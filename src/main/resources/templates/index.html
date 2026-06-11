@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PIMTO 홈화면</title>
+    <style>
+        /* 기본 여백 제거 및 전체 화면 설정 */
+        body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; }
+
+        /* 상단 네비게이션 바 (로그인/회원가입) */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 2px solid #000; }
+
+        /* 🌟 로고 이미지와 글자를 나란히 정렬 */
+        .header .logo { display: flex; align-items: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
+        .logo-image { height: 35px; margin-right: 10px; } /* 로고 이미지 크기와 여백 조정 */
+
+        .header .nav a { margin-left: 20px; text-decoration: none; color: #000; font-weight: bold; font-size: 16px; }
+
+        /* 메인 콘텐츠 영역 (화면 중앙 정렬) */
+        .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+
+        /* PIMTO 타이틀 및 물결 무늬 */
+        .title { font-size: 56px; font-weight: bold; margin-bottom: 10px; font-style: italic; letter-spacing: 5px; }
+        .wavy-line {
+            width: 200px;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" fill="none" stroke="black" stroke-width="2"/></svg>') repeat-x;
+            margin-bottom: 60px;
+        }
+
+        /* 스케치하신 두 개의 큰 박스 영역 */
+        .box-container { display: flex; gap: 50px; }
+        .box {
+            width: 300px;
+            height: 350px;
+            border: 2px solid #000;
+            padding: 30px;
+            box-sizing: border-box;
+        }
+
+        /* 왼쪽 이용법 박스 (살짝 회색 배경) */
+        .box-left { background-color: #e9ecef; }
+        .usage-title { font-size: 24px; font-weight: bold; text-align: right; margin-bottom: 20px; }
+        .usage-list { list-style: none; padding: 0; margin: 0; font-size: 18px; line-height: 2; font-weight: bold;}
+
+        /* 오른쪽 사진 박스 */
+        .box-right {
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <div class="logo">
+        <img src="/images/vending-logo.png" class="logo-image" alt="PIMTO 로고">
+        PIMTO
+    </div>
+    <div class="nav">
+        <a href="/login">로그인</a>
+        <a href="#">회원가입</a>
+    </div>
+</div>
+
+<div class="main">
+    <div class="title">PIMTO</div>
+    <div class="wavy-line"></div>
+
+    <div class="box-container">
+        <div class="box box-left">
+            <div class="usage-title">이용법</div>
+            <ul class="usage-list">
+                <li>1. ~</li>
+                <li>2. ~</li>
+                <li>3. ~</li>
+                <li>4. ~</li>
+            </ul>
+        </div>
+        <div class="box box-right">
+            사진
+        </div>
+    </div>
+</div>
+</body>
+</html>

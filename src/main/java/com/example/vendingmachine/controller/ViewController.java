@@ -6,9 +6,15 @@ import org.springframework.web.bind.annotation.GetMapping;
 @Controller
 public class ViewController {
 
-    // 사용자가 http://localhost:8080/login 으로 접속하면 실행됩니다.
+    // 기본 홈화면 (http://localhost:8080/ 로 접속 시 실행)
+    @GetMapping("/")
+    public String home() {
+        return "index"; // templates/index.html 파일을 찾아 화면에 띄워줍니다.
+    }
+
+    // 로그인 화면 (http://localhost:8080/login 으로 접속 시 실행)
     @GetMapping("/login")
     public String loginPage() {
-        return "login"; // templates 폴더 안의 login.html 파일을 찾아서 화면에 띄워줍니다.
+        return "login"; // templates/login.html 파일을 찾아 화면에 띄워줍니다.
     }
 }
