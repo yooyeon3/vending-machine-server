@@ -10,23 +10,22 @@
         body {
             margin: 0;
             font-family: 'Pretendard', sans-serif;
-            background-color: #f4f7f6;
+            background-color: #f8fafc; /* 배경을 더 밝고 깨끗한 톤으로 변경 */
             display: flex;
             flex-direction: column;
             min-height: 100vh;
             color: #333;
         }
 
-        /* 상단 네비게이션 바 (글래스모피즘 효과) */
+        /* 상단 네비게이션 바 */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 15px 40px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255,255,255,0.3);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
             position: sticky;
             top: 0;
             z-index: 100;
@@ -38,7 +37,7 @@
         .header .nav a {
             margin-left: 25px;
             text-decoration: none;
-            color: #555;
+            color: #475569;
             font-weight: 600;
             font-size: 16px;
             transition: color 0.3s ease;
@@ -55,7 +54,7 @@
             padding: 60px 20px;
         }
 
-        /* PIMTO 타이틀 (그라데이션 텍스트) */
+        /* PIMTO 타이틀 */
         .title {
             font-size: 64px;
             font-weight: 800;
@@ -66,17 +65,16 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* 🌟 새로 추가된 PIMTO 사용권장 메시지 문구 */
+        /* 메시지 문구 */
         .recommend-message {
             font-size: 18px;
             font-weight: 500;
-            color: #666;
-            margin-bottom: 50px;
+            color: #64748b;
+            margin-bottom: 55px;
             letter-spacing: -0.5px;
             text-align: center;
             line-height: 1.5;
         }
-        .recommend-message th { color: #6e8efb; font-weight: 700; }
 
         /* 박스 레이아웃 */
         .box-container {
@@ -88,90 +86,117 @@
             flex-wrap: wrap;
         }
 
-        /* 공통 박스 스타일 */
-        .box {
+        /* ---------------------------------------------------
+           ✨ 왼쪽 이용법 박스
+        --------------------------------------------------- */
+        .box-left {
             width: 320px;
             height: 380px;
             background-color: #ffffff;
             border-radius: 24px;
             padding: 40px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            /* 아주 부드럽고 넓게 퍼지는 고급스러운 그림자 */
+            box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             display: flex;
             flex-direction: column;
         }
-        .box:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        .box-left:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25);
         }
 
-        /* 왼쪽 이용법 박스 */
         .usage-title {
-            font-size: 26px;
+            font-size: 24px;
             font-weight: 800;
-            color: #333;
+            color: #1e293b;
             margin-bottom: 25px;
             text-align: left;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 2px solid #f1f5f9;
             padding-bottom: 15px;
         }
         .usage-list {
             list-style: none;
             padding: 0;
             margin: 0;
-            font-size: 17px;
-            line-height: 2.2;
-            font-weight: 500;
-            color: #555;
+            font-size: 16px;
+            line-height: 2.4;
+            font-weight: 600;
+            color: #475569;
         }
-        .usage-list li {
-            position: relative;
-            padding-left: 20px;
-        }
+        .usage-list li { position: relative; padding-left: 24px; }
         .usage-list li::before {
             content: '✨';
             position: absolute;
-            left: -5px;
+            left: -2px;
             font-size: 14px;
         }
 
-        /* 오른쪽 사진 박스 */
+        /* ---------------------------------------------------
+           ✨ 오른쪽 사진 박스 (이미지가 가장 깔끔하게 보이는 마법)
+        --------------------------------------------------- */
         .box-right {
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
-            border: 2px dashed #d1d8e0;
-            box-shadow: none;
-            color: #999;
-            font-size: 20px;
-            font-weight: 600;
-        }
-        .box-right:hover {
-            border-color: #a777e3;
-            color: #a777e3;
-            background: #fff;
+            width: 320px;
+            height: 380px;
+            border-radius: 24px;
+            position: relative; /* 오버레이를 위한 필수 속성 */
+            overflow: hidden; /* 이미지가 둥근 모서리를 튀어나가지 않게 자름 */
+            box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            background-color: #f1f5f9; /* 이미지 로딩 전 보이는 깔끔한 배경색 */
         }
 
-        /* 🌟 새로 추가된 하단 푸터(Footer) 디자인 */
+        .vending-image {
+            width: 100%;
+            height: 100%;
+            /* 찌그러짐 방지 및 꽉 채우기 (핵심!) */
+            object-fit: cover;
+            /* 이미지의 중앙을 기준으로 크롭되게 설정 */
+            object-position: center;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        /* 이미지 위를 은은하게 덮어주는 그라데이션 효과 (사진이 훨씬 깊이 있어 보입니다) */
+        .box-right::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.15) 100%);
+            pointer-events: none;
+        }
+
+        /* 마우스 오버 시 이미지만 부드럽게 확대 (테두리 밖으로 안 나감) */
+        .box-right:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25);
+        }
+        .box-right:hover .vending-image {
+            transform: scale(1.07);
+        }
+
+        /* 하단 푸터 */
         .footer {
             background-color: #ffffff;
-            border-top: 1px solid #eef2f5;
+            border-top: 1px solid #f1f5f9;
             padding: 25px 40px;
+            margin-top: auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 14px;
-            color: #888;
+            color: #94a3b8;
         }
         .footer-info { margin: 0; }
-        .footer-links th { margin-left: 20px; text-decoration: none; color: #888; transition: color 0.3s; }
-        .footer-links th:hover { color: #6e8efb; }
+        .footer-links a { margin-left: 20px; text-decoration: none; color: #94a3b8; transition: color 0.3s; }
+        .footer-links a:hover { color: #6e8efb; }
 
-        /* 반응형 모바일 대응 */
+        /* 모바일 대응 */
         @media (max-width: 768px) {
+            .box-container { gap: 20px; }
             .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
             .footer-links { display: flex; gap: 15px; justify-content: center; }
-            .footer-links th { margin: 0; }
+            .footer-links a { margin: 0; }
         }
     </style>
 </head>
@@ -195,7 +220,7 @@
     </div>
 
     <div class="box-container">
-        <div class="box box-left">
+        <div class="box-left">
             <div class="usage-title">이용법 안내</div>
             <ul class="usage-list">
                 <li>원하는 자판기를 선택하세요.</li>
@@ -204,8 +229,9 @@
                 <li>마이페이지에서 내역을 확인!</li>
             </ul>
         </div>
-        <div class="box box-right">
-            📷 매력적인 사진 공간
+
+        <div class="box-right">
+            <img th:src="@{/images/IMG_6255.jpg}" class="vending-image" alt="PIMTO 자판기 이미지">
         </div>
     </div>
 </div>
