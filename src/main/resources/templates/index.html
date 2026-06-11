@@ -2,63 +2,161 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>PIMTO 홈화면</title>
+    <title>PIMTO - 나만의 이동식 자판기</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
-        /* 기본 여백 제거 및 전체 화면 설정 */
-        body { margin: 0; font-family: 'Malgun Gothic', sans-serif; display: flex; flex-direction: column; height: 100vh; }
-
-        /* 상단 네비게이션 바 (로그인/회원가입) */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; border-bottom: 2px solid #000; }
-
-        /* 🌟 로고 이미지와 글자를 나란히 정렬 */
-        .header .logo { display: flex; align-items: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; }
-        .logo-image { height: 35px; margin-right: 10px; } /* 로고 이미지 크기와 여백 조정 */
-
-        .header .nav a { margin-left: 20px; text-decoration: none; color: #000; font-weight: bold; font-size: 16px; }
-
-        /* 메인 콘텐츠 영역 (화면 중앙 정렬) */
-        .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-
-        /* PIMTO 타이틀 및 물결 무늬 */
-        .title { font-size: 56px; font-weight: bold; margin-bottom: 10px; font-style: italic; letter-spacing: 5px; }
-        .wavy-line {
-            width: 200px;
-            height: 20px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" fill="none" stroke="black" stroke-width="2"/></svg>') repeat-x;
-            margin-bottom: 60px;
-        }
-
-        /* 스케치하신 두 개의 큰 박스 영역 */
-        .box-container { display: flex; gap: 50px; }
-        .box {
-            width: 300px;
-            height: 350px;
-            border: 2px solid #000;
-            padding: 30px;
-            box-sizing: border-box;
-        }
-
-        /* 왼쪽 이용법 박스 (살짝 회색 배경) */
-        .box-left { background-color: #e9ecef; }
-        .usage-title { font-size: 24px; font-weight: bold; text-align: right; margin-bottom: 20px; }
-        .usage-list { list-style: none; padding: 0; margin: 0; font-size: 18px; line-height: 2; font-weight: bold;}
-
-        /* 오른쪽 사진 박스 */
-        .box-right {
-            background-color: #ffffff;
+        /* 전역 설정 */
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f4f7f6; /* 아주 연한 배경색으로 카드들을 돋보이게 함 */
             display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* 상단 네비게이션 바 (글래스모피즘 효과) */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px); /* 반투명 블러 효과 */
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header .logo { display: flex; align-items: center; }
+        .logo-image { height: 45px; transition: transform 0.3s ease; }
+        .logo-image:hover { transform: scale(1.05); }
+
+        .header .nav a {
+            margin-left: 25px;
+            text-decoration: none;
+            color: #555;
+            font-weight: 600;
+            font-size: 16px;
+            transition: color 0.3s ease;
+        }
+        .header .nav a:hover { color: #6e8efb; }
+
+        /* 메인 콘텐츠 영역 */
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            color: #666;
+            padding: 40px 20px;
+        }
+
+        /* PIMTO 타이틀 (그라데이션 텍스트) */
+        .title {
+            font-size: 64px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: 4px;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* 세련된 물결 무늬 장식 */
+        .wavy-line {
+            width: 150px;
+            height: 15px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" fill="none" stroke="%23a777e3" stroke-width="3" stroke-linecap="round"/></svg>') repeat-x;
+            margin-bottom: 60px;
+            opacity: 0.7;
+        }
+
+        /* 박스 레이아웃 */
+        .box-container {
+            display: flex;
+            gap: 40px;
+            max-width: 900px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap; /* 화면이 좁아지면 아래로 떨어짐 */
+        }
+
+        /* 공통 박스 스타일 (소프트 섀도우 둥근 카드) */
+        .box {
+            width: 320px;
+            height: 380px;
+            background-color: #ffffff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+        }
+        .box:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+        }
+
+        /* 왼쪽 이용법 박스 */
+        .usage-title {
+            font-size: 26px;
+            font-weight: 800;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: left;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+        }
+        .usage-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 17px;
+            line-height: 2.2;
+            font-weight: 500;
+            color: #555;
+        }
+        .usage-list li {
+            position: relative;
+            padding-left: 20px;
+        }
+        /* 리스트 앞의 예쁜 불릿 기호 */
+        .usage-list li::before {
+            content: '✨';
+            position: absolute;
+            left: -5px;
+            font-size: 14px;
+        }
+
+        /* 오른쪽 사진 박스 (이미지 홀더) */
+        .box-right {
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            border: 2px dashed #d1d8e0;
+            box-shadow: none;
+            color: #999;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .box-right:hover {
+            border-color: #a777e3;
+            color: #a777e3;
+            background: #fff;
         }
     </style>
 </head>
 <body>
 <div class="header">
     <div class="logo">
-        <img src="/images/vending-logo.png" class="logo-image" alt="PIMTO 로고">
-        PIMTO
+        <a href="/">
+            <img src="/images/vending-logo.png" class="logo-image" alt="PIMTO 로고">
+        </a>
     </div>
     <div class="nav">
         <a href="/login">로그인</a>
@@ -72,16 +170,16 @@
 
     <div class="box-container">
         <div class="box box-left">
-            <div class="usage-title">이용법</div>
+            <div class="usage-title">이용법 안내</div>
             <ul class="usage-list">
-                <li>1. ~</li>
-                <li>2. ~</li>
-                <li>3. ~</li>
-                <li>4. ~</li>
+                <li>원하는 자판기를 선택하세요.</li>
+                <li>투입할 금액을 충전합니다.</li>
+                <li>상품을 클릭해 구매하세요.</li>
+                <li>마이페이지에서 내역을 확인!</li>
             </ul>
         </div>
         <div class="box box-right">
-            사진
+            📷 매력적인 사진 공간
         </div>
     </div>
 </div>
