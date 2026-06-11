@@ -10,7 +10,7 @@
         body {
             margin: 0;
             font-family: 'Pretendard', sans-serif;
-            background-color: #f8fafc; /* 배경을 더 밝고 깨끗한 톤으로 변경 */
+            background-color: #f8fafc;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -86,16 +86,13 @@
             flex-wrap: wrap;
         }
 
-        /* ---------------------------------------------------
-           ✨ 왼쪽 이용법 박스
-        --------------------------------------------------- */
+        /* 왼쪽 이용법 박스 */
         .box-left {
             width: 320px;
             height: 380px;
             background-color: #ffffff;
             border-radius: 24px;
             padding: 40px;
-            /* 아주 부드럽고 넓게 퍼지는 고급스러운 그림자 */
             box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
             display: flex;
@@ -133,46 +130,81 @@
         }
 
         /* ---------------------------------------------------
-           ✨ 오른쪽 사진 박스 (이미지가 가장 깔끔하게 보이는 마법)
+           ✨ 오른쪽 사진 박스 (CSS 이미지 보정 마법 적용)
         --------------------------------------------------- */
         .box-right {
             width: 320px;
             height: 380px;
             border-radius: 24px;
-            position: relative; /* 오버레이를 위한 필수 속성 */
-            overflow: hidden; /* 이미지가 둥근 모서리를 튀어나가지 않게 자름 */
+            position: relative;
+            overflow: hidden;
             box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
             transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            background-color: #f1f5f9; /* 이미지 로딩 전 보이는 깔끔한 배경색 */
+            background-color: #1e293b; /* 로딩 전 배경색 */
+            cursor: pointer;
         }
 
         .vending-image {
             width: 100%;
             height: 100%;
-            /* 찌그러짐 방지 및 꽉 채우기 (핵심!) */
             object-fit: cover;
-            /* 이미지의 중앙을 기준으로 크롭되게 설정 */
             object-position: center;
             display: block;
-            transition: transform 0.5s ease;
+            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+
+            /* 💡 핵심 1: CSS 필터로 사진의 채도와 대비를 높이고 살짝 어둡게 처리 */
+            filter: contrast(1.1) saturate(1.15) brightness(0.85);
         }
 
-        /* 이미지 위를 은은하게 덮어주는 그라데이션 효과 (사진이 훨씬 깊이 있어 보입니다) */
+        /* 💡 핵심 2: 테마 색상(블루/퍼플)의 은은한 그라데이션 필터 덮기 */
         .box-right::after {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.15) 100%);
+            background: linear-gradient(
+                to top,
+                rgba(15, 23, 42, 0.9) 0%,   /* 하단은 어둡게 (글씨가 잘 보이도록) */
+                rgba(110, 142, 251, 0.2) 50%, /* 중간은 테마색 필터 */
+                rgba(255, 255, 255, 0) 100%
+            );
             pointer-events: none;
         }
 
-        /* 마우스 오버 시 이미지만 부드럽게 확대 (테두리 밖으로 안 나감) */
+        /* 💡 핵심 3: 사진 위에 올라가는 매거진 스타일의 텍스트 캡션 */
+        .image-caption {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            right: 30px;
+            color: #ffffff;
+            z-index: 2; /* 오버레이 위로 글씨가 올라오게 함 */
+            transition: transform 0.4s ease;
+        }
+        .image-caption h3 {
+            margin: 0 0 6px 0;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .image-caption p {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* 마우스 오버(Hover) 시 역동적인 애니메이션 효과 */
         .box-right:hover {
             transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25);
+            /* 보라색 테마빛의 그림자 발산 */
+            box-shadow: 0 20px 40px rgba(167, 119, 227, 0.3);
         }
         .box-right:hover .vending-image {
-            transform: scale(1.07);
+            transform: scale(1.08); /* 사진 확대 */
+            filter: contrast(1.15) saturate(1.2) brightness(1.05); /* 어두웠던 사진이 밝아짐! */
+        }
+        .box-right:hover .image-caption {
+            transform: translateY(-5px); /* 글씨도 살짝 위로 떠오름 */
         }
 
         /* 하단 푸터 */
@@ -231,7 +263,12 @@
         </div>
 
         <div class="box-right">
-            <img th:src="@{/images/IMG_6255.jpg}" class="vending-image" alt="PIMTO 자판기 이미지">
+            <img th:src="@{/images/IMG_6255.jpg}" class="vending-image" alt="PIMTO 자판기">
+
+            <div class="image-caption">
+                <h3>스마트 자판기</h3>
+                <p>터치 한 번으로 만나는 일상</p>
+            </div>
         </div>
     </div>
 </div>
