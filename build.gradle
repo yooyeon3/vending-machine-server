@@ -35,6 +35,9 @@ dependencies {
     // 테스트 환경
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // 화면(HTML)을 렌더링하기 위한 타임리프
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 }
 
 tasks.named('test') {
