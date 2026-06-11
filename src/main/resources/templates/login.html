@@ -16,6 +16,20 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            position: relative; /* 절대 위치(로고)의 기준점이 됩니다 */
+        }
+
+        /* 좌측 상단 로고 설정 */
+        .top-left-logo {
+            position: absolute;
+            top: 30px;
+            left: 40px;
+            height: 45px; /* 로고 크기 */
+            transition: opacity 0.3s ease;
+        }
+
+        .top-left-logo:hover {
+            opacity: 0.8;
         }
 
         /* 로그인 컨테이너 (중앙 카드) */
@@ -128,6 +142,11 @@
     </style>
 </head>
 <body>
+
+<a href="/">
+    <img th:src="@{/images/vending-logo.png}" alt="PIMTO Logo" class="top-left-logo">
+</a>
+
 <div class="login-container">
     <div class="brand-title">PIMTO</div>
     <div class="brand-subtitle">나만의 스마트 자판기 플랫폼</div>
@@ -148,12 +167,13 @@
         </div>
 
         <button type="submit" class="login-button">로그인</button>
-    </form>`
+    </form>
     <div class="extra-links">
         <a href="#">아이디 찾기</a> |
         <a href="#">비밀번호 찾기</a> |
         <a href="#">회원가입</a>
     </div>
 </div>
+
 </body>
 </html>
