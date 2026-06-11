@@ -2,7 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>PIMTO - 나만의 이동식 자판기</title>
+    <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
         /* 전역 설정 */
@@ -10,7 +10,7 @@
         body {
             margin: 0;
             font-family: 'Pretendard', sans-serif;
-            background-color: #f4f7f6; /* 아주 연한 배경색으로 카드들을 돋보이게 함 */
+            background-color: #f4f7f6;
             display: flex;
             flex-direction: column;
             min-height: 100vh;
@@ -24,7 +24,7 @@
             align-items: center;
             padding: 15px 40px;
             background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px); /* 반투명 블러 효과 */
+            backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.3);
             box-shadow: 0 4px 6px rgba(0,0,0,0.02);
             position: sticky;
@@ -52,28 +52,31 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 60px 20px;
         }
 
         /* PIMTO 타이틀 (그라데이션 텍스트) */
         .title {
             font-size: 64px;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             letter-spacing: 4px;
             background: linear-gradient(135deg, #6e8efb, #a777e3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* 세련된 물결 무늬 장식 */
-        .wavy-line {
-            width: 150px;
-            height: 15px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" fill="none" stroke="%23a777e3" stroke-width="3" stroke-linecap="round"/></svg>') repeat-x;
-            margin-bottom: 60px;
-            opacity: 0.7;
+        /* 🌟 새로 추가된 PIMTO 사용권장 메시지 문구 */
+        .recommend-message {
+            font-size: 18px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 50px;
+            letter-spacing: -0.5px;
+            text-align: center;
+            line-height: 1.5;
         }
+        .recommend-message th { color: #6e8efb; font-weight: 700; }
 
         /* 박스 레이아웃 */
         .box-container {
@@ -82,10 +85,10 @@
             max-width: 900px;
             width: 100%;
             justify-content: center;
-            flex-wrap: wrap; /* 화면이 좁아지면 아래로 떨어짐 */
+            flex-wrap: wrap;
         }
 
-        /* 공통 박스 스타일 (소프트 섀도우 둥근 카드) */
+        /* 공통 박스 스타일 */
         .box {
             width: 320px;
             height: 380px;
@@ -125,7 +128,6 @@
             position: relative;
             padding-left: 20px;
         }
-        /* 리스트 앞의 예쁜 불릿 기호 */
         .usage-list li::before {
             content: '✨';
             position: absolute;
@@ -133,7 +135,7 @@
             font-size: 14px;
         }
 
-        /* 오른쪽 사진 박스 (이미지 홀더) */
+        /* 오른쪽 사진 박스 */
         .box-right {
             align-items: center;
             justify-content: center;
@@ -148,6 +150,28 @@
             border-color: #a777e3;
             color: #a777e3;
             background: #fff;
+        }
+
+        /* 🌟 새로 추가된 하단 푸터(Footer) 디자인 */
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #eef2f5;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #888;
+        }
+        .footer-info { margin: 0; }
+        .footer-links th { margin-left: 20px; text-decoration: none; color: #888; transition: color 0.3s; }
+        .footer-links th:hover { color: #6e8efb; }
+
+        /* 반응형 모바일 대응 */
+        @media (max-width: 768px) {
+            .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
+            .footer-links { display: flex; gap: 15px; justify-content: center; }
+            .footer-links th { margin: 0; }
         }
     </style>
 </head>
@@ -166,7 +190,9 @@
 
 <div class="main">
     <div class="title">PIMTO</div>
-    <div class="wavy-line"></div>
+    <div class="recommend-message">
+        내 손안의 스마트 자판기, <span style="color: #6e8efb; font-weight: 700;">PIMTO</span>와 함께 언제 어디서나 더 편리한 일상을 경험해 보세요.
+    </div>
 
     <div class="box-container">
         <div class="box box-left">
@@ -181,6 +207,15 @@
         <div class="box box-right">
             📷 매력적인 사진 공간
         </div>
+    </div>
+</div>
+
+<div class="footer">
+    <p class="footer-info">© 2026 PIMTO. All rights reserved. | 나만의 이동식 자판기 플랫폼</p>
+    <div class="footer-links">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">고객센터</a>
     </div>
 </div>
 </body>

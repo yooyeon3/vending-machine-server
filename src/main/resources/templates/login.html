@@ -52,27 +52,28 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 20px;
+            padding: 60px 20px;
         }
 
         /* PIMTO 타이틀 */
         .title {
             font-size: 64px;
             font-weight: 800;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             letter-spacing: 4px;
             background: linear-gradient(135deg, #6e8efb, #a777e3);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
-        /* 세련된 물결 무늬 */
-        .wavy-line {
-            width: 150px;
-            height: 15px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0 10 Q 12.5 0, 25 10 T 50 10 T 75 10 T 100 10" fill="none" stroke="%23a777e3" stroke-width="3" stroke-linecap="round"/></svg>') repeat-x;
+        /* 🌟 로그인 화면에도 통일감 있게 적용된 메시지 문구 */
+        .recommend-message {
+            font-size: 18px;
+            font-weight: 500;
+            color: #666;
             margin-bottom: 50px;
-            opacity: 0.7;
+            letter-spacing: -0.5px;
+            text-align: center;
         }
 
         /* 로그인 옵션 컨테이너 */
@@ -97,10 +98,9 @@
             cursor: pointer;
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
             transition: all 0.3s ease;
-            text-decoration: none; /* a태그 밑줄 제거 */
+            text-decoration: none;
         }
 
-        /* 버튼별 색상 및 마우스 오버 효과 설정 */
         .normal-login:hover {
             transform: translateY(-8px);
             box-shadow: 0 15px 30px rgba(110, 142, 251, 0.3);
@@ -111,13 +111,33 @@
         .social-login:hover {
             transform: translateY(-8px);
             box-shadow: 0 15px 30px rgba(254, 211, 48, 0.4);
-            background: linear-gradient(135deg, #fed330, #feca57); /* 카카오톡 느낌의 노란색 */
+            background: linear-gradient(135deg, #fed330, #feca57);
             color: #333;
         }
 
-        /* 아이콘 자리를 위한 이모지 추가 */
         .icon { font-size: 36px; margin-bottom: 15px; transition: transform 0.3s ease;}
         .login-box:hover .icon { transform: scale(1.2); }
+
+        /* 🌟 하단 푸터(Footer) 디자인 */
+        .footer {
+            background-color: #ffffff;
+            border-top: 1px solid #eef2f5;
+            padding: 25px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            color: #888;
+        }
+        .footer-info { margin: 0; }
+        .footer-links th { margin-left: 20px; text-decoration: none; color: #888; transition: color 0.3s; }
+        .footer-links th:hover { color: #6e8efb; }
+
+        @media (max-width: 768px) {
+            .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
+            .footer-links { display: flex; gap: 15px; justify-content: center; }
+            .footer-links th { margin: 0; }
+        }
     </style>
 </head>
 <body>
@@ -135,7 +155,7 @@
 
 <div class="main">
     <div class="title">PIMTO</div>
-    <div class="wavy-line"></div>
+    <div class="recommend-message">간편하게 로그인하고 PIMTO 스마트 자판기를 만나보세요.</div>
 
     <div class="login-container">
         <a href="#" class="login-box normal-login">
@@ -146,6 +166,15 @@
             <span class="icon">💬</span>
             카카오 로그인
         </a>
+    </div>
+</div>
+
+<div class="footer">
+    <p class="footer-info">© 2026 PIMTO. All rights reserved. | 나만의 이동식 자판기 플랫폼</p>
+    <div class="footer-links">
+        <a href="#">이용약관</a>
+        <a href="#">개인정보처리방침</a>
+        <a href="#">고객센터</a>
     </div>
 </div>
 </body>
