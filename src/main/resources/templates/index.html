@@ -5,9 +5,7 @@
     <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
-        /* =========================================
-           공통 및 비로그인(랜딩) 페이지 스타일
-           ========================================= */
+        /* 전역 설정 */
         * { box-sizing: border-box; }
         body {
             margin: 0;
@@ -19,6 +17,7 @@
             color: #333;
         }
 
+        /* 상단 네비게이션 바 */
         .header {
             display: flex;
             justify-content: space-between;
@@ -31,7 +30,6 @@
             top: 0;
             z-index: 100;
         }
-
         .header .logo { display: flex; align-items: center; }
         .logo-image { height: 45px; transition: transform 0.3s ease; }
         .logo-image:hover { transform: scale(1.05); }
@@ -46,6 +44,7 @@
         }
         .header .nav a:hover { color: #6e8efb; }
 
+        /* 메인 콘텐츠 영역 */
         .main {
             flex: 1;
             display: flex;
@@ -55,6 +54,7 @@
             padding: 60px 20px;
         }
 
+        /* PIMTO 타이틀 */
         .title {
             font-size: 64px;
             font-weight: 800;
@@ -65,6 +65,7 @@
             -webkit-text-fill-color: transparent;
         }
 
+        /* 메시지 문구 */
         .recommend-message {
             font-size: 18px;
             font-weight: 500;
@@ -75,6 +76,7 @@
             line-height: 1.5;
         }
 
+        /* 박스 레이아웃 */
         .box-container {
             display: flex;
             gap: 40px;
@@ -84,6 +86,7 @@
             flex-wrap: wrap;
         }
 
+        /* 왼쪽 이용법 박스 */
         .box-left {
             width: 320px;
             height: 380px;
@@ -109,7 +112,6 @@
             border-bottom: 2px solid #f1f5f9;
             padding-bottom: 15px;
         }
-
         .usage-list {
             list-style: none;
             padding: 0;
@@ -127,6 +129,9 @@
             font-size: 14px;
         }
 
+        /* ---------------------------------------------------
+           ✨ 오른쪽 사진 박스
+        --------------------------------------------------- */
         .box-right {
             width: 320px;
             height: 380px;
@@ -196,6 +201,7 @@
             transform: translateY(-5px);
         }
 
+        /* 하단 푸터 */
         .footer {
             background-color: #ffffff;
             border-top: 1px solid #f1f5f9;
@@ -431,6 +437,7 @@
 
         /* 모바일 대응 */
         @media (max-width: 900px) {
+            .box-container { gap: 20px; }
             .dash-body { flex-direction: column; }
             .dash-view { min-height: 350px; }
             .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
@@ -481,9 +488,10 @@
     </div>
 
     <div class="footer">
-        <p class="footer-info">© 2026 PIMTO. All rights reserved.</p>
+        <p class="footer-info">© 2026 PIMTO. All rights reserved. | 나만의 이동식 자판기 플랫폼</p>
         <div class="footer-links">
             <a href="#">이용약관</a>
+            <a href="#">개인정보처리방침</a>
             <a href="#">고객센터</a>
         </div>
     </div>
@@ -495,7 +503,10 @@
         <div class="dash-header">
             <div class="dash-header-left">
                 <span class="dash-menu-icon">≡</span>
-                <span style="color: #6e8efb;">PIMTO</span>
+                <!-- 텍스트 대신 로고 이미지 적용 -->
+                <a href="/" style="display: flex; align-items: center; margin-left: 10px;">
+                    <img th:src="@{/images/vending-logo.png}" style="height: 35px;" alt="PIMTO 로고">
+                </a>
             </div>
             <div class="dash-header-right">
                 <span><span th:text="${session.loginMember.name}" style="color: #6e8efb; font-weight: 800;"></span>님 환영합니다!</span>

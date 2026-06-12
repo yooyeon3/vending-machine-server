@@ -48,4 +48,16 @@ public class MemberController {
         // 로그인 성공 후 메인 홈 화면으로 이동
         return "redirect:/";
     }
+
+    // 👇 새로 추가된 로그아웃 기능 👇
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request) {
+        // 기존 세션이 있으면 가져오고, 없으면 새로 만들지 않음 (false)
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate(); // 현재 로그인된 세션 정보를 완전히 삭제합니다.
+        }
+        // 로그아웃 처리 후 비로그인 홈 화면(랜딩 페이지)으로 이동
+        return "redirect:/";
+    }
 }
