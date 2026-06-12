@@ -27,4 +27,20 @@ public class MemberService {
 
         memberRepository.save(member);
     }
+
+    public Member login(String username, String password) {
+        // 1. DB에서 아이디로 회원 찾아보기
+        Member member = memberRepository.findByUsername(username)
+                .orElse(null); // 회원이 없으면 null 반환
+
+        // 2. 회원이 없거나, 비밀번호가 일치하지 않으면 null 반환 (passwordEncoder.matches 사용!)
+        if (member == null || !passwordEncoder.matches(password, member.getPassword())) {
+            return null; // 로그인 실패
+        }
+
+        // 3. 모두 통과하면 회원 정보 반환 (로그인 성공)
+        return member;
+
+    }
+
 }
