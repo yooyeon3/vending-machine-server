@@ -5,6 +5,8 @@
     <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
+
+
         /* =========================================
            공통 및 비로그인(랜딩) 페이지 스타일
            ========================================= */
@@ -59,8 +61,8 @@
         .dash-left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 400px; }
 
         .product-grid { display: flex; gap: 15px; }
-        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; gap: 15px; }
-        .product-img { width: 100%; height: 160px; background-color: #e2e8f0; border-radius: 12px; object-fit: cover; }
+        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 1px solid #ffffff; }
+        .product-img { width: 100%; height: 160px; border-radius: 12px; object-fit: contain; background-color: #ffffff !important; border: 1px solid #ffffff !important; padding: 10px; }
         .product-info { text-align: center; }
         .product-name { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
         .product-price { font-size: 16px; font-weight: 600; color: #6e8efb; }
@@ -97,6 +99,21 @@
             .footer-links { display: flex; gap: 15px; justify-content: center; }
             .footer-links a { margin: 0; }
         }
+
+        /* 1. 상품 이미지 공통 스타일 (이미지 비율 유지) */
+.product-img {
+    width: 100%;
+    height: 160px;
+    border-radius: 12px;
+    background: #f8fafc;
+    object-fit: contain; /* 💡 사진이 잘리지 않고 전체가 보이도록 함 */
+    padding: 10px;       /* 💡 사진 주변에 여백을 주어 캔 크기를 시각적으로 조절 */
+}
+
+/* 2. 레쓰비 이미지 전용 추가 보정 (펩시와 시각적 크기 맞춤) */
+.letsbe-img {
+    padding: 15px;       /* 펩시보다 약간 더 여백을 주어 캔이 작아 보이게 설정 */
+}
     </style>
 </head>
 <body>
