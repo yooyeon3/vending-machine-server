@@ -5,214 +5,37 @@
     <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
-        /* 전역 설정 */
+        /* =========================================
+           공통 및 비로그인(랜딩) 페이지 스타일
+           ========================================= */
         * { box-sizing: border-box; }
-        body {
-            margin: 0;
-            font-family: 'Pretendard', sans-serif;
-            background-color: #f8fafc;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            color: #333;
-        }
-
-        /* 상단 네비게이션 바 */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 40px;
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); position: sticky; top: 0; z-index: 100; }
         .header .logo { display: flex; align-items: center; }
         .logo-image { height: 45px; transition: transform 0.3s ease; }
         .logo-image:hover { transform: scale(1.05); }
-
-        .header .nav a {
-            margin-left: 25px;
-            text-decoration: none;
-            color: #475569;
-            font-weight: 600;
-            font-size: 16px;
-            transition: color 0.3s ease;
-        }
+        .header .nav a { margin-left: 25px; text-decoration: none; color: #475569; font-weight: 600; font-size: 16px; transition: color 0.3s ease; }
         .header .nav a:hover { color: #6e8efb; }
-
-        /* 메인 콘텐츠 영역 */
-        .main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-        }
-
-        /* PIMTO 타이틀 */
-        .title {
-            font-size: 64px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            letter-spacing: 4px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* 메시지 문구 */
-        .recommend-message {
-            font-size: 18px;
-            font-weight: 500;
-            color: #64748b;
-            margin-bottom: 55px;
-            letter-spacing: -0.5px;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        /* 박스 레이아웃 */
-        .box-container {
-            display: flex;
-            gap: 40px;
-            max-width: 900px;
-            width: 100%;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        /* 왼쪽 이용법 박스 */
-        .box-left {
-            width: 320px;
-            height: 380px;
-            background-color: #ffffff;
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            display: flex;
-            flex-direction: column;
-        }
-        .box-left:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25);
-        }
-
-        .usage-title {
-            font-size: 24px;
-            font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 25px;
-            text-align: left;
-            border-bottom: 2px solid #f1f5f9;
-            padding-bottom: 15px;
-        }
-        .usage-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            font-size: 16px;
-            line-height: 2.4;
-            font-weight: 600;
-            color: #475569;
-        }
+        .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; }
+        .title { font-size: 64px; font-weight: 800; margin-bottom: 12px; letter-spacing: 4px; background: linear-gradient(135deg, #6e8efb, #a777e3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .recommend-message { font-size: 18px; font-weight: 500; color: #64748b; margin-bottom: 55px; letter-spacing: -0.5px; text-align: center; line-height: 1.5; }
+        .box-container { display: flex; gap: 40px; max-width: 900px; width: 100%; justify-content: center; flex-wrap: wrap; }
+        .box-left { width: 320px; height: 380px; background-color: #ffffff; border-radius: 24px; padding: 40px; box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); display: flex; flex-direction: column; }
+        .box-left:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25); }
+        .usage-title { font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 25px; text-align: left; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
+        .usage-list { list-style: none; padding: 0; margin: 0; font-size: 16px; line-height: 2.4; font-weight: 600; color: #475569; }
         .usage-list li { position: relative; padding-left: 24px; }
-        .usage-list li::before {
-            content: '✨';
-            position: absolute;
-            left: -2px;
-            font-size: 14px;
-        }
-
-        /* ---------------------------------------------------
-           ✨ 오른쪽 사진 박스
-        --------------------------------------------------- */
-        .box-right {
-            width: 320px;
-            height: 380px;
-            border-radius: 24px;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15);
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-            background-color: #1e293b;
-            cursor: pointer;
-        }
-
-        .vending-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            object-position: center;
-            display: block;
-            transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
-            filter: contrast(1.1) saturate(1.15) brightness(0.85);
-        }
-
-        .box-right::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(
-                to top,
-                rgba(15, 23, 42, 0.9) 0%,
-                rgba(110, 142, 251, 0.2) 50%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            pointer-events: none;
-        }
-
-        .image-caption {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            right: 30px;
-            color: #ffffff;
-            z-index: 2;
-            transition: transform 0.4s ease;
-        }
-        .image-caption h3 {
-            margin: 0 0 6px 0;
-            font-size: 22px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        .image-caption p {
-            margin: 0;
-            font-size: 14px;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.8);
-        }
-
-        .box-right:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(167, 119, 227, 0.3);
-        }
-        .box-right:hover .vending-image {
-            transform: scale(1.08);
-            filter: contrast(1.15) saturate(1.2) brightness(1.05);
-        }
-        .box-right:hover .image-caption {
-            transform: translateY(-5px);
-        }
-
-        /* 하단 푸터 */
-        .footer {
-            background-color: #ffffff;
-            border-top: 1px solid #f1f5f9;
-            padding: 25px 40px;
-            margin-top: auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            color: #94a3b8;
-        }
+        .usage-list li::before { content: '✨'; position: absolute; left: -2px; font-size: 14px; }
+        .box-right { width: 320px; height: 380px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); background-color: #1e293b; cursor: pointer; }
+        .vending-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); filter: contrast(1.1) saturate(1.15) brightness(0.85); }
+        .box-right::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(110, 142, 251, 0.2) 50%, rgba(255, 255, 255, 0) 100%); pointer-events: none; }
+        .image-caption { position: absolute; bottom: 30px; left: 30px; right: 30px; color: #ffffff; z-index: 2; transition: transform 0.4s ease; }
+        .image-caption h3 { margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+        .image-caption p { margin: 0; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, 0.8); }
+        .box-right:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(167, 119, 227, 0.3); }
+        .box-right:hover .vending-image { transform: scale(1.08); filter: contrast(1.15) saturate(1.2) brightness(1.05); }
+        .box-right:hover .image-caption { transform: translateY(-5px); }
+        .footer { background-color: #ffffff; border-top: 1px solid #f1f5f9; padding: 25px 40px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #94a3b8; }
         .footer-info { margin: 0; }
         .footer-links a { margin-left: 20px; text-decoration: none; color: #94a3b8; transition: color 0.3s; }
         .footer-links a:hover { color: #6e8efb; }
@@ -220,225 +43,55 @@
         /* =========================================
            로그인 후 (원격 제어 대시보드) 스타일
            ========================================= */
-        .dash-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background-color: #f1f5f9;
-        }
+        .dash-container { flex: 1; display: flex; flex-direction: column; background-color: #f1f5f9; }
 
         /* 앱 상단 헤더 */
-        .dash-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #ffffff;
-            padding: 15px 30px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .dash-header-left { display: flex; align-items: center; gap: 15px; font-size: 24px; font-weight: 800; color: #1e293b; letter-spacing: 1px; }
+        .dash-menu-icon { cursor: pointer; font-size: 28px; color: #64748b; }
+        .dash-header-right { font-size: 16px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 20px; }
+        .dash-header-right a { color: #ef4444; text-decoration: none; font-size: 14px; }
 
-        .dash-header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 24px;
-            font-weight: 800;
-            color: #1e293b;
-            letter-spacing: 1px;
-        }
+        /* 💡 메인 레이아웃: 좌측(상품/결제) 우측(지도/호출) */
+        .dash-body { display: flex; flex: 1; padding: 30px; gap: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
 
-        .dash-menu-icon {
-            cursor: pointer;
-            font-size: 28px;
-            color: #64748b;
-        }
+        /* 💡 왼쪽: 상품 목록, 요약, 결제 버튼 */
+        .dash-left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 400px; }
 
-        .dash-header-right {
-            font-size: 16px;
-            font-weight: 600;
-            color: #475569;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
+        .product-grid { display: flex; gap: 15px; }
+        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .product-img { width: 100%; height: 160px; background-color: #e2e8f0; border-radius: 12px; object-fit: cover; }
+        .product-info { text-align: center; }
+        .product-name { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+        .product-price { font-size: 16px; font-weight: 600; color: #6e8efb; }
 
-        .dash-header-right a {
-            color: #ef4444;
-            text-decoration: none;
-            font-size: 14px;
-        }
+        .counter-group { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 12px; border-radius: 12px; width: 100%; justify-content: center; }
+        .counter-btn { width: 36px; height: 36px; border: none; background: #ffffff; border-radius: 8px; font-size: 20px; font-weight: bold; color: #475569; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.1s; }
+        .counter-btn:active { background: #e2e8f0; transform: scale(0.95); }
+        .counter-val { font-size: 18px; font-weight: 700; width: 30px; text-align: center; }
 
-        /* 대시보드 메인 레이아웃 (좌:화면 / 우:컨트롤러) */
-        .dash-body {
-            display: flex;
-            flex: 1;
-            padding: 30px;
-            gap: 30px;
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
-        }
+        .summary-box { background: #ffffff; padding: 25px 30px; border-radius: 20px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; gap: 15px; margin-top: auto; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 600; color: #475569; }
+        .summary-val { font-weight: 800; color: #1e293b; font-size: 20px; }
+        .total-price-text { font-size: 24px; color: #6e8efb; font-weight: 800; }
 
-        /* 왼쪽: 카메라/지도 화면 영역 */
-        .dash-view {
-            flex: 2;
-            background-color: #e2e8f0;
-            border-radius: 20px;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: inset 0 4px 20px rgba(0,0,0,0.05);
-            overflow: hidden;
-            min-height: 500px;
-        }
+        .pay-btn { padding: 20px; background: #1e293b; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(30, 41, 59, 0.2); }
+        .pay-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(30, 41, 59, 0.3); }
 
-        .view-crosshair {
-            position: absolute;
-            font-size: 40px;
-            color: rgba(100, 116, 139, 0.5);
-            font-weight: 300;
-            pointer-events: none;
-        }
+        /* 💡 오른쪽: 지도(뷰어) 화면 및 호출 버튼 */
+        .dash-right-panel { flex: 1.5; display: flex; flex-direction: column; gap: 20px; }
 
-        .view-play {
-            position: absolute;
-            bottom: 30px;
-            left: 30px;
-            width: 50px;
-            height: 50px;
-            background: rgba(255,255,255,0.8);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: #333;
-            cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
+        .dash-view { flex: 1; background-color: #e2e8f0; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; min-height: 400px; }
+        .view-crosshair { position: absolute; font-size: 40px; color: rgba(100, 116, 139, 0.5); font-weight: 300; pointer-events: none; }
+        .view-play { position: absolute; bottom: 30px; left: 30px; width: 50px; height: 50px; background: rgba(255,255,255,0.8); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .view-label { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; letter-spacing: 1px; }
 
-        .view-label {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.6);
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
+        .call-btn { padding: 25px; background: linear-gradient(135deg, #6e8efb, #a777e3); color: #ffffff; border: none; border-radius: 20px; font-size: 24px; font-weight: 800; letter-spacing: 2px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(110, 142, 251, 0.4); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .call-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(110, 142, 251, 0.5); }
 
-        /* 오른쪽: 조작 및 정보 영역 */
-        .dash-controls {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            min-width: 350px;
-        }
-
-        /* 상태창 (점선 박스 표현) */
-        .status-box {
-            background: #ffffff;
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-            min-height: 150px;
-            border: 2px dashed #cbd5e1;
-            font-family: monospace;
-            font-size: 14px;
-            color: #64748b;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        /* 상품 수량 조절 박스 */
-        .item-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            background: #ffffff;
-            padding: 15px 20px;
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        }
-
-        .counter-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #f1f5f9;
-            padding: 5px;
-            border-radius: 10px;
-        }
-
-        .counter-btn {
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: #ffffff;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            color: #475569;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .counter-btn:active {
-            background: #e2e8f0;
-        }
-
-        .counter-val {
-            font-size: 16px;
-            font-weight: 700;
-            width: 30px;
-            text-align: center;
-        }
-
-        .item-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #1e293b;
-        }
-
-        /* 매우 큰 호출하기 버튼 */
-        .call-btn {
-            margin-top: auto;
-            padding: 25px;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            color: #ffffff;
-            border: none;
-            border-radius: 20px;
-            font-size: 24px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 10px 25px rgba(110, 142, 251, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .call-btn:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 30px rgba(110, 142, 251, 0.5);
-        }
-
-        .call-btn:active {
-            transform: translateY(0);
-        }
-
-        /* 모바일 대응 */
         @media (max-width: 900px) {
-            .box-container { gap: 20px; }
             .dash-body { flex-direction: column; }
+            .product-grid { flex-direction: column; }
             .dash-view { min-height: 350px; }
             .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
             .footer-links { display: flex; gap: 15px; justify-content: center; }
@@ -503,7 +156,6 @@
         <div class="dash-header">
             <div class="dash-header-left">
                 <span class="dash-menu-icon">≡</span>
-                <!-- 텍스트 대신 로고 이미지 적용 -->
                 <a href="/" style="display: flex; align-items: center; margin-left: 10px;">
                     <img th:src="@{/images/vending-logo.png}" style="height: 35px;" alt="PIMTO 로고">
                 </a>
@@ -516,46 +168,94 @@
 
         <div class="dash-body">
 
-            <div class="dash-view">
-                <div class="view-label">● LIVE VIEW</div>
-                <div class="view-crosshair">✛</div>
-                <div class="view-play">▷</div>
+            <div class="dash-left-panel">
+
+                <div class="product-grid">
+                    <div class="product-card">
+                        <img th:src="@{/images/IMG_6255.jpg}" class="product-img" alt="칸타타">
+                        <div class="product-info">
+                            <div class="product-name">칸타타 프리미엄 라떼</div>
+                            <div class="product-price">1,500원</div>
+                        </div>
+                        <div class="counter-group">
+                            <button class="counter-btn" onclick="changeQty('qty1', -1, 1500)">-</button>
+                            <span class="counter-val" id="qty1">0</span>
+                            <button class="counter-btn" onclick="changeQty('qty1', 1, 1500)">+</button>
+                        </div>
+                    </div>
+
+                    <div class="product-card">
+                        <img th:src="@{/images/IMG_6255.jpg}" class="product-img" alt="레쓰비">
+                        <div class="product-info">
+                            <div class="product-name">레쓰비 마일드 커피</div>
+                            <div class="product-price">1,200원</div>
+                        </div>
+                        <div class="counter-group">
+                            <button class="counter-btn" onclick="changeQty('qty2', -1, 1200)">-</button>
+                            <span class="counter-val" id="qty2">0</span>
+                            <button class="counter-btn" onclick="changeQty('qty2', 1, 1200)">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="summary-box">
+                    <div class="summary-row">
+                        <span>선택한 음료수</span>
+                        <span class="summary-val"><span id="total-count">0</span>개</span>
+                    </div>
+                    <div class="summary-row" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+                        <span>총 결제 금액</span>
+                        <span class="total-price-text"><span id="total-price">0</span>원</span>
+                    </div>
+                </div>
+
+                <button class="pay-btn" onclick="alert('결제가 완료되었습니다! 우측에서 로봇을 호출해주세요.')">💳 결제하기</button>
             </div>
 
-            <div class="dash-controls">
-
-                <div class="status-box">
-                    <div>_ 시스템 대기 중...</div>
-                    <div>_ PIMTO-01 연결 완료</div>
-                    <div>_ 현재 위치 파악 중...</div>
-                    <div>_ 상품을 선택해 주세요.</div>
+            <div class="dash-right-panel">
+                <div class="dash-view">
+                    <div class="view-label">● LIVE VIEW (현재 위치)</div>
+                    <div class="view-crosshair">✛</div>
+                    <div class="view-play">▷</div>
                 </div>
 
-                <div class="item-row">
-                    <div class="counter-group">
-                        <button class="counter-btn">-</button>
-                        <span class="counter-val">0</span>
-                        <button class="counter-btn">+</button>
-                    </div>
-                    <div class="item-name">칸타타 프리미엄 라떼</div>
-                </div>
-
-                <div class="item-row">
-                    <div class="counter-group">
-                        <button class="counter-btn">-</button>
-                        <span class="counter-val">0</span>
-                        <button class="counter-btn">+</button>
-                    </div>
-                    <div class="item-name">레쓰비 마일드 커피</div>
-                </div>
-
-                <button class="call-btn">
+                <button class="call-btn" onclick="alert('PIMTO 로봇이 고객님의 위치로 이동을 시작합니다!')">
                     🚀 호출하기
                 </button>
-
             </div>
+
         </div>
     </div>
+
+    <script>
+        function changeQty(elementId, change, pricePerItem) {
+            const qtyElement = document.getElementById(elementId);
+            let currentQty = parseInt(qtyElement.innerText);
+
+            // 수량 변경 (0 밑으로는 내려가지 않도록 설정)
+            let newQty = currentQty + change;
+            if (newQty < 0) newQty = 0;
+
+            qtyElement.innerText = newQty;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            // 각 상품의 수량 가져오기
+            const qty1 = parseInt(document.getElementById('qty1').innerText);
+            const qty2 = parseInt(document.getElementById('qty2').innerText);
+
+            // 총 개수 계산
+            const totalCount = qty1 + qty2;
+
+            // 총 가격 계산 (칸타타 1500원, 레쓰비 1200원 기준)
+            const totalPrice = (qty1 * 1500) + (qty2 * 1200);
+
+            // 화면에 렌더링 (toLocaleString()을 사용해 천 단위 콤마 찍기)
+            document.getElementById('total-count').innerText = totalCount;
+            document.getElementById('total-price').innerText = totalPrice.toLocaleString();
+        }
+    </script>
 </th:block>
 
 </body>
