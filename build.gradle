@@ -38,6 +38,10 @@ dependencies {
 
     // 화면(HTML)을 렌더링하기 위한 타임리프
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    //admin 로그인 구현하기 위한 Security 추가
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6'
 }
 
 tasks.named('test') {
