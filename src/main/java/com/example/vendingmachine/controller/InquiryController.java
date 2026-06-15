@@ -42,13 +42,15 @@ public class InquiryController {
         return "redirect:/inquiry/list";
     }
 
-    // 전체 문의 목록 (비밀글은 제목 숨김)
+    // 전체 문의 목록
     @GetMapping("/list")
     public String listPage(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        List<Inquiry> inquiries = inquiryService.findAll();
-        model.addAttribute("inquiries", inquiries);
-        model.addAttribute("currentUser", auth.getName());
+        String username = auth.getName();
+        model.addAttribute("inquiries", inquiryService.findAll());
+        model.addAttribute("currentUser", username);
+        // 사용자 알림 개수
+        model.addAttribute("unreadCount", inquiryService.countUnreadReplies(username));
         return "inquiry-list";
     }
 
@@ -56,9 +58,10 @@ public class InquiryController {
     @GetMapping("/my")
     public String myListPage(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        List<Inquiry> inquiries = inquiryService.findByUsername(auth.getName());
-        model.addAttribute("inquiries", inquiries);
-        model.addAttribute("currentUser", auth.getName());
+        String username = auth.getName();
+        model.addAttribute("inquiries", inquiryService.findByUsername(username));
+        model.addAttribute("currentUser", username);
+        model.addAttribute("unreadCount", inquiryService.countUnreadReplies(username));
         return "inquiry-my";
     }
 
@@ -66,32 +69,42 @@ public class InquiryController {
     @GetMapping("/detail/{id}")
     public String detailPage(@PathVariable Long id, Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Inquiry inquiry = inquiryService.findById(id);
         String currentUser = auth.getName();
+        Inquiry inquiry = inquiryService.findById(id);
 
-        // 비밀글이면 작성자랑 관리자만 볼 수 있음
+        // 비밀글이면 작성자랑 관리자만
         if (inquiry.isSecret() && !inquiry.getUsername().equals(currentUser) && !currentUser.equals("admin")) {
             return "redirect:/inquiry/list";
         }
+
+        // 읽음 처리
+        inquiryService.markRepliesAsRead(inquiry, currentUser);
 
         List<InquiryReply> replies = inquiryService.findReplies(inquiry);
         model.addAttribute("inquiry", inquiry);
         model.addAttribute("replies", replies);
         model.addAttribute("currentUser", currentUser);
+        model.addAttribute("unreadCount", inquiryService.countUnreadReplies(currentUser));
         return "inquiry-detail";
     }
 
-    // 답글 등록
+    // 답글 등록 (관리자 또는 문의 작성자만)
     @PostMapping("/reply/{id}")
     public String reply(@PathVariable Long id, @RequestParam String content) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String currentUser = auth.getName();
         Inquiry inquiry = inquiryService.findById(id);
+
+        // 관리자이거나 문의 작성자만 답글 가능
+        if (!currentUser.equals("admin") && !inquiry.getUsername().equals(currentUser)) {
+            return "redirect:/inquiry/list";
+        }
 
         InquiryReply reply = new InquiryReply();
         reply.setInquiry(inquiry);
         reply.setContent(content);
-        reply.setUsername(auth.getName());
-        reply.setAdminReply(auth.getName().equals("admin"));
+        reply.setUsername(currentUser);
+        reply.setAdminReply(currentUser.equals("admin"));
 
         inquiryService.saveReply(reply);
         return "redirect:/inquiry/detail/" + id;
