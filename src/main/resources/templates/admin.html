@@ -69,7 +69,7 @@
             position: fixed;
             top: 0; left: 0;
             width: 220px;
-            height: fit-content;
+            height: 100vh;
             background: white;
             border-right: 2px solid #e2e8f0;
             z-index: 200;
@@ -107,6 +107,21 @@
         }
         .sidebar-menu li a:hover { background: #f8fafc; color: #6e8efb; border-left-color: #6e8efb; }
         .sidebar-menu li a.active { background: #f0f0ff; color: #6e8efb; border-left-color: #6e8efb; font-weight: 700; }
+        .menu-badge {
+            margin-left: auto;
+            background: #ef4444; color: white;
+            border-radius: 50%; min-width: 18px; height: 18px;
+            font-size: 11px; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+            padding: 0 4px;
+        }
+        .inquiry-panel-item-link {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s;
+        }
+        .inquiry-panel-item-link:hover .inquiry-panel-item { background: #f8fafc; }
 
         .wrapper { display: flex; flex: 1; overflow: hidden; background: #d4d8dd; }
 
@@ -260,7 +275,12 @@
         <li><a href="#">📊 매출통계</a></li>
         <li><a href="#">👥 회원관리</a></li>
         <li><a href="#"><img src="/images/pimto.png" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;"> 로봇관리</a></li>
-        <li><a href="/inquiry/list">💬 문의기능</a></li>
+        <li>
+            <a href="/inquiry/list">
+                💬 문의기능
+                <span th:if="${inquiryCount > 0}" th:text="${inquiryCount}" class="menu-badge"></span>
+            </a>
+        </li>
     </ul>
 </div>
 
@@ -296,17 +316,19 @@
 <div class="inquiry-panel" id="inquiryPanel">
     <div class="inquiry-panel-header">💬 문의 내역</div>
     <div th:if="${#lists.isEmpty(inquiries)}" class="inquiry-empty">문의 내역이 없어요.</div>
-    <div th:each="inquiry : ${inquiries}" class="inquiry-panel-item">
-        <div class="inquiry-panel-title">
-            <span th:if="${inquiry.secret}" class="secret-badge">🔒 비밀글</span>
-            <span th:text="${inquiry.title}"></span>
+    <a th:each="inquiry : ${inquiries}" th:href="@{/inquiry/detail/{id}(id=${inquiry.id})}" class="inquiry-panel-item-link">
+        <div class="inquiry-panel-item">
+            <div class="inquiry-panel-title">
+                <span th:if="${inquiry.secret}" class="secret-badge">🔒 비밀글</span>
+                <span th:text="${inquiry.title}"></span>
+            </div>
+            <div class="inquiry-panel-content" th:text="${inquiry.content}"></div>
+            <div class="inquiry-panel-meta">
+                <span th:text="${inquiry.username}"></span> ·
+                <span th:text="${#temporals.format(inquiry.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+            </div>
         </div>
-        <div class="inquiry-panel-content" th:text="${inquiry.content}"></div>
-        <div class="inquiry-panel-meta">
-            <span th:text="${inquiry.username}"></span> ·
-            <span th:text="${#temporals.format(inquiry.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
-        </div>
-    </div>
+    </a>
 </div>
 
 <div class="wrapper">

@@ -57,12 +57,25 @@ public class InquiryService {
         return inquiryReplyRepository.countByInquiry_UsernameAndAdminReplyTrueAndReadFalse(username);
     }
 
-    // 답글 읽음 처리
+    // 관리자용 - 사용자가 남긴 안읽은 답글 개수
+    public long countUnreadUserReplies() {
+        return inquiryReplyRepository.countByAdminReplyFalseAndReadFalse();
+    }
+
+    // 답글 읽음 처리 (양방향: 관리자 읽으면 사용자 답글 읽음, 사용자 읽으면 관리자 답글 읽음)
     public void markRepliesAsRead(Inquiry inquiry, String username) {
         List<InquiryReply> replies = inquiryReplyRepository.findByInquiryOrderByCreatedAtAsc(inquiry);
-        for (InquiryReply reply : replies) {
-            if (reply.isAdminReply() && !reply.isRead()) {
-                reply.setRead(true);
+        if (username.equals("admin")) {
+            for (InquiryReply reply : replies) {
+                if (!reply.isAdminReply() && !reply.isRead()) {
+                    reply.setRead(true);
+                }
+            }
+        } else {
+            for (InquiryReply reply : replies) {
+                if (reply.isAdminReply() && !reply.isRead()) {
+                    reply.setRead(true);
+                }
             }
         }
     }

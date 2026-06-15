@@ -82,6 +82,7 @@
         .sidebar-menu { list-style: none; padding: 0; margin: 0; }
         .sidebar-menu li a { display: flex; align-items: center; gap: 10px; padding: 13px 22px; font-size: 14px; font-weight: 500; color: #64748b; text-decoration: none; border-left: 3px solid transparent; transition: all 0.2s; }
         .sidebar-menu li a:hover { background: #f8fafc; color: #6e8efb; border-left-color: #6e8efb; }
+        .menu-badge { margin-left: auto; background: #ef4444; color: white; border-radius: 50%; min-width: 18px; height: 18px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
 
         @media (max-width: 900px) {
             .dash-body { flex-direction: column; }
@@ -108,7 +109,12 @@
         <li><a href="#">🗺️ 지도</a></li>
         <li><a href="#">📋 주문내역</a></li>
         <li><a href="#">💳 결제(PIN)</a></li>
-        <li><a href="/inquiry/list">💬 문의</a></li>
+        <li>
+            <a href="/inquiry/my">
+                💬 문의
+                <span th:if="${unreadCount > 0}" th:text="${unreadCount}" class="menu-badge"></span>
+            </a>
+        </li>
     </ul>
 </div>
 
