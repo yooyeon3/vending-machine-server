@@ -17,28 +17,39 @@
 
         /* 문의 원글 */
         .inquiry-card { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 24px; }
-        .inquiry-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-        .secret-badge { background: #fef2f2; color: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .inquiry-title { font-size: 20px; font-weight: 700; color: #1e293b; }
+        .secret-badge { background: #fef2f2; color: #ef4444; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 8px; }
+        .inquiry-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 8px; }
         .inquiry-meta { font-size: 13px; color: #94a3b8; margin-bottom: 16px; }
         .inquiry-content { font-size: 15px; color: #475569; line-height: 1.7; }
 
         /* 답글 목록 */
-        .reply-list { display: flex; flex-direction: column; gap: 12px; }
-        .reply-item { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px 20px; }
-        .reply-item.admin { background: #f0f0ff; border-color: #c4b5fd; }
-        .reply-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .admin-badge { background: #6e8efb; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-        .reply-username { font-size: 13px; font-weight: 600; color: #1e293b; }
-        .reply-time { font-size: 12px; color: #94a3b8; margin-left: auto; }
-        .reply-content { font-size: 14px; color: #475569; line-height: 1.6; }
+        .reply-list { display: flex; flex-direction: column; gap: 8px; }
 
-        /* 답글 작성 */
+        /* 관리자 답글 */
+        .admin-reply { background: #f0f0ff; border-radius: 12px; border: 1px solid #c4b5fd; padding: 16px 20px; }
+        .admin-badge { background: #6e8efb; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 6px; }
+        .reply-username { font-size: 13px; font-weight: 600; color: #1e293b; }
+        .reply-time { font-size: 12px; color: #94a3b8; margin-left: 8px; }
+        .reply-content { font-size: 14px; color: #475569; line-height: 1.6; margin-top: 8px; }
+
+        /* 사용자 재답글 (ㄴ자) */
+        .user-reply { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px 20px; margin-left: 24px; position: relative; }
+        .user-reply::before { content: '↳'; position: absolute; left: -20px; top: 16px; color: #94a3b8; font-size: 16px; }
+
+        /* 답글 폼 */
         .reply-form { background: white; border-radius: 16px; border: 1px solid #e2e8f0; padding: 20px; }
+        .reply-form-title { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 10px; }
         .reply-form textarea { width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; font-family: 'Pretendard', sans-serif; height: 100px; resize: none; outline: none; }
         .reply-form textarea:focus { border-color: #6e8efb; }
         .reply-submit { margin-top: 10px; padding: 10px 20px; background: #1e293b; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; float: right; }
         .reply-submit:hover { background: #334155; }
+
+        /* 사용자 재답글 폼 (ㄴ자) */
+        .user-reply-form { margin-left: 24px; background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 16px; position: relative; }
+        .user-reply-form::before { content: '↳'; position: absolute; left: -20px; top: 16px; color: #94a3b8; font-size: 16px; }
+        .user-reply-form textarea { width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Pretendard', sans-serif; height: 80px; resize: none; outline: none; }
+        .user-reply-form textarea:focus { border-color: #6e8efb; }
+        .user-reply-submit { margin-top: 8px; padding: 8px 16px; background: #6e8efb; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; float: right; }
     </style>
 </head>
 <body>
@@ -54,9 +65,9 @@
 
     <!-- 원글 -->
     <div class="inquiry-card">
-        <div class="inquiry-header">
+        <div class="inquiry-title">
             <span th:if="${inquiry.secret}" class="secret-badge">🔒 비밀글</span>
-            <div class="inquiry-title" th:text="${inquiry.title}"></div>
+            <span th:text="${inquiry.title}"></span>
         </div>
         <div class="inquiry-meta">
             <span th:text="${inquiry.username}"></span> ·
@@ -66,24 +77,43 @@
     </div>
 
     <!-- 답글 목록 -->
-    <div class="reply-list" th:if="${!#lists.isEmpty(replies)}">
-        <div th:each="reply : ${replies}"
-             th:classappend="${reply.adminReply} ? 'admin' : ''"
-             class="reply-item">
-            <div class="reply-header">
-                <span th:if="${reply.adminReply}" class="admin-badge">관리자</span>
-                <span class="reply-username" th:text="${reply.username}"></span>
-                <span class="reply-time" th:text="${#temporals.format(reply.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+    <div class="reply-list">
+        <div th:each="reply : ${replies}">
+            <!-- 관리자 답글 -->
+            <div th:if="${reply.adminReply}" class="admin-reply">
+                <div>
+                    <span class="admin-badge">관리자</span>
+                    <span class="reply-username" th:text="${reply.username}"></span>
+                    <span class="reply-time" th:text="${#temporals.format(reply.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+                </div>
+                <div class="reply-content" th:text="${reply.content}"></div>
             </div>
-            <div class="reply-content" th:text="${reply.content}"></div>
+
+            <!-- 사용자 재답글 (ㄴ자) -->
+            <div th:unless="${reply.adminReply}" class="user-reply">
+                <div>
+                    <span class="reply-username" th:text="${reply.username}"></span>
+                    <span class="reply-time" th:text="${#temporals.format(reply.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+                </div>
+                <div class="reply-content" th:text="${reply.content}"></div>
+            </div>
         </div>
     </div>
 
-    <!-- 답글 작성 -->
-    <div class="reply-form">
+    <!-- 관리자 답글 폼 -->
+    <div class="reply-form" th:if="${currentUser == 'admin'}">
+        <div class="reply-form-title">💬 답글 작성</div>
         <form th:action="@{/inquiry/reply/{id}(id=${inquiry.id})}" method="post">
             <textarea name="content" placeholder="답글을 입력하세요" required></textarea>
             <button type="submit" class="reply-submit">답글 등록</button>
+        </form>
+    </div>
+
+    <!-- 사용자 재답글 폼 (ㄴ자) - 관리자 답글이 있을 때만 -->
+    <div th:if="${currentUser == inquiry.username and !#lists.isEmpty(replies)}" class="user-reply-form">
+        <form th:action="@{/inquiry/reply/{id}(id=${inquiry.id})}" method="post">
+            <textarea name="content" placeholder="관리자 답글에 재답글을 입력하세요" required></textarea>
+            <button type="submit" class="user-reply-submit">재답글 등록</button>
         </form>
     </div>
 
