@@ -19,4 +19,6 @@ public class Member {
     private String password; // 비밀번호
 
     private String name;     // 회원 이름
+
+    private String phoneNumber; // 전화번호
 }
