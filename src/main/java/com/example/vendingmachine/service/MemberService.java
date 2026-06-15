@@ -3,7 +3,7 @@ package com.example.vendingmachine.service;
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // 암호화 라이브러리
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final BCryptPasswordEncoder passwordEncoder; // 암호화 객체 주입
+    private final PasswordEncoder passwordEncoder;
 
     public void join(Member member) {
         // 1. 아이디 중복 체크
