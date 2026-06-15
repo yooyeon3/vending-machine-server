@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -31,6 +33,10 @@ public class Inquiry {
 
     // 작성 시간
     private LocalDateTime createdAt;
+
+    // 답글 목록
+    @OneToMany(mappedBy = "inquiry", cascade = CascadeType.ALL)
+    private List<InquiryReply> replies = new ArrayList<>();
 
     @PrePersist
     public void prePersist() {
