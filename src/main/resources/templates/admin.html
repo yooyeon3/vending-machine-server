@@ -193,6 +193,7 @@
         .menu-info { text-align: center; width: 100%; }
         .menu-info .name { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 6px; }
 
+        /* 💡 DB 연동 폼 컨트롤 버튼 스타일 (비활성화 상태 포함) */
         .stock-control { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
         .stock-btn {
             width: 24px; height: 24px;
@@ -202,10 +203,23 @@
             cursor: pointer;
             font-size: 14px;
             font-weight: 700;
-            color: #6e8efb;
             display: flex; align-items: center; justify-content: center;
+            transition: 0.2s;
         }
-        .stock-btn:hover { background: #f1f5f9; }
+        .stock-btn.btn-minus { color: #64748b; }
+        .stock-btn.btn-plus { color: #6e8efb; border-color: #6e8efb; }
+        .stock-btn.btn-minus:hover:not(:disabled) { background: #f1f5f9; }
+        .stock-btn.btn-plus:hover:not(:disabled) { background: #6e8efb; color: white; }
+
+        /* 비활성화 시 스타일 */
+        .stock-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: #f1f5f9;
+            color: #94a3b8;
+            border-color: #e2e8f0;
+        }
+
         .stock-count { font-size: 16px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center; }
         .stock-label { font-size: 11px; color: #64748b; margin-top: 3px; }
 
@@ -293,23 +307,20 @@
 
 <div class="sidebar-overlay" id="overlay"></div>
 
-<!-- 사이드바 -->
 <div class="sidebar" id="sidebar">
-    <!-- 사이드바 내 로고 -->
     <div class="sidebar-logo">
         <img src="/images/vending-logo.png" alt="PIMTO 로고">
         <span>관리자</span>
     </div>
     <ul class="sidebar-menu">
         <li><a href="#" class="active">📦 재고관리</a></li>
-        <li><a href="#">📊 매출통계</a></li>
+        <li><a href="/admin/statistics">📊 매출통계</a></li>
         <li><a href="#">👥 회원관리</a></li>
         <li><a href="#"><img src="/images/pimto.png" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;"> 로봇관리</a></li>
         <li><a href="#">💬 문의기능</a></li>
     </ul>
 </div>
 
-<!-- 헤더 -->
 <div class="header">
     <div class="header-left">
         <div class="hamburger" id="hamburger">
@@ -329,32 +340,41 @@
     <div class="content">
 
         <div class="left-panel">
-            <div class="panel-title">🥤 음료 재고</div>
+            <div class="panel-title">🥤 음료 재고 (DB 연동)</div>
+
             <div class="menu-grid" id="menuGrid">
-                <div class="menu-item" id="item-레쓰비">
-                    <img src="/images/letsbe.jpg" alt="레쓰비">
+
+                <div class="menu-item"
+                     th:each="product : ${products}"
+                     th:if="${product.name == '펩시 콜라' or product.name == '레쓰비 마일드 커피'}"
+                     th:id="'item-' + ${product.id}">
+
+                    <img th:if="${product.name == '펩시 콜라'}" src="/images/pepsi.png" alt="펩시 콜라">
+                    <img th:if="${product.name == '레쓰비 마일드 커피'}" src="/images/letsbe.jpg" alt="레쓰비 마일드 커피">
+
                     <div class="menu-info">
-                        <div class="name">레쓰비</div>
+                        <div class="name" th:text="${product.name}">상품명</div>
                         <div class="stock-control">
-                            <button class="stock-btn" onclick="changeStock('레쓰비', -1)">−</button>
-                            <span class="stock-count" id="count-레쓰비">0</span>
-                            <button class="stock-btn" onclick="changeStock('레쓰비', 1)">+</button>
+
+                            <form th:action="@{/admin/stock/update}" method="post" style="margin: 0; display: flex;">
+                                <input type="hidden" name="productId" th:value="${product.id}">
+                                <input type="hidden" name="amount" value="-1">
+                                <button type="submit" class="stock-btn btn-minus" th:disabled="${product.stock <= 0}">−</button>
+                            </form>
+
+                            <span class="stock-count" th:text="${product.stock}">0</span>
+
+                            <form th:action="@{/admin/stock/update}" method="post" style="margin: 0; display: flex;">
+                                <input type="hidden" name="productId" th:value="${product.id}">
+                                <input type="hidden" name="amount" value="1">
+                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 2}">+</button>
+                            </form>
+
                         </div>
                         <div class="stock-label">개 남음</div>
                     </div>
                 </div>
-                <div class="menu-item" id="item-펩시콜라">
-                    <img src="/images/pepsi.png" alt="펩시콜라">
-                    <div class="menu-info">
-                        <div class="name">펩시콜라</div>
-                        <div class="stock-control">
-                            <button class="stock-btn" onclick="changeStock('펩시콜라', -1)">−</button>
-                            <span class="stock-count" id="count-펩시콜라">0</span>
-                            <button class="stock-btn" onclick="changeStock('펩시콜라', 1)">+</button>
-                        </div>
-                        <div class="stock-label">개 남음</div>
-                    </div>
-                </div>
+
             </div>
 
             <div class="manage-section">
@@ -403,7 +423,7 @@
         overlay.classList.remove('show');
     });
 
-    // 재고 관리
+    // 화면 테스트용 가상 음료 추가/제거
     const stocks = { '레쓰비': 0, '펩시콜라': 0 };
 
     function changeStock(name, delta) {
@@ -428,9 +448,9 @@
             <div class="menu-info">
                 <div class="name">${name}</div>
                 <div class="stock-control">
-                    <button class="stock-btn" onclick="changeStock('${name}', -1)">−</button>
+                    <button class="stock-btn btn-minus" onclick="changeStock('${name}', -1)">−</button>
                     <span class="stock-count" id="count-${name}">0</span>
-                    <button class="stock-btn" onclick="changeStock('${name}', 1)">+</button>
+                    <button class="stock-btn btn-plus" onclick="changeStock('${name}', 1)">+</button>
                 </div>
                 <div class="stock-label">개 남음</div>
             </div>`;
@@ -453,7 +473,7 @@
         select.remove(select.selectedIndex);
     }
 
-    // 임시 지도
+    // 지도 캔버스 및 긴급 호출 로직
     const canvas = document.getElementById('mapCanvas');
     const ctx = canvas.getContext('2d');
     const HOME = { x: 0.15, y: 0.5 };
