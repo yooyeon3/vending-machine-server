@@ -1,20 +1,30 @@
 package com.example.vendingmachine.controller;
 
+import com.example.vendingmachine.domain.Member;
+import com.example.vendingmachine.service.InquiryService;
+import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
+@RequiredArgsConstructor
 public class ViewController {
 
-    // 기본 홈화면 (http://localhost:8080/ 로 접속 시 실행)
+    private final InquiryService inquiryService;
+
     @GetMapping("/")
-    public String home() {
-        return "index"; // templates/index.html 파일을 찾아 화면에 띄워줍니다.
+    public String home(HttpSession session, Model model) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember != null) {
+            model.addAttribute("unreadCount", inquiryService.countUnreadReplies(loginMember.getUsername()));
+        }
+        return "index";
     }
 
-    // 로그인 화면 (http://localhost:8080/login 으로 접속 시 실행)
     @GetMapping("/login")
     public String loginPage() {
-        return "login"; // templates/login.html 파일을 찾아 화면에 띄워줍니다.
+        return "login";
     }
 }
