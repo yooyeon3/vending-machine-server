@@ -109,4 +109,39 @@ public class InquiryController {
         inquiryService.saveReply(reply);
         return "redirect:/inquiry/detail/" + id;
     }
+    // 문의 수정 페이지
+    @GetMapping("/edit/{id}")
+    public String editPage(@PathVariable Long id, Model model) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Inquiry inquiry = inquiryService.findById(id);
+
+        // 본인 글만 수정 가능
+        if (!inquiry.getUsername().equals(auth.getName())) {
+            return "redirect:/inquiry/list";
+        }
+
+        model.addAttribute("inquiry", inquiry);
+        return "inquiry-edit";
+    }
+
+    // 문의 수정 처리
+    @PostMapping("/edit/{id}")
+    public String edit(@PathVariable Long id,
+                       @RequestParam String title,
+                       @RequestParam String content,
+                       @RequestParam(defaultValue = "false") boolean secret) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Inquiry inquiry = inquiryService.findById(id);
+
+        if (!inquiry.getUsername().equals(auth.getName())) {
+            return "redirect:/inquiry/list";
+        }
+
+        inquiry.setTitle(title);
+        inquiry.setContent(content);
+        inquiry.setSecret(secret);
+
+        inquiryService.save(inquiry);
+        return "redirect:/inquiry/detail/" + id;
+    }
 }

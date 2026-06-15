@@ -53,7 +53,6 @@
             border-radius: 2px;
         }
 
-        /* 오버레이 - 슬라이드 열릴때만 어둡게 */
         .sidebar-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -64,17 +63,13 @@
             pointer-events: none;
             transition: opacity 0.25s;
         }
-        .sidebar-overlay.show {
-            opacity: 1;
-            pointer-events: all;
-        }
+        .sidebar-overlay.show { opacity: 1; pointer-events: all; }
 
-        /* 사이드바 */
         .sidebar {
             position: fixed;
             top: 0; left: 0;
             width: 220px;
-            height: 40vh;
+            height: fit-content;
             background: white;
             border-right: 2px solid #e2e8f0;
             z-index: 200;
@@ -86,7 +81,6 @@
         }
         .sidebar.open { transform: translateX(0); }
 
-        /* 사이드바 내 로고 영역 */
         .sidebar-logo {
             display: flex;
             align-items: center;
@@ -111,17 +105,8 @@
             border-left: 3px solid transparent;
             transition: all 0.2s;
         }
-        .sidebar-menu li a:hover {
-            background: #f8fafc;
-            color: #6e8efb;
-            border-left-color: #6e8efb;
-        }
-        .sidebar-menu li a.active {
-            background: #f0f0ff;
-            color: #6e8efb;
-            border-left-color: #6e8efb;
-            font-weight: 700;
-        }
+        .sidebar-menu li a:hover { background: #f8fafc; color: #6e8efb; border-left-color: #6e8efb; }
+        .sidebar-menu li a.active { background: #f0f0ff; color: #6e8efb; border-left-color: #6e8efb; font-weight: 700; }
 
         .wrapper { display: flex; flex: 1; overflow: hidden; background: #d4d8dd; }
 
@@ -169,26 +154,11 @@
             border-radius: 12px;
             border: 1px solid #e2e8f0;
         }
-        .menu-item img {
-            width: 100%;
-            aspect-ratio: 1;
-            object-fit: contain;
-            border-radius: 8px;
-            margin-bottom: 8px;
-        }
+        .menu-item img { width: 100%; aspect-ratio: 1; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
         .no-img {
-            width: 100%;
-            aspect-ratio: 1;
-            background: #e2e8f0;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #94a3b8;
-            font-size: 11px;
-            text-align: center;
-            margin-bottom: 8px;
-            padding: 8px;
+            width: 100%; aspect-ratio: 1; background: #e2e8f0; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            color: #94a3b8; font-size: 11px; text-align: center; margin-bottom: 8px; padding: 8px;
         }
         .menu-info { text-align: center; width: 100%; }
         .menu-info .name { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 6px; }
@@ -196,14 +166,9 @@
         .stock-control { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
         .stock-btn {
             width: 24px; height: 24px;
-            border: 1px solid #e2e8f0;
-            border-radius: 6px;
-            background: white;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            color: #6e8efb;
-            display: flex; align-items: center; justify-content: center;
+            border: 1px solid #e2e8f0; border-radius: 6px;
+            background: white; cursor: pointer; font-size: 14px; font-weight: 700;
+            color: #6e8efb; display: flex; align-items: center; justify-content: center;
         }
         .stock-btn:hover { background: #f1f5f9; }
         .stock-count { font-size: 16px; font-weight: 700; color: #1e293b; min-width: 20px; text-align: center; }
@@ -213,80 +178,71 @@
         .manage-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
         .manage-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .manage-input {
-            flex: 1;
-            padding: 9px 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 13px;
-            font-family: 'Pretendard', sans-serif;
+            flex: 1; padding: 9px 12px; border: 1px solid #e2e8f0;
+            border-radius: 8px; font-size: 13px; font-family: 'Pretendard', sans-serif;
         }
         .manage-input:focus { outline: none; border-color: #6e8efb; }
         .add-btn {
-            padding: 9px 14px;
-            background: white;
-            color: #6e8efb;
-            border: 1.5px solid #6e8efb;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
+            padding: 9px 14px; background: white; color: #6e8efb;
+            border: 1.5px solid #6e8efb; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; white-space: nowrap;
         }
         .add-btn:hover { background: #f0f0ff; }
         .remove-row { display: flex; gap: 8px; margin-top: 10px; }
         .manage-select {
-            flex: 1;
-            padding: 9px 12px;
-            border: 1.5px solid #6e8efb;
-            border-radius: 8px;
-            font-size: 13px;
-            font-family: 'Pretendard', sans-serif;
-            background: white;
-            color: #1e293b;
+            flex: 1; padding: 9px 12px; border: 1.5px solid #6e8efb;
+            border-radius: 8px; font-size: 13px; font-family: 'Pretendard', sans-serif;
+            background: white; color: #1e293b;
         }
         .remove-btn {
-            padding: 9px 14px;
-            background: white;
-            color: #ef4444;
-            border: 1.5px solid #6e8efb;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            white-space: nowrap;
+            padding: 9px 14px; background: white; color: #ef4444;
+            border: 1.5px solid #6e8efb; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; white-space: nowrap;
         }
         .remove-btn:hover { background: #fef2f2; }
 
         .map-panel {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            border: 1px solid #b0b8c4;
-            flex: 1;
-            overflow: hidden;
+            background: white; border-radius: 16px; padding: 20px;
+            border: 1px solid #b0b8c4; flex: 1; overflow: hidden;
         }
         #mapCanvas {
-            width: 100%;
-            height: calc(100% - 36px);
-            border-radius: 10px;
-            background: #111;
-            display: block;
+            width: 100%; height: calc(100% - 36px);
+            border-radius: 10px; background: #111; display: block;
         }
 
         .emergency-btn {
-            width: 100%;
-            padding: 16px;
-            background: #fef2f2;
-            border: 2px solid #f8a0a0;
-            border-radius: 12px;
-            color: #ef4444;
-            font-size: 17px;
-            font-weight: 700;
-            cursor: pointer;
-            flex-shrink: 0;
+            width: 100%; padding: 16px; background: #fef2f2;
+            border: 2px solid #f8a0a0; border-radius: 12px;
+            color: #ef4444; font-size: 17px; font-weight: 700;
+            cursor: pointer; flex-shrink: 0;
         }
         .emergency-btn:hover { background: #fee2e2; }
         .emergency-btn.active { background: #ef4444; color: white; border-color: #ef4444; }
+
+        /* 문의 팝업 패널 */
+        .inquiry-panel {
+            position: fixed;
+            top: 70px; right: 20px;
+            width: 360px;
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            z-index: 300;
+            display: none;
+            overflow: hidden;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .inquiry-panel.show { display: block; }
+        .inquiry-panel-header { padding: 16px 20px; border-bottom: 1px solid #e2e8f0; font-size: 15px; font-weight: 700; color: #1e293b; position: sticky; top: 0; background: white; }
+        .inquiry-panel-item { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+        .inquiry-panel-item:last-child { border-bottom: none; }
+        .inquiry-panel-title { font-size: 14px; font-weight: 600; color: #1e293b; margin-bottom: 4px; }
+        .inquiry-panel-content { font-size: 13px; color: #64748b; margin-top: 6px; line-height: 1.5; }
+        .inquiry-panel-meta { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+        .inquiry-empty { padding: 30px; text-align: center; color: #94a3b8; font-size: 14px; }
+        .secret-badge { background: #fef2f2; color: #ef4444; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
     </style>
 </head>
 <body>
@@ -295,7 +251,6 @@
 
 <!-- 사이드바 -->
 <div class="sidebar" id="sidebar">
-    <!-- 사이드바 내 로고 -->
     <div class="sidebar-logo">
         <img src="/images/vending-logo.png" alt="PIMTO 로고">
         <span>관리자</span>
@@ -305,7 +260,7 @@
         <li><a href="#">📊 매출통계</a></li>
         <li><a href="#">👥 회원관리</a></li>
         <li><a href="#"><img src="/images/pimto.png" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;"> 로봇관리</a></li>
-        <li><a href="#">💬 문의기능</a></li>
+        <li><a href="/inquiry/list">💬 문의기능</a></li>
     </ul>
 </div>
 
@@ -320,9 +275,38 @@
         <img src="/images/vending-logo.png" alt="PIMTO 로고">
         <span class="admin-label">관리자</span>
     </div>
-    <form th:action="@{/logout}" method="post">
-        <button class="logout-btn" type="submit">로그아웃</button>
-    </form>
+    <div style="display:flex; align-items:center; gap:16px;">
+        <!-- 문의 알림 아이콘 -->
+        <div style="position:relative; cursor:pointer;" onclick="toggleInquiryPanel()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span th:if="${inquiryCount > 0}"
+                  th:text="${inquiryCount}"
+                  style="position:absolute; top:-6px; right:-6px; background:#ef4444; color:white; border-radius:50%; width:18px; height:18px; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;">
+            </span>
+        </div>
+        <form th:action="@{/logout}" method="post">
+            <button class="logout-btn" type="submit">로그아웃</button>
+        </form>
+    </div>
+</div>
+
+<!-- 문의 팝업 패널 -->
+<div class="inquiry-panel" id="inquiryPanel">
+    <div class="inquiry-panel-header">💬 문의 내역</div>
+    <div th:if="${#lists.isEmpty(inquiries)}" class="inquiry-empty">문의 내역이 없어요.</div>
+    <div th:each="inquiry : ${inquiries}" class="inquiry-panel-item">
+        <div class="inquiry-panel-title">
+            <span th:if="${inquiry.secret}" class="secret-badge">🔒 비밀글</span>
+            <span th:text="${inquiry.title}"></span>
+        </div>
+        <div class="inquiry-panel-content" th:text="${inquiry.content}"></div>
+        <div class="inquiry-panel-meta">
+            <span th:text="${inquiry.username}"></span> ·
+            <span th:text="${#temporals.format(inquiry.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+        </div>
+    </div>
 </div>
 
 <div class="wrapper">
@@ -401,6 +385,19 @@
     sidebar.addEventListener('mouseleave', () => {
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
+    });
+
+    // 문의 패널 토글
+    function toggleInquiryPanel() {
+        document.getElementById('inquiryPanel').classList.toggle('show');
+    }
+
+    // 문의 패널 외부 클릭시 닫기
+    document.addEventListener('click', (e) => {
+        const panel = document.getElementById('inquiryPanel');
+        if (!panel.contains(e.target) && !e.target.closest('[onclick="toggleInquiryPanel()"]')) {
+            panel.classList.remove('show');
+        }
     });
 
     // 재고 관리
