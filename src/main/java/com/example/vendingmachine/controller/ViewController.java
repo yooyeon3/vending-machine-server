@@ -1,6 +1,7 @@
 package com.example.vendingmachine.controller;
 
 import com.example.vendingmachine.domain.Member;
+import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.service.InquiryService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class ViewController {
 
     private final InquiryService inquiryService;
+    private final ProductRepository productRepository;
 
     @GetMapping("/")
     public String home(HttpSession session, Model model) {
@@ -20,6 +22,7 @@ public class ViewController {
         if (loginMember != null) {
             model.addAttribute("unreadCount", inquiryService.countUnreadReplies(loginMember.getUsername()));
         }
+        model.addAttribute("products", productRepository.findAll());
         return "index";
     }
 

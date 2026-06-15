@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>매출 통계 관리자 페이지</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #6e8efb;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📊 자판기 매출 통계 및 내역</h2>
+
+    <table>
+        <thead>
+        <tr>
+            <th>구매 시간</th>
+            <th>구매자 이름(실명)</th>
+            <th>전화번호</th>
+            <th>구매 상품</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="history : ${histories}">
+            <td th:text="${#temporals.format(history.purchaseTime, 'yyyy-MM-dd HH:mm:ss')}">시간</td>
+            <td th:text="${history.buyerName}">이름</td>
+            <td th:text="${history.phoneNumber}">전화번호</td>
+            <td th:text="${history.productName}">상품명</td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(histories)}">
+            <td colspan="4" style="color: #94a3b8;">아직 구매 내역이 존재하지 않습니다.</td>
+        </tr>
+        </tbody>
+    </table>
+
+    <canvas id="salesChart" width="400" height="150"></canvas>
+</div>
+
+<script th:inline="javascript">
+    // 서버에서 계산해서 넘겨준 시간대별 판매량 배열 데이터를 가져옴
+    const hourlySales = [[${hourlySales}]];
+
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'line', // 선형 그래프
+        data: {
+            labels: Array.from({length: 24}, (_, i) => i + '시'), // x축: 0시부터 23시까지
+            datasets: [{
+                label: '시간대별 구매 건수',
+                data: hourlySales, // y축: 시간대별 판매량 데이터
+                borderColor: '#6e8efb',
+                backgroundColor: 'rgba(110, 142, 251, 0.2)',
+                borderWidth: 2,
+                pointBackgroundColor: '#6e8efb',
+                tension: 0.3 // 선을 살짝 부드럽게
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1 } // y축의 단위를 1씩 증가하도록 설정
+                }
+            }
+        }
+    });
+</script>
+
+</body>
+</html>
