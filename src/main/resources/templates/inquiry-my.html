@@ -79,3 +79,27 @@
     </div>
     <div class="card">
         <div class="card-title">📋 내 문의 목록</div>
+        <div th:if="${#lists.isEmpty(inquiries)}" class="empty">아직 문의 내역이 없어요.</div>
+        <a th:each="inquiry : ${inquiries}"
+           th:href="@{/inquiry/detail/{id}(id=${inquiry.id})}"
+           class="inquiry-item">
+            <div class="inquiry-title">
+                <span th:if="${inquiry.secret}" class="secret-badge">🔒 비밀글</span>
+                <span th:text="${inquiry.title}"></span>
+            </div>
+            <div class="inquiry-meta">
+                <span th:text="${#temporals.format(inquiry.createdAt, 'yyyy.MM.dd HH:mm')}"></span>
+            </div>
+        </a>
+    </div>
+</div>
+
+<script>
+    const hamburger = document.getElementById('hamburger');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('overlay');
+    hamburger.addEventListener('mouseenter', () => { sidebar.classList.add('open'); overlay.classList.add('show'); });
+    sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
+</script>
+</body>
+</html>
