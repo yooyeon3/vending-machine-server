@@ -193,7 +193,7 @@
         .menu-info { text-align: center; width: 100%; }
         .menu-info .name { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 6px; }
 
-        /* 💡 DB 연동 폼 컨트롤 버튼 스타일 (비활성화 상태 포함) */
+        /* DB 연동 폼 컨트롤 버튼 스타일 */
         .stock-control { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px; }
         .stock-btn {
             width: 24px; height: 24px;
@@ -225,7 +225,10 @@
 
         .manage-section { border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 4px; }
         .manage-title { font-size: 13px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
-        .manage-input-row { display: flex; gap: 8px; margin-bottom: 10px; }
+
+        /* 폼 스타일 */
+        .add-product-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 8px; }
         .manage-input {
             flex: 1;
             padding: 9px 12px;
@@ -236,17 +239,19 @@
         }
         .manage-input:focus { outline: none; border-color: #6e8efb; }
         .add-btn {
-            padding: 9px 14px;
-            background: white;
-            color: #6e8efb;
-            border: 1.5px solid #6e8efb;
+            width: 100%;
+            padding: 10px 14px;
+            background: #6e8efb;
+            color: white;
+            border: none;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
-            white-space: nowrap;
+            transition: background 0.2s;
         }
-        .add-btn:hover { background: #f0f0ff; }
+        .add-btn:hover { background: #5a7be0; }
+
         .remove-row { display: flex; gap: 8px; margin-top: 10px; }
         .manage-select {
             flex: 1;
@@ -343,14 +348,10 @@
             <div class="panel-title">🥤 음료 재고 (DB 연동)</div>
 
             <div class="menu-grid" id="menuGrid">
+                <div class="menu-item" th:each="product : ${products}" th:id="'item-' + ${product.id}">
 
-                <div class="menu-item"
-                     th:each="product : ${products}"
-                     th:if="${product.name == '펩시 콜라' or product.name == '레쓰비 마일드 커피'}"
-                     th:id="'item-' + ${product.id}">
-
-                    <img th:if="${product.name == '펩시 콜라'}" src="/images/pepsi.png" alt="펩시 콜라">
-                    <img th:if="${product.name == '레쓰비 마일드 커피'}" src="/images/letsbe.jpg" alt="레쓰비 마일드 커피">
+                    <img th:if="${product.imageUrl != null and product.imageUrl != ''}" th:src="${product.imageUrl}" alt="상품 이미지">
+                    <div class="no-img" th:if="${product.imageUrl == null or product.imageUrl == ''}">No Image</div>
 
                     <div class="menu-info">
                         <div class="name" th:text="${product.name}">상품명</div>
@@ -367,7 +368,7 @@
                             <form th:action="@{/admin/stock/update}" method="post" style="margin: 0; display: flex;">
                                 <input type="hidden" name="productId" th:value="${product.id}">
                                 <input type="hidden" name="amount" value="1">
-                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 2}">+</button>
+                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 20}">+</button>
                             </form>
 
                         </div>
@@ -378,16 +379,22 @@
             </div>
 
             <div class="manage-section">
-                <div class="manage-title">➕ 음료 추가</div>
-                <div class="manage-input-row">
-                    <input class="manage-input" id="newDrinkName" type="text" placeholder="음료 이름 입력">
-                    <button class="add-btn" onclick="addDrink()">추가</button>
-                </div>
-                <div class="manage-title" style="margin-top: 14px;">➖ 음료 제거</div>
+                <div class="manage-title">➕ 음료 추가 (DB 연동)</div>
+
+                <form action="/admin/product/add" method="POST" class="add-product-form">
+                    <input class="manage-input" type="text" name="name" placeholder="상품명 (예: 콜라)" required>
+                    <div class="form-row">
+                        <input class="manage-input" type="number" name="price" placeholder="가격 (예: 1500)" required>
+                        <input class="manage-input" type="number" name="stock" placeholder="초기 재고 (예: 10)" required>
+                    </div>
+                    <input class="manage-input" type="text" name="imageUrl" placeholder="사진 경로 (예: /images/letsbe.jpg)">
+                    <button class="add-btn" type="submit">상품 추가하기</button>
+                </form>
+
+                <div class="manage-title" style="margin-top: 14px;">➖ 음료 제거 (테스트용)</div>
                 <div class="remove-row">
                     <select class="manage-select" id="removeDrinkSelect">
-                        <option value="레쓰비">레쓰비</option>
-                        <option value="펩시콜라">펩시콜라</option>
+                        <option th:each="product : ${products}" th:value="${product.name}" th:text="${product.name}"></option>
                     </select>
                     <button class="remove-btn" onclick="removeDrink()">제거</button>
                 </div>
@@ -423,54 +430,12 @@
         overlay.classList.remove('show');
     });
 
-    // 화면 테스트용 가상 음료 추가/제거
-    const stocks = { '레쓰비': 0, '펩시콜라': 0 };
-
-    function changeStock(name, delta) {
-        const current = stocks[name] || 0;
-        const newVal = current + delta;
-        if (newVal < 0 || newVal > 2) return;
-        stocks[name] = newVal;
-        document.getElementById('count-' + name).textContent = newVal;
-    }
-
-    function addDrink() {
-        const name = document.getElementById('newDrinkName').value.trim();
-        if (!name) return alert('음료 이름을 입력하세요.');
-        if (stocks[name] !== undefined) return alert('이미 존재하는 음료입니다.');
-        stocks[name] = 0;
-        const grid = document.getElementById('menuGrid');
-        const div = document.createElement('div');
-        div.className = 'menu-item';
-        div.id = 'item-' + name;
-        div.innerHTML = `
-            <div class="no-img">이미지 준비 중..</div>
-            <div class="menu-info">
-                <div class="name">${name}</div>
-                <div class="stock-control">
-                    <button class="stock-btn btn-minus" onclick="changeStock('${name}', -1)">−</button>
-                    <span class="stock-count" id="count-${name}">0</span>
-                    <button class="stock-btn btn-plus" onclick="changeStock('${name}', 1)">+</button>
-                </div>
-                <div class="stock-label">개 남음</div>
-            </div>`;
-        grid.appendChild(div);
-        const select = document.getElementById('removeDrinkSelect');
-        const option = document.createElement('option');
-        option.value = name;
-        option.textContent = name;
-        select.appendChild(option);
-        document.getElementById('newDrinkName').value = '';
-    }
-
+    // 화면 테스트용 가상 음료 제거 (UI 상에서만 삭제)
     function removeDrink() {
         const select = document.getElementById('removeDrinkSelect');
         const name = select.value;
         if (!name) return;
-        delete stocks[name];
-        const item = document.getElementById('item-' + name);
-        if (item) item.remove();
-        select.remove(select.selectedIndex);
+        alert('이 버튼은 현재 UI 테스트용입니다. 실제 삭제는 DB 연결이 필요합니다.');
     }
 
     // 지도 캔버스 및 긴급 호출 로직
