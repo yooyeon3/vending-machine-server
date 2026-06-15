@@ -16,7 +16,7 @@ import java.util.List;
 public class AdminController {
 
     private final PurchaseHistoryRepository purchaseHistoryRepository;
-    private final ProductRepository productRepository; // 💡 상품 DB 연동을 위해 추가됨
+    private final ProductRepository productRepository;
 
     // 두 개의 Repository를 모두 생성자로 주입받습니다.
     public AdminController(PurchaseHistoryRepository purchaseHistoryRepository,
@@ -34,32 +34,56 @@ public class AdminController {
         return "admin";
     }
 
-    // 💡 2. 재고 + / - 업데이트 기능 (새로 추가된 핵심 로직)
-    @PostMapping("/admin/stock/update")
-    public String updateStock(@RequestParam("productId") Long productId,
-                              @RequestParam("amount") int amount) { // amount는 1 또는 -1
+    // 💡 2. 상품 추가 (기존에 만드신 이미지 포함 로직 유지)
+    @PostMapping("/admin/product/add")
+    public String addProduct(
+            @RequestParam String name,
+            @RequestParam int price,
+            @RequestParam int stock,
+            @RequestParam(required = false, defaultValue = "/images/pepsi.png") String imageUrl) {
 
-        // 클릭한 상품을 DB에서 찾습니다.
-        Product product = productRepository.findById(productId).orElse(null);
-
-        if (product != null) {
-            // 현재 재고에 amount(+1 또는 -1)를 더합니다.
-            int newStock = product.getStock() + amount;
-
-            // 재고가 마이너스가 되지 않도록 방어
-            if (newStock < 0) {
-                newStock = 0;
-            }
-
-            product.setStock(newStock); // 새 재고 세팅
-            productRepository.save(product); // DB에 덮어쓰기(저장)!
-        }
-
-        // 저장이 완료되면 다시 관리자 메인화면으로 새로고침
+        // 이미지를 안 넣으면 기본 펩시 이미지로 세팅되게 방어
+        Product product = Product.builder()
+                .name(name)
+                .price(price)
+                .stock(stock)
+                .imageUrl(imageUrl) // 이미지 경로 저장
+                .build();
+        productRepository.save(product);
         return "redirect:/admin";
     }
 
-    // 3. 관리자 매출 통계 페이지 (기존 코드 유지)
+    // 💡 3. 재고 수정 (+ / - 버튼 클릭 시 동작, 최대 2개 제한 반영)
+    @PostMapping("/admin/stock/update")
+    public String updateStock(@RequestParam("productId") Long productId, @RequestParam("amount") int amount) {
+        Product product = productRepository.findById(productId).orElse(null);
+
+        if (product != null) {
+            int newStock = product.getStock() + amount;
+
+            // 💡 최소 0개, 최대 2개까지만 가능하도록 강력하게 제한
+            if (newStock < 0) newStock = 0;
+            if (newStock > 2) newStock = 2;
+
+            product.setStock(newStock);
+            productRepository.save(product);
+        }
+        return "redirect:/admin";
+    }
+
+    // (참고용) 기존 직접 입력 방식 수정 로직이 필요하다면 아래 주석을 풀고 사용하세요.
+    /*
+    @PostMapping("/admin/product/update")
+    public String updateStockDirect(@RequestParam Long productId, @RequestParam int newStock) {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("상품을 찾을 수 없습니다."));
+        product.setStock(newStock);
+        productRepository.save(product);
+        return "redirect:/admin";
+    }
+    */
+
+    // 4. 관리자 매출 통계 페이지
     @GetMapping("/admin/statistics")
     public String salesStatistics(Model model) {
         List<PurchaseHistory> histories = purchaseHistoryRepository.findAll();
