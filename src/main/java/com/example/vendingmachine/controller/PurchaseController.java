@@ -29,26 +29,29 @@ public class PurchaseController {
     @PostMapping("/purchase")
     public String buyProduct(@RequestParam("productId") Long productId, HttpSession session) {
 
-        // 💡 index.html의 로그인 시스템에 맞춰 세션에서 회원 정보를 꺼냅니다.
+        // 세션에서 로그인된 회원 정보 가져오기
         Member loginMember = (Member) session.getAttribute("loginMember");
 
-        // 로그인이 안 되어 있다면 로그인 페이지로 리다이렉트
         if (loginMember == null) {
-            return "redirect:/login";
+            return "redirect:/login"; // 로그인이 안 되어있으면 로그인창으로
         }
 
-        // 세션에 있는 정보로 DB에서 최신 회원 정보와 상품 정보를 조회합니다.
+        // 최신 회원 정보와 클릭한 상품 정보 DB 조회
         Member member = memberRepository.findById(loginMember.getId()).orElse(null);
         Product product = productRepository.findById(productId).orElse(null);
 
         if (member != null && product != null) {
-            // 매출 내역 객체 생성 및 저장
             PurchaseHistory history = new PurchaseHistory();
-            history.setBuyerName(member.getName()); // 실제 이름 저장
-            history.setPhoneNumber(member.getPhoneNumber()); // 전화번호 저장
-            history.setProductName(product.getName()); // 상품명 저장
 
-            purchaseHistoryRepository.save(history); // 💡 이제 성공적으로 DB에 저장됩니다.
+            // 💡 중요: member.getUsername()(아이디) 대신 member.getName()(실제이름)을 저장합니다!
+            history.setBuyerName(member.getName());
+
+            history.setPhoneNumber(member.getPhoneNumber());
+
+            // 💡 DB에 등록된 실제 상품명(펩시 콜라 또는 레쓰비 마일드 커피)이 그대로 저장됩니다.
+            history.setProductName(product.getName());
+
+            purchaseHistoryRepository.save(history);
         }
 
         return "redirect:/";
