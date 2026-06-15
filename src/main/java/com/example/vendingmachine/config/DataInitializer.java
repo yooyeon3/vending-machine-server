@@ -10,43 +10,35 @@ public class DataInitializer implements CommandLineRunner {
 
     private final ProductRepository productRepository;
 
-    // 방금 만든 ProductRepository를 주입받습니다.
+    // ProductRepository를 주입받습니다.
     public DataInitializer(ProductRepository productRepository) {
         this.productRepository = productRepository;
     }
 
     @Override
     public void run(String... args) throws Exception {
-        // 기존에 데이터가 없을 때만 초기 데이터를 넣도록 방어 코드를 작성합니다.
+
+        // 데이터베이스에 등록된 상품이 하나도 없을 때만 초기화를 진행합니다.
+        // 순서대로 저장하면 자동으로 ID가 1, 2로 부여됩니다.
         if (productRepository.count() == 0) {
 
-            // 1. 콜라 추가
-            Product cola = Product.builder()
-                    .name("콜라")
+            // 1. 펩시 콜라 (초기 재고 2개로 수정)
+            Product pepsi = Product.builder()
+                    .name("펩시 콜라")
                     .price(1500)
-                    .stock(10)
+                    .stock(2) // 💡 재고 2개 세팅
                     .build();
+            productRepository.save(pepsi);
+            System.out.println("====== [1번 상품] 펩시 콜라 세팅 완료 ======");
 
-            // 2. 사이다 추가
-            Product cider = Product.builder()
-                    .name("사이다")
+            // 2. 레쓰비 마일드 커피 (초기 재고 2개로 수정)
+            Product letsbe = Product.builder()
+                    .name("레쓰비 마일드 커피")
                     .price(1200)
-                    .stock(8)
+                    .stock(2) // 💡 재고 2개 세팅
                     .build();
-
-            // 3. 생수 추가
-            Product water = Product.builder()
-                    .name("생수")
-                    .price(800)
-                    .stock(15)
-                    .build();
-
-            // 데이터베이스에 저장하기
-            productRepository.save(cola);
-            productRepository.save(cider);
-            productRepository.save(water);
-
-            System.out.println("====== 자판기 초기 상품 데이터 세팅 완료! ======");
+            productRepository.save(letsbe);
+            System.out.println("====== [2번 상품] 레쓰비 마일드 커피 세팅 완료 ======");
         }
     }
 }
