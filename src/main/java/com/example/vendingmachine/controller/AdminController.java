@@ -13,27 +13,31 @@ public class AdminController {
 
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
-    // 생성자 주입 방식을 사용하여 Repository를 가져옵니다. (스프링 부트 추천 방식)
     public AdminController(PurchaseHistoryRepository purchaseHistoryRepository) {
         this.purchaseHistoryRepository = purchaseHistoryRepository;
     }
 
-    // 1. 관리자 메인 페이지 (http://localhost:8080/admin)
-    // ADMIN 권한이 있어야만 접근 가능 (SecurityConfig에서 설정됨)
     @GetMapping("/admin")
     public String adminPage() {
-        return "admin"; // src/main/resources/templates/admin.html 파일을 보여줍니다.
+        return "admin";
     }
 
-    // 2. 관리자 매출 통계 페이지 (http://localhost:8080/admin/statistics)
     @GetMapping("/admin/statistics")
     public String salesStatistics(Model model) {
-        // DB에서 모든 구매 내역을 가져옵니다.
         List<PurchaseHistory> histories = purchaseHistoryRepository.findAll();
-
-        // 타임리프 화면(HTML)으로 데이터를 넘겨줍니다.
         model.addAttribute("histories", histories);
 
-        return "admin_statistics"; // src/main/resources/templates/admin_statistics.html 파일을 보여줍니다.
+        // 💡 자바스크립트 에러 방지를 위해 서버에서 0시~23시 통계를 미리 계산합니다.
+        int[] hourlySales = new int[24];
+        for (PurchaseHistory history : histories) {
+            if (history.getPurchaseTime() != null) {
+                int hour = history.getPurchaseTime().getHour(); // 구매 시간(Hour) 추출
+                hourlySales[hour]++;
+            }
+        }
+        // 계산 완료된 배열을 모델에 담아 전송
+        model.addAttribute("hourlySales", hourlySales);
+
+        return "admin_statistics";
     }
 }

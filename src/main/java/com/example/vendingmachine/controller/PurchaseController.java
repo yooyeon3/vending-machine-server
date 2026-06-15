@@ -6,11 +6,10 @@ import com.example.vendingmachine.domain.PurchaseHistory;
 import com.example.vendingmachine.repository.MemberRepository;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.security.Principal;
 
 @Controller
 public class PurchaseController {
@@ -19,7 +18,6 @@ public class PurchaseController {
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
-    // 생성자를 통해 Repository(DB 접근 객체)들을 연결합니다.
     public PurchaseController(MemberRepository memberRepository,
                               ProductRepository productRepository,
                               PurchaseHistoryRepository purchaseHistoryRepository) {
@@ -28,33 +26,31 @@ public class PurchaseController {
         this.purchaseHistoryRepository = purchaseHistoryRepository;
     }
 
-    // 사용자 화면에서 "구매하기" 버튼을 눌렀을 때 실행되는 주소 (/purchase)
     @PostMapping("/purchase")
-    public String buyProduct(@RequestParam("productId") Long productId, Principal principal) {
+    public String buyProduct(@RequestParam("productId") Long productId, HttpSession session) {
 
-        // 1. 누가 샀는지 찾기 (현재 로그인한 사용자의 아이디를 가져옵니다)
-        String username = principal.getName();
-        // DB에서 해당 사용자 정보를 꺼내옵니다 (memberRepository에 findByUsername이 구현되어 있어야 합니다)
-        Member member = memberRepository.findByUsername(username).orElse(null);
+        // 💡 index.html의 로그인 시스템에 맞춰 세션에서 회원 정보를 꺼냅니다.
+        Member loginMember = (Member) session.getAttribute("loginMember");
 
-        // 2. 뭘 샀는지 찾기 (클릭한 상품의 번호로 상품 정보를 꺼내옵니다)
-        Product product = productRepository.findById(productId).orElse(null);
-
-        // 사용자와 상품이 모두 정상적으로 존재할 때만 구매 기록을 저장합니다.
-        if (member != null && product != null) {
-
-            // 💡 3. 질문자님이 작성해주신 '매출 통계 저장 로직'이 여기에 들어갑니다! 💡
-            PurchaseHistory history = new PurchaseHistory();
-            history.setBuyerName(member.getUsername());
-            history.setPhoneNumber(member.getPhoneNumber()); // Member 테이블에 전화번호가 있어야 함
-            history.setProductName(product.getName());
-
-            purchaseHistoryRepository.save(history); // DB에 구매 이력 저장!
-
-            // (참고) 나중에 여기에 사용자의 잔액(포인트)을 깎거나 상품 재고를 줄이는 코드를 추가할 수 있습니다.
+        // 로그인이 안 되어 있다면 로그인 페이지로 리다이렉트
+        if (loginMember == null) {
+            return "redirect:/login";
         }
 
-        // 구매가 완료되면 다시 메인 화면(자판기 화면)으로 돌아갑니다.
+        // 세션에 있는 정보로 DB에서 최신 회원 정보와 상품 정보를 조회합니다.
+        Member member = memberRepository.findById(loginMember.getId()).orElse(null);
+        Product product = productRepository.findById(productId).orElse(null);
+
+        if (member != null && product != null) {
+            // 매출 내역 객체 생성 및 저장
+            PurchaseHistory history = new PurchaseHistory();
+            history.setBuyerName(member.getName()); // 실제 이름 저장
+            history.setPhoneNumber(member.getPhoneNumber()); // 전화번호 저장
+            history.setProductName(product.getName()); // 상품명 저장
+
+            purchaseHistoryRepository.save(history); // 💡 이제 성공적으로 DB에 저장됩니다.
+        }
+
         return "redirect:/";
     }
 }
