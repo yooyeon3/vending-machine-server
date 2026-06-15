@@ -49,8 +49,13 @@ public class InquiryController {
         String username = auth.getName();
         model.addAttribute("inquiries", inquiryService.findAll());
         model.addAttribute("currentUser", username);
-        // 사용자 알림 개수
         model.addAttribute("unreadCount", inquiryService.countUnreadReplies(username));
+        // 빨간 점: 관리자면 미응답/미읽음 문의, 사용자면 안읽은 관리자 답글 있는 문의
+        if (username.equals("admin")) {
+            model.addAttribute("unreadInquiryIds", inquiryService.getUnreadInquiryIdsForAdmin());
+        } else {
+            model.addAttribute("unreadInquiryIds", inquiryService.getUnreadInquiryIdsForUser(username));
+        }
         return "inquiry-list";
     }
 
@@ -62,6 +67,7 @@ public class InquiryController {
         model.addAttribute("inquiries", inquiryService.findByUsername(username));
         model.addAttribute("currentUser", username);
         model.addAttribute("unreadCount", inquiryService.countUnreadReplies(username));
+        model.addAttribute("unreadInquiryIds", inquiryService.getUnreadInquiryIdsForUser(username));
         return "inquiry-my";
     }
 

@@ -14,4 +14,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     // 관리자가 아직 답글 안 단 문의 개수
     long countByRepliesEmpty();
+
+    // 답글 없는 문의 목록 (관리자 빨간 점용)
+    List<Inquiry> findByRepliesEmpty();
 }

@@ -7,7 +7,10 @@ import com.example.vendingmachine.repository.InquiryReplyRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -60,6 +63,22 @@ public class InquiryService {
     // 관리자용 - 사용자가 남긴 안읽은 답글 개수
     public long countUnreadUserReplies() {
         return inquiryReplyRepository.countByAdminReplyFalseAndReadFalse();
+    }
+
+    // 사용자용 - 안읽은 관리자 답글이 있는 문의 ID 집합 (빨간 점 표시용)
+    public Set<Long> getUnreadInquiryIdsForUser(String username) {
+        return inquiryReplyRepository.findByInquiry_UsernameAndAdminReplyTrueAndReadFalse(username)
+                .stream()
+                .map(r -> r.getInquiry().getId())
+                .collect(Collectors.toSet());
+    }
+
+    // 관리자용 - 미응답 or 사용자 답글 미읽음 문의 ID 집합 (빨간 점 표시용)
+    public Set<Long> getUnreadInquiryIdsForAdmin() {
+        Set<Long> ids = new HashSet<>();
+        inquiryRepository.findByRepliesEmpty().forEach(i -> ids.add(i.getId()));
+        inquiryReplyRepository.findByAdminReplyFalseAndReadFalse().forEach(r -> ids.add(r.getInquiry().getId()));
+        return ids;
     }
 
     // 답글 읽음 처리 (양방향: 관리자 읽으면 사용자 답글 읽음, 사용자 읽으면 관리자 답글 읽음)
