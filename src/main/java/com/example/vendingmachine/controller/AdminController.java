@@ -1,15 +1,23 @@
 package com.example.vendingmachine.controller;
 
+import com.example.vendingmachine.service.InquiryService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 @Controller
+@RequiredArgsConstructor
 public class AdminController {
 
-    // 관리자 페이지 (http://localhost:8080/admin 으로 접속 시 실행)
-    // ADMIN 권한이 있어야만 접근 가능 (SecurityConfig에서 설정)
+    private final InquiryService inquiryService;
+
     @GetMapping("/admin")
-    public String adminPage() {
-        return "admin"; // templates/admin.html 파일을 찾아 화면에 띄워줍니다.
+    public String adminPage(Model model) {
+        // 답글 안 달린 문의 개수 (빨간 숫자)
+        model.addAttribute("inquiryCount", inquiryService.countUnanswered());
+        // 전체 문의 목록
+        model.addAttribute("inquiries", inquiryService.findAll());
+        return "admin";
     }
 }
