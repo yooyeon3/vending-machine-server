@@ -1,0 +1,26 @@
+package com.example.vendingmachine.domain;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+import java.time.LocalDateTime;
+
+@Entity
+@Getter @Setter
+public class PurchaseHistory {
+
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String productName; // 구매한 상품명
+    private String buyerName;   // 구매자 이름
+    private String phoneNumber; // 구매자 전화번호
+
+    private LocalDateTime purchaseTime; // 구매한 시간
+
+    // DB에 저장되기 직전에 현재 시간을 자동으로 기록해줍니다.
+    @PrePersist
+    public void prePersist() {
+        this.purchaseTime = LocalDateTime.now();
+    }
+}
