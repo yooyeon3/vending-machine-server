@@ -22,19 +22,14 @@ public class InquiryService {
         inquiryRepository.save(inquiry);
     }
 
-    // 전체 문의 조회 (관리자 + 전체 목록용)
+    // 전체 문의 조회
     public List<Inquiry> findAll() {
         return inquiryRepository.findAllByOrderByCreatedAtDesc();
     }
 
-    // 내 문의 조회 (사용자용)
+    // 내 문의 조회
     public List<Inquiry> findByUsername(String username) {
         return inquiryRepository.findByUsernameOrderByCreatedAtDesc(username);
-    }
-
-    // 문의 개수 (관리자 알림용)
-    public long count() {
-        return inquiryRepository.count();
     }
 
     // 문의 단건 조회
@@ -50,5 +45,25 @@ public class InquiryService {
     // 특정 문의 답글 조회
     public List<InquiryReply> findReplies(Inquiry inquiry) {
         return inquiryReplyRepository.findByInquiryOrderByCreatedAtAsc(inquiry);
+    }
+
+    // 관리자용 - 답글 안 달린 문의 개수
+    public long countUnanswered() {
+        return inquiryRepository.countByRepliesEmpty();
+    }
+
+    // 사용자용 - 안읽은 관리자 답글 개수
+    public long countUnreadReplies(String username) {
+        return inquiryReplyRepository.countByInquiry_UsernameAndAdminReplyTrueAndReadFalse(username);
+    }
+
+    // 답글 읽음 처리
+    public void markRepliesAsRead(Inquiry inquiry, String username) {
+        List<InquiryReply> replies = inquiryReplyRepository.findByInquiryOrderByCreatedAtAsc(inquiry);
+        for (InquiryReply reply : replies) {
+            if (reply.isAdminReply() && !reply.isRead()) {
+                reply.setRead(true);
+            }
+        }
     }
 }
