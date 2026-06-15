@@ -37,4 +37,9 @@ public class Product {
             throw new IllegalArgumentException("재고가 부족합니다.");
         }
     }
+
+    // 관리자용: 재고 수량을 수정하는 메서드
+    public void setStock(int stock) {
+        this.stock = stock;
+    }
 }
