@@ -11,4 +11,7 @@ public interface InquiryRepository extends JpaRepository<Inquiry, Long> {
 
     // 특정 사용자 문의 조회
     List<Inquiry> findByUsernameOrderByCreatedAtDesc(String username);
+
+    // 관리자가 아직 답글 안 단 문의 개수
+    long countByRepliesEmpty();
 }
