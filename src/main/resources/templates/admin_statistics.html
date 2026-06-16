@@ -227,7 +227,7 @@
     const rawHistories = [[${histories}]];
     const hourlySales = [[${hourlySales}]];
 
-    // 상품별 가격 정보 (계산을 위해 필요)
+    // 상품별 가격 정보 (구매자 기준 상품명으로 통일)
     const productPrices = {
         '펩시 콜라': 1500,
         '레쓰비 마일드 커피': 1200
@@ -241,13 +241,19 @@
         rawHistories.forEach(item => {
             if (!item.purchaseTime) return;
 
+            // 💡 [추가] 데이터 보정: 옛날 이름(콜라, 사이다 등)이 들어와도 새 이름으로 매핑
+            let productName = item.productName;
+            if (productName === '콜라') productName = '펩시 콜라';
+            if (productName === '사이다') productName = '레쓰비 마일드 커피';
+
             // 1. 그룹화 키 생성 (분 단위까지)
             const timeKey = item.purchaseTime.substring(0, 16);
-            const key = `${item.buyerName}_${item.productName}_${timeKey}`;
+            const key = `${item.buyerName}_${productName}_${timeKey}`;
 
             if (!grouped[key]) {
                 grouped[key] = {
                     ...item,
+                    productName: productName, // 보정된 이름 사용
                     displayTime: timeKey.replace('T', ' '),
                     count: 1
                 };
@@ -256,9 +262,9 @@
             }
 
             // 2. 총 매출 및 상품별 집계
-            const price = productPrices[item.productName] || 0;
+            const price = productPrices[productName] || 0;
             totalRevenue += price;
-            productCounts[item.productName] = (productCounts[item.productName] || 0) + 1;
+            productCounts[productName] = (productCounts[productName] || 0) + 1;
         });
 
         const sortedData = Object.values(grouped).sort((a, b) => b.purchaseTime.localeCompare(a.purchaseTime));
