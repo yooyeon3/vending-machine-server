@@ -50,9 +50,8 @@ public class PurchaseController {
             // [구매 프로세스 2] 매출 통계 페이지를 위한 기록 저장
             PurchaseHistory history = new PurchaseHistory();
 
-            // 💡 수정된 부분: member.getName()이 아닌 getUsername()을 사용해야 할 수 있습니다.
-            // (Member 클래스에 name 필드가 있다면 getName() 유지, 아이디만 있다면 getUsername() 사용)
-            history.setBuyerName(member.getUsername());
+            // 💡 수정된 부분: 아이디(username)가 아닌 실제 성함(name)을 저장합니다.
+            history.setBuyerName(member.getName());
 
             history.setPhoneNumber(member.getPhoneNumber()); // 전화번호 저장
             history.setProductName(product.getName());       // 상품명 저장

@@ -22,20 +22,22 @@ public class DataInitializer implements CommandLineRunner {
         // 순서대로 저장하면 자동으로 ID가 1, 2로 부여됩니다.
         if (productRepository.count() == 0) {
 
-            // 1. 펩시 콜라 (초기 재고 2개로 수정)
+            // 1. 펩시 콜라
             Product pepsi = Product.builder()
                     .name("펩시 콜라")
                     .price(1500)
-                    .stock(2) // 💡 재고 2개 세팅
+                    .stock(2)
+                    .imageUrl("/images/pepsi.jpg") // 💡 이미지 경로 고정
                     .build();
             productRepository.save(pepsi);
             System.out.println("====== [1번 상품] 펩시 콜라 세팅 완료 ======");
 
-            // 2. 레쓰비 마일드 커피 (초기 재고 2개로 수정)
+            // 2. 레쓰비 마일드 커피
             Product letsbe = Product.builder()
                     .name("레쓰비 마일드 커피")
                     .price(1200)
-                    .stock(2) // 💡 재고 2개 세팅
+                    .stock(2)
+                    .imageUrl("/images/letsbe.jpg") // 💡 이미지 경로 고정
                     .build();
             productRepository.save(letsbe);
             System.out.println("====== [2번 상품] 레쓰비 마일드 커피 세팅 완료 ======");
