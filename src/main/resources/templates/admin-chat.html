@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>PIMTO 채팅 관리</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+        .header {
+            background: white;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+        .back-btn {
+            color: #64748b;
+            text-decoration: none;
+            font-size: 20px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .back-btn:hover { background: #f1f5f9; }
+        .header-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+        .header-count { font-size: 13px; color: #64748b; margin-left: auto; }
+
+        .chat-list { flex: 1; overflow-y: auto; }
+
+        .chat-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 20px;
+            background: white;
+            border-bottom: 1px solid #f1f5f9;
+            text-decoration: none;
+            color: inherit;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .chat-item:hover { background: #f8fafc; }
+        .chat-item.has-unread { background: #fff7ed; }
+        .chat-item.has-unread:hover { background: #fef3e2; }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .chat-info { flex: 1; min-width: 0; }
+        .chat-username { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+        .chat-last-msg { font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
+        .chat-time { font-size: 11px; color: #94a3b8; }
+        .unread-badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            min-width: 20px;
+            height: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+            gap: 12px;
+        }
+        .empty-state .icon { font-size: 56px; }
+        .empty-state p { font-size: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/admin" class="back-btn">←</a>
+    <span class="header-title">💬 고객 채팅</span>
+    <span class="header-count" th:if="${!#lists.isEmpty(chatList)}"
+          th:text="${#lists.size(chatList)} + '명'"></span>
+</div>
+
+<div class="chat-list">
+    <div th:if="${#lists.isEmpty(chatList)}" class="empty-state">
+        <div class="icon">💬</div>
+        <p>아직 채팅을 시작한 고객이 없어요.</p>
+    </div>
+
+    <a th:each="item : ${chatList}"
+       th:href="@{/admin/chat/{u}(u=${item.username})}"
+       th:class="${item.unreadCount > 0} ? 'chat-item has-unread' : 'chat-item'"
+       th:id="'chat-' + ${item.username}">
+        <div class="avatar" th:text="${#strings.substring(item.username, 0, 1).toUpperCase()}"></div>
+        <div class="chat-info">
+            <div class="chat-username" th:text="${item.username}"></div>
+            <div class="chat-last-msg" th:text="${item.lastMessage}"></div>
+        </div>
+        <div class="chat-meta">
+            <span class="chat-time" th:text="${item.lastTime}"></span>
+            <span th:if="${item.unreadCount > 0}" class="unread-badge" th:text="${item.unreadCount}"></span>
+        </div>
+    </a>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    let stompClient = null;
+
+    function connect() {
+        const socket = new SockJS('/ws');
+        stompClient = Stomp.over(socket);
+        stompClient.debug = null;
+        stompClient.connect({}, function () {
+            stompClient.subscribe('/user/queue/chat', function (frame) {
+                const msg = JSON.parse(frame.body);
+                if (!msg.fromAdmin) {
+                    updateListItem(msg);
+                }
+            });
+        });
+    }
+
+    function updateListItem(msg) {
+        const username = msg.userUsername;
+        let item = document.getElementById('chat-' + username);
+
+        if (!item) {
+            // 새 유저 → 페이지 상단에 추가
+            item = document.createElement('a');
+            item.id = 'chat-' + username;
+            item.href = '/admin/chat/' + username;
+            item.className = 'chat-item has-unread';
+            item.innerHTML = `
+                <div class="avatar">${username.charAt(0).toUpperCase()}</div>
+                <div class="chat-info">
+                    <div class="chat-username">${username}</div>
+                    <div class="chat-last-msg"></div>
+                </div>
+                <div class="chat-meta">
+                    <span class="chat-time"></span>
+                    <span class="unread-badge">1</span>
+                </div>`;
+
+            const emptyState = document.querySelector('.empty-state');
+            if (emptyState) emptyState.remove();
+
+            const list = document.querySelector('.chat-list');
+            list.insertBefore(item, list.firstChild);
+        }
+
+        // 마지막 메시지 업데이트
+        const lastMsgEl = item.querySelector('.chat-last-msg');
+        if (lastMsgEl) lastMsgEl.textContent = msg.content;
+
+        const timeEl = item.querySelector('.chat-time');
+        if (timeEl) timeEl.textContent = msg.time;
+
+        // 미읽음 뱃지 증가
+        item.classList.add('has-unread');
+        let badge = item.querySelector('.unread-badge');
+        if (!badge) {
+            badge = document.createElement('span');
+            badge.className = 'unread-badge';
+            badge.textContent = '0';
+            item.querySelector('.chat-meta').appendChild(badge);
+        }
+        badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+
+        // 맨 위로 이동
+        const list = document.querySelector('.chat-list');
+        list.insertBefore(item, list.firstChild);
+    }
+
+    window.addEventListener('load', connect);
+</script>
+
+</body>
+</html>

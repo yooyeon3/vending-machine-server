@@ -3,7 +3,7 @@ package com.example.vendingmachine.controller;
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.repository.MemberRepository;
 import com.example.vendingmachine.repository.ProductRepository;
-import com.example.vendingmachine.service.InquiryService;
+import com.example.vendingmachine.service.ChatService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 @RequiredArgsConstructor
 public class ViewController {
 
-    private final InquiryService inquiryService;
+    private final ChatService chatService;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
 
@@ -40,7 +40,7 @@ public class ViewController {
             }
 
             if (loginMember != null) {
-                model.addAttribute("unreadCount", inquiryService.countUnreadReplies(loginMember.getUsername()));
+                model.addAttribute("unreadCount", chatService.countUnreadForUser(loginMember.getUsername()));
             }
         }
         model.addAttribute("products", productRepository.findAll());

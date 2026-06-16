@@ -4,7 +4,7 @@ import com.example.vendingmachine.domain.Product;
 import com.example.vendingmachine.domain.PurchaseHistory;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
-import com.example.vendingmachine.service.InquiryService;
+import com.example.vendingmachine.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,15 +18,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminController {
 
-    private final InquiryService inquiryService;
+    private final ChatService chatService;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     @GetMapping("/admin")
     public String adminPage(Model model) {
-        long inquiryCount = inquiryService.countUnanswered() + inquiryService.countUnreadUserReplies();
-        model.addAttribute("inquiryCount", inquiryCount);
-        model.addAttribute("inquiries", inquiryService.findAll());
+        model.addAttribute("chatCount", chatService.countUnreadForAdmin());
         model.addAttribute("products", productRepository.findAll());
         return "admin";
     }
