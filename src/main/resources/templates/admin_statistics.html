@@ -246,15 +246,16 @@
             if (productName === '콜라') productName = '펩시 콜라';
             if (productName === '사이다') productName = '레쓰비 마일드 커피';
 
-            // 1. 그룹화 키 생성 (분 단위까지)
-            const timeKey = item.purchaseTime.substring(0, 16);
+            // 1. 그룹화 키 생성 (초 단위까지 정밀도 향상)
+            // T를 공백으로 바꾸고 나노초를 제외한 초 단위(19자)까지만 자릅니다.
+            const timeKey = item.purchaseTime.replace('T', ' ').substring(0, 19);
             const key = `${item.buyerName}_${productName}_${timeKey}`;
 
             if (!grouped[key]) {
                 grouped[key] = {
                     ...item,
-                    productName: productName, // 보정된 이름 사용
-                    displayTime: timeKey.replace('T', ' '),
+                    productName: productName,
+                    displayTime: timeKey, // 초 단위까지 포함된 시간
                     count: 1
                 };
             } else {

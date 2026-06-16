@@ -244,7 +244,10 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
+        // 💡 Spring Security CSRF 토큰 가져오기 (JS에서 필요)
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
         function changeQty(elementId, change, pricePerItem) {
             const qtyElement = document.getElementById(elementId);
             let currentQty = parseInt(qtyElement.innerText);
@@ -282,27 +285,31 @@
                 return;
             }
 
-            let purchaseList = [];
-            // 펩시 콜라 (ID: 1) 수량만큼 추가
-            for (let i = 0; i < qty1; i++) purchaseList.push(1);
-            // 레쓰비 (ID: 2) 수량만큼 추가
-            for (let i = 0; i < qty2; i++) purchaseList.push(2);
+            // 확실한 상품명으로 구매 요청 (ID 불일치 방지)
+            let items = [];
+            for (let i = 0; i < qty1; i++) items.push('펩시 콜라');
+            for (let i = 0; i < qty2; i++) items.push('레쓰비 마일드 커피');
 
             try {
-                for (const productId of purchaseList) {
-                    await fetch('/purchase', {
+                // 병렬로 구매 요청을 보내어 실시간성 확보
+                const requests = items.map(name => {
+                    return fetch('/purchase', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRF-TOKEN': csrfToken // 💡 CSRF 토큰 추가 (중요!)
                         },
-                        body: 'productId=' + productId
+                        body: 'productName=' + encodeURIComponent(name)
                     });
-                }
-                alert('결제가 완료되었습니다! 관리자 페이지에서 내역을 확인하세요.');
-                location.reload(); // 재고 반영을 위해 페이지 새로고침
+                });
+
+                await Promise.all(requests);
+                
+                alert('결제가 완료되었습니다! 관리자 대시보드(새로고침)에서 초 단위로 기록된 주문 내역을 확인하세요.');
+                location.reload(); 
             } catch (error) {
-                console.error('구매 요청 실패:', error);
-                alert('구매 처리 중 오류가 발생했습니다.');
+                console.error('구매 실패:', error);
+                alert('구매 처리 중 보안 문제 또는 오류가 발생했습니다.');
             }
         }
     </script>
