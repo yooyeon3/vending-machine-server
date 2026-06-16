@@ -28,34 +28,45 @@ public class PurchaseController {
     }
 
     @PostMapping("/purchase")
-    public String buyProduct(@RequestParam("productId") Long productId, HttpSession session) {
+    public String buyProduct(@RequestParam(value = "productId", required = false) Long productId,
+                             @RequestParam(value = "productName", required = false) String productName,
+                             HttpSession session) {
 
-        // 1. 세션에서 현재 로그인된 회원 정보 확인
+        // 1. 세션 확인
         Member loginMember = (Member) session.getAttribute("loginMember");
-        if (loginMember == null) {
-            return "redirect:/login"; // 비로그인 시 로그인 페이지로
+        if (loginMember == null) return "redirect:/login";
+
+        Member member = memberRepository.findById(loginMember.getId()).orElse(null);
+        Product product = null;
+
+        // 2. ID 또는 이름으로 상품 찾기 (정합성 강화)
+        if (productId != null) {
+            product = productRepository.findById(productId).orElse(null);
+        }
+        
+        // ID로 못 찾았거나 이름이 넘어왔다면 이름으로 다시 시도
+        if (product == null && productName != null) {
+            product = productRepository.findAll().stream()
+                    .filter(p -> p.getName().equals(productName))
+                    .findFirst().orElse(null);
         }
 
-        // 2. DB에서 최신 회원 정보와 상품 정보 조회
-        Member member = memberRepository.findById(loginMember.getId()).orElse(null);
-        Product product = productRepository.findById(productId).orElse(null);
-
-        // 3. 상품이 존재하고 재고가 1개 이상일 때만 구매 프로세스 진행
+        // 3. 구매 처리
         if (member != null && product != null && product.getStock() > 0) {
-
-            // [구매 프로세스 1] 실시간 재고 1개 감소 및 DB 저장
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
 
-            // [구매 프로세스 2] 매출 통계 페이지를 위한 기록 저장
             PurchaseHistory history = new PurchaseHistory();
-            history.setBuyerName(member.getName()); // 실제 이름 저장
-            history.setPhoneNumber(member.getPhoneNumber()); // 전화번호 저장
-            history.setProductName(product.getName()); // 상품명 저장
-            purchaseHistoryRepository.save(history); // 최종적으로 DB에 매출 기록
+            history.setBuyerName(member.getName());
+            history.setPhoneNumber(member.getPhoneNumber());
+            history.setProductName(product.getName());
+            purchaseHistoryRepository.save(history);
+            
+            System.out.println(">>> 구매 성공: " + product.getName() + " (구매자: " + member.getName() + ")");
+        } else {
+            System.out.println(">>> 구매 실패: 상품 없음 또는 재고 부족 (ID: " + productId + ", Name: " + productName + ")");
         }
 
-        // 4. 모든 작업이 완료되면 메인 화면으로 리다이렉트
         return "redirect:/";
     }
 }

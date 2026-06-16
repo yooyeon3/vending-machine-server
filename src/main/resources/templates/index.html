@@ -251,7 +251,7 @@
                     </div>
                 </div>
 
-                <button class="pay-btn" onclick="alert('결제가 완료되었습니다! 우측에서 로봇을 호출해주세요.')">💳 결제하기</button>
+                <button class="pay-btn" onclick="processOrder()">💳 결제하기</button>
             </div>
 
             <div class="dash-right-panel">
@@ -266,6 +266,52 @@
             </div>
         </div>
     </div>
+
+    <script th:inline="javascript">
+        const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+
+        function changeQty(elementId, change, pricePerItem) {
+            const qtyElement = document.getElementById(elementId);
+            let newQty = parseInt(qtyElement.innerText) + change;
+            if (newQty < 0) newQty = 0;
+            qtyElement.innerText = newQty;
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const qty1 = parseInt(document.getElementById('qty1').innerText);
+            const qty2 = parseInt(document.getElementById('qty2').innerText);
+            document.getElementById('total-count').innerText = qty1 + qty2;
+            document.getElementById('total-price').innerText = ((qty1 * 1500) + (qty2 * 1200)).toLocaleString();
+        }
+
+        async function processOrder() {
+            const qty1 = parseInt(document.getElementById('qty1').innerText);
+            const qty2 = parseInt(document.getElementById('qty2').innerText);
+
+            if (qty1 === 0 && qty2 === 0) {
+                alert('상품을 선택해주세요.');
+                return;
+            }
+
+            let items = [];
+            for (let i = 0; i < qty1; i++) items.push('펩시 콜라');
+            for (let i = 0; i < qty2; i++) items.push('레쓰비 마일드 커피');
+
+            try {
+                const requests = items.map(name => fetch('/purchase', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
+                    body: 'productName=' + encodeURIComponent(name)
+                }));
+                await Promise.all(requests);
+                alert('결제가 완료되었습니다!');
+                location.reload();
+            } catch (error) {
+                alert('구매 처리 중 오류가 발생했습니다.');
+            }
+        }
+    </script>
 </th:block>
 
 <th:block th:if="${session.loginMember != null}">

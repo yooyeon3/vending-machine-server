@@ -345,7 +345,7 @@
         <span>관리자</span>
     </div>
     <ul class="sidebar-menu">
-        <li><a href="#" class="active">📦 재고관리</a></li>
+        <li><a href="/admin" class="active">📦 재고관리</a></li>
         <li><a href="/admin/statistics">📊 매출통계</a></li>
         <li><a href="#">👥 회원관리</a></li>
         <li><a href="#"><img src="/images/pimto.png" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;"> 로봇관리</a></li>
@@ -407,7 +407,7 @@
                             <form th:action="@{/admin/stock/update}" method="post" style="margin: 0; display: flex;">
                                 <input type="hidden" name="productId" th:value="${product.id}">
                                 <input type="hidden" name="amount" value="1">
-                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 20}">+</button>
+                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 2}">+</button>
                             </form>
 
                         </div>
@@ -734,6 +734,7 @@
     robotImg.src = '/images/pimto.png';
 
     function resizeCanvas() {
+        canvas.width = canvas.width; // dummy write
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         drawMap();
