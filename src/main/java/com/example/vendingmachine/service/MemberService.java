@@ -14,28 +14,19 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final org.springframework.context.annotation.Lazy
     private final com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository;
     private final com.example.vendingmachine.repository.InquiryRepository inquiryRepository;
 
-    public MemberService(MemberRepository memberRepository, 
-                         PasswordEncoder passwordEncoder,
-                         com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository,
-                         com.example.vendingmachine.repository.InquiryRepository inquiryRepository) {
-        this.memberRepository = memberRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.purchaseHistoryRepository = purchaseHistoryRepository;
-        this.inquiryRepository = inquiryRepository;
-    }
-
     public int getActivityScore(Member member) {
         if (member == null) return 0;
-        long purchaseCount = purchaseHistoryRepository.countByBuyerName(member.getName());
+        String buyerName = member.getName() != null ? member.getName() : "";
+        long purchaseCount = purchaseHistoryRepository.countByBuyerName(buyerName);
         long inquiryCount = inquiryRepository.countByUsername(member.getUsername());
         return (int) (purchaseCount * 10 + inquiryCount * 5);
     }
 
     public String getGrade(Member member) {
+        if (member == null) return "BRONZE";
         int score = getActivityScore(member);
         if (score >= 100) return "DIAMOND";
         if (score >= 50) return "GOLD";
@@ -43,12 +34,32 @@ public class MemberService {
         return "BRONZE";
     }
 
+    // 등급별 할인율 (DIAMOND 20%, GOLD 10%, SILVER 5%)
     public double getDiscountRate(String grade) {
+        if (grade == null) return 0.0;
         return switch (grade) {
-            case "DIAMOND" -> 0.20; // 20% 할인
-            case "GOLD" -> 0.10;    // 10% 할인
+            case "DIAMOND" -> 0.20;
+            case "GOLD" -> 0.10;
+            case "SILVER" -> 0.05;
             default -> 0.0;
         };
+    }
+
+    // 등급별 포인트 적립률 (DIAMOND 10%, GOLD 5%, 나머지 1%)
+    public double getPointRate(String grade) {
+        if (grade == null) return 0.01;
+        return switch (grade) {
+            case "DIAMOND" -> 0.10;
+            case "GOLD" -> 0.05;
+            default -> 0.01;
+        };
+    }
+
+    public void addPoints(Member member, int points) {
+        if (member == null) return;
+        int currentPoints = member.getPoints() != null ? member.getPoints() : 0;
+        member.setPoints(currentPoints + points);
+        memberRepository.save(member);
     }
 
     public void join(Member member) {

@@ -37,6 +37,13 @@
         .footer-links a { margin-left: 20px; text-decoration: none; color: #94a3b8; transition: color 0.3s; }
         .footer-links a:hover { color: #6e8efb; }
 
+        /* 등급 뱃지 스타일 */
+        .grade-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+        .grade-badge.diamond { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .grade-badge.gold { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .grade-badge.silver { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .grade-badge.bronze { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+
         /* 대시보드 */
         .dash-container { flex: 1; display: flex; flex-direction: column; background-color: #f1f5f9; }
         .dash-header { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
@@ -196,7 +203,15 @@
                 </a>
             </div>
             <div class="dash-header-right">
-                <span><span th:text="${session.loginMember.name}" style="color: #6e8efb; font-weight: 800;"></span>님 환영합니다!</span>
+                <div style="text-align: right; margin-right: 15px;">
+                    <div style="font-size: 14px; color: #64748b; font-weight: 700;">
+                        <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${grade.toLowerCase()}">GRADE</span>
+                        <span th:text="${session.loginMember.name}" style="color: #1e293b; margin-left: 5px;">사용자</span>님
+                    </div>
+                    <div style="font-size: 13px; color: #6e8efb; font-weight: 800; margin-top: 2px;">
+                        보유 포인트: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P
+                    </div>
+                </div>
                 <!-- 채팅 알림 아이콘 -->
                 <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
@@ -240,6 +255,10 @@
                         <span>선택한 음료수</span>
                         <span class="summary-val"><span id="total-count">0</span>개</span>
                     </div>
+                    <div th:if="${discountRate > 0}" class="summary-row" style="color: #ef4444; font-size: 14px;">
+                        <span>등급 할인 (<span th:text="${discountRate}">0</span>%)</span>
+                        <span class="summary-val">-<span id="discount-amount">0</span>원</span>
+                    </div>
                     <div class="summary-row" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
                         <span>총 결제 금액</span>
                         <span class="total-price-text"><span id="total-price">0</span>원</span>
@@ -264,6 +283,7 @@
 
     <script th:inline="javascript">
         const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
+        const discountRate = /*[[${discountRate ?: 0}]]*/ 0;
 
         // changeQty 함수가 이제 maxStock(재고)을 인자로 받아 제한을 체크합니다.
         function changeQty(elementId, change, pricePerItem, maxStock) {
@@ -282,18 +302,24 @@
 
         function calculateTotal() {
             let totalCount = 0;
-            let totalPrice = 0;
+            let originalTotalPrice = 0;
             
             // 모든 qty 클래스를 가진 요소들의 값을 합산합니다.
             document.querySelectorAll('.counter-val').forEach(el => {
                 const qty = parseInt(el.innerText);
                 const price = parseInt(el.getAttribute('data-price'));
                 totalCount += qty;
-                totalPrice += (qty * price);
+                originalTotalPrice += (qty * price);
             });
+
+            const discountAmount = Math.floor(originalTotalPrice * (discountRate / 100));
+            const finalPrice = originalTotalPrice - discountAmount;
             
             document.getElementById('total-count').innerText = totalCount;
-            document.getElementById('total-price').innerText = totalPrice.toLocaleString();
+            if (document.getElementById('discount-amount')) {
+                document.getElementById('discount-amount').innerText = discountAmount.toLocaleString();
+            }
+            document.getElementById('total-price').innerText = finalPrice.toLocaleString();
         }
 
         async function processOrder() {

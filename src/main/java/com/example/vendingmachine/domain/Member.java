@@ -27,6 +27,8 @@ public class Member {
     @Column(columnDefinition = "TEXT")
     private String adminMemo; // 관리자용 메모
 
+    private Integer points = 0; // 고객 보유 포인트
+
     @PrePersist
     public void prePersist() {
         this.createdAt = java.time.LocalDateTime.now();

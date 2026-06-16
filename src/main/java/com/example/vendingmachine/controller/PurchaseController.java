@@ -17,14 +17,17 @@ public class PurchaseController {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+    private final com.example.vendingmachine.service.MemberService memberService;
 
     // 생성자를 통해 의존성 주입
     public PurchaseController(MemberRepository memberRepository,
                               ProductRepository productRepository,
-                              PurchaseHistoryRepository purchaseHistoryRepository) {
+                              PurchaseHistoryRepository purchaseHistoryRepository,
+                              com.example.vendingmachine.service.MemberService memberService) {
         this.memberRepository = memberRepository;
         this.productRepository = productRepository;
         this.purchaseHistoryRepository = purchaseHistoryRepository;
+        this.memberService = memberService;
     }
 
     @PostMapping("/purchase")
@@ -44,7 +47,6 @@ public class PurchaseController {
             product = productRepository.findById(productId).orElse(null);
         }
         
-        // ID로 못 찾았거나 이름이 넘어왔다면 이름으로 다시 시도
         if (product == null && productName != null) {
             product = productRepository.findAll().stream()
                     .filter(p -> p.getName().equals(productName))
@@ -53,16 +55,37 @@ public class PurchaseController {
 
         // 3. 구매 처리
         if (member != null && product != null && product.getStock() > 0) {
+            // 등급에 따른 혜택 계산
+            String grade = memberService.getGrade(member);
+            double discountRate = memberService.getDiscountRate(grade);
+            double pointRate = memberService.getPointRate(grade);
+
+            int originalPrice = product.getPrice();
+            int discountAmount = (int) (originalPrice * discountRate);
+            int finalPrice = originalPrice - discountAmount;
+            int earnedPoints = (int) (finalPrice * pointRate);
+
+            // 재고 차감 및 포인트 적립
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
+
+            int currentPoints = member.getPoints() != null ? member.getPoints() : 0;
+            member.setPoints(currentPoints + earnedPoints);
+            memberRepository.save(member);
+            
+            // 세션 정보 갱신 (포인트 등)
+            session.setAttribute("loginMember", member);
 
             PurchaseHistory history = new PurchaseHistory();
             history.setBuyerName(member.getName());
             history.setPhoneNumber(member.getPhoneNumber());
             history.setProductName(product.getName());
+            history.setPaidPrice(finalPrice);
+            history.setEarnedPoints(earnedPoints);
             purchaseHistoryRepository.save(history);
             
-            System.out.println(">>> 구매 성공: " + product.getName() + " (구매자: " + member.getName() + ")");
+            System.out.println(">>> 구매 성공: " + product.getName() + 
+                               " (할인: " + discountAmount + "원, 결제: " + finalPrice + "원, 적립: " + earnedPoints + "P)");
         } else {
             System.out.println(">>> 구매 실패: 상품 없음 또는 재고 부족 (ID: " + productId + ", Name: " + productName + ")");
         }
