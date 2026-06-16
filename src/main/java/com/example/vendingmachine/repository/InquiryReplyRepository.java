@@ -11,15 +11,15 @@ public interface InquiryReplyRepository extends JpaRepository<InquiryReply, Long
     List<InquiryReply> findByInquiryOrderByCreatedAtAsc(Inquiry inquiry);
 
     // 안읽은 답글 개수 (사용자용 - 관리자가 남긴 답글 중 미읽음)
-    long countByInquiry_UsernameAndAdminReplyTrueAndReadFalse(String username);
+    long countByInquiry_UsernameAndAdminReplyTrueAndIsReadFalse(String username);
 
     // 안읽은 답글 개수 (관리자용 - 사용자가 남긴 답글 중 미읽음)
-    long countByAdminReplyFalseAndReadFalse();
+    long countByAdminReplyFalseAndIsReadFalse();
 
     // 사용자별 안읽은 관리자 답글 목록 (문의 ID 추출용)
-    List<InquiryReply> findByInquiry_UsernameAndAdminReplyTrueAndReadFalse(String username);
+    List<InquiryReply> findByInquiry_UsernameAndAdminReplyTrueAndIsReadFalse(String username);
 
     // 관리자용 - 안읽은 사용자 답글 목록 (문의 ID 추출용)
-    List<InquiryReply> findByAdminReplyFalseAndReadFalse();
+    List<InquiryReply> findByAdminReplyFalseAndIsReadFalse();
 
 }

@@ -11,15 +11,15 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     List<ChatMessage> findTop1ByUserUsernameOrderByCreatedAtDesc(String userUsername);
 
-    long countByUserUsernameAndFromAdminTrueAndReadFalse(String userUsername);
+    long countByUserUsernameAndFromAdminTrueAndIsReadFalse(String userUsername);
 
-    long countByFromAdminFalseAndReadFalse();
+    long countByFromAdminFalseAndIsReadFalse();
 
-    long countByUserUsernameAndFromAdminFalseAndReadFalse(String userUsername);
+    long countByUserUsernameAndFromAdminFalseAndIsReadFalse(String userUsername);
 
-    List<ChatMessage> findByUserUsernameAndFromAdminTrueAndReadFalse(String userUsername);
+    List<ChatMessage> findByUserUsernameAndFromAdminTrueAndIsReadFalse(String userUsername);
 
-    List<ChatMessage> findByUserUsernameAndFromAdminFalseAndReadFalse(String userUsername);
+    List<ChatMessage> findByUserUsernameAndFromAdminFalseAndIsReadFalse(String userUsername);
 
     @Query("SELECT DISTINCT m.userUsername FROM ChatMessage m")
     List<String> findDistinctUserUsernames();

@@ -18,7 +18,10 @@ public class ChatMessage {
     private String userUsername;
     private String content;
     private boolean fromAdmin;
-    private boolean read;
+
+    @Column(name = "is_read")
+    private boolean isRead;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -31,10 +34,10 @@ public class ChatMessage {
         this.userUsername = userUsername;
         this.content = content;
         this.fromAdmin = fromAdmin;
-        this.read = false;
+        this.isRead = false;
     }
 
     public void markAsRead() {
-        this.read = true;
+        this.isRead = true;
     }
 }

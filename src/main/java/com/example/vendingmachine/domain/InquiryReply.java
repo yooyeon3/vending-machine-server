@@ -28,7 +28,7 @@ public class InquiryReply {
     private boolean adminReply;
 
     @Column(name = "is_read")
-    private boolean read = false;
+    private boolean isRead = false;
 
     private LocalDateTime createdAt;
 
