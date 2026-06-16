@@ -49,13 +49,17 @@ public class PurchaseController {
 
             // [구매 프로세스 2] 매출 통계 페이지를 위한 기록 저장
             PurchaseHistory history = new PurchaseHistory();
-            history.setBuyerName(member.getName()); // 실제 이름 저장
+
+            // 💡 수정된 부분: member.getName()이 아닌 getUsername()을 사용해야 할 수 있습니다.
+            // (Member 클래스에 name 필드가 있다면 getName() 유지, 아이디만 있다면 getUsername() 사용)
+            history.setBuyerName(member.getUsername());
+
             history.setPhoneNumber(member.getPhoneNumber()); // 전화번호 저장
-            history.setProductName(product.getName()); // 상품명 저장
-            purchaseHistoryRepository.save(history); // 최종적으로 DB에 매출 기록
+            history.setProductName(product.getName());       // 상품명 저장
+
+            purchaseHistoryRepository.save(history); // DB에 저장! (시간은 @PrePersist로 자동 저장됨)
         }
 
-        // 4. 모든 작업이 완료되면 메인 화면으로 리다이렉트
-        return "redirect:/";
+        return "redirect:/"; // 구매 후 메인 화면으로 돌아감
     }
 }

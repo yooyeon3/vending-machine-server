@@ -463,6 +463,7 @@
     robotImg.src = '/images/pimto.png';
 
     function resizeCanvas() {
+        canvas.width = canvas.width; // dummy write
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         drawMap();

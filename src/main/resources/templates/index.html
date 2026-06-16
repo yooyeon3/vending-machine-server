@@ -226,7 +226,7 @@
                     </div>
                 </div>
 
-                <button class="pay-btn" onclick="alert('결제가 완료되었습니다! 우측에서 로봇을 호출해주세요.')">💳 결제하기</button>
+                <button class="pay-btn" onclick="processOrder()">💳 결제하기</button>
             </div>
 
             <div class="dash-right-panel">
@@ -265,12 +265,45 @@
             // 총 개수 계산
             const totalCount = qty1 + qty2;
 
-            // 총 가격 계산 (칸타타 1500원, 레쓰비 1200원 기준)
+            // 총 가격 계산 (펩시 1500원, 레쓰비 1200원 기준)
             const totalPrice = (qty1 * 1500) + (qty2 * 1200);
 
             // 화면에 렌더링 (toLocaleString()을 사용해 천 단위 콤마 찍기)
             document.getElementById('total-count').innerText = totalCount;
             document.getElementById('total-price').innerText = totalPrice.toLocaleString();
+        }
+
+        async function processOrder() {
+            const qty1 = parseInt(document.getElementById('qty1').innerText);
+            const qty2 = parseInt(document.getElementById('qty2').innerText);
+
+            if (qty1 === 0 && qty2 === 0) {
+                alert('상품을 선택해주세요.');
+                return;
+            }
+
+            let purchaseList = [];
+            // 펩시 콜라 (ID: 1) 수량만큼 추가
+            for (let i = 0; i < qty1; i++) purchaseList.push(1);
+            // 레쓰비 (ID: 2) 수량만큼 추가
+            for (let i = 0; i < qty2; i++) purchaseList.push(2);
+
+            try {
+                for (const productId of purchaseList) {
+                    await fetch('/purchase', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'productId=' + productId
+                    });
+                }
+                alert('결제가 완료되었습니다! 관리자 페이지에서 내역을 확인하세요.');
+                location.reload(); // 재고 반영을 위해 페이지 새로고침
+            } catch (error) {
+                console.error('구매 요청 실패:', error);
+                alert('구매 처리 중 오류가 발생했습니다.');
+            }
         }
     </script>
 </th:block>
