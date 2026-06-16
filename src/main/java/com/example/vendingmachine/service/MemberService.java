@@ -47,4 +47,28 @@ public class MemberService {
         // 3. 모두 통과하면 회원 정보 반환 (로그인 성공)
         return member;
     }
+
+    // [관리자 전용] 모든 회원 목록 조회
+    public java.util.List<Member> findAll() {
+        return memberRepository.findAll();
+    }
+
+    // [관리자 전용] 회원 정보 수정
+    public void updateMember(Long id, String name, String phoneNumber) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        member.setName(name);
+        member.setPhoneNumber(phoneNumber);
+        memberRepository.save(member);
+    }
+
+    // [관리자 전용] 회원 삭제 (강제 탈퇴)
+    public void deleteMember(Long id) {
+        memberRepository.deleteById(id);
+    }
+
+    // [관리자 전용] ID로 회원 찾기
+    public Member findById(Long id) {
+        return memberRepository.findById(id).orElse(null);
+    }
 }
