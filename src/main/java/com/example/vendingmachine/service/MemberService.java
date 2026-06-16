@@ -14,6 +14,42 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
+    private final org.springframework.context.annotation.Lazy
+    private final com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository;
+    private final com.example.vendingmachine.repository.InquiryRepository inquiryRepository;
+
+    public MemberService(MemberRepository memberRepository, 
+                         PasswordEncoder passwordEncoder,
+                         com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository,
+                         com.example.vendingmachine.repository.InquiryRepository inquiryRepository) {
+        this.memberRepository = memberRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.purchaseHistoryRepository = purchaseHistoryRepository;
+        this.inquiryRepository = inquiryRepository;
+    }
+
+    public int getActivityScore(Member member) {
+        if (member == null) return 0;
+        long purchaseCount = purchaseHistoryRepository.countByBuyerName(member.getName());
+        long inquiryCount = inquiryRepository.countByUsername(member.getUsername());
+        return (int) (purchaseCount * 10 + inquiryCount * 5);
+    }
+
+    public String getGrade(Member member) {
+        int score = getActivityScore(member);
+        if (score >= 100) return "DIAMOND";
+        if (score >= 50) return "GOLD";
+        if (score >= 20) return "SILVER";
+        return "BRONZE";
+    }
+
+    public double getDiscountRate(String grade) {
+        return switch (grade) {
+            case "DIAMOND" -> 0.20; // 20% 할인
+            case "GOLD" -> 0.10;    // 10% 할인
+            default -> 0.0;
+        };
+    }
 
     public void join(Member member) {
         // [로그 추가] 가입 시도 확인
@@ -53,12 +89,13 @@ public class MemberService {
         return memberRepository.findAll();
     }
 
-    // [관리자 전용] 회원 정보 수정
-    public void updateMember(Long id, String name, String phoneNumber) {
+    // [관리자 전용] 회원 정보 수정 (메모 포함)
+    public void updateMember(Long id, String name, String phoneNumber, String adminMemo) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
         member.setName(name);
         member.setPhoneNumber(phoneNumber);
+        member.setAdminMemo(adminMemo);
         memberRepository.save(member);
     }
 
