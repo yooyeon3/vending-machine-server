@@ -214,28 +214,23 @@
         <div class="dash-body">
             <div class="dash-left-panel">
                 <div class="product-grid">
-                    <div class="product-card">
-                        <img th:src="@{/images/pepsi.jpg}" class="product-img" alt="펩시 콜라">
+                    <!-- DB의 상품 목록을 동적으로 반복 출력합니다. -->
+                    <div class="product-card" th:each="product : ${products}">
+                        <img th:src="${product.imageUrl}" class="product-img" th:alt="${product.name}" 
+                             th:classappend="${product.name.contains('레쓰비')} ? 'letsbe-img' : ''">
                         <div class="product-info">
-                            <div class="product-name">펩시 콜라</div>
-                            <div class="product-price">1,500원</div>
+                            <div class="product-name" th:text="${product.name}">상품명</div>
+                            <div class="product-price" th:text="${#numbers.formatInteger(product.price, 0, 'COMMA') + '원'}">0원</div>
                         </div>
                         <div class="counter-group">
-                            <button class="counter-btn" onclick="changeQty('qty1', -1, 1500)">-</button>
-                            <span class="counter-val" id="qty1">0</span>
-                            <button class="counter-btn" onclick="changeQty('qty1', 1, 1500)">+</button>
+                            <!-- changeQty 함수에 해당 상품의 재고(stock) 정보를 함께 넘깁니다. -->
+                            <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', -1, ${product.price}, ${product.stock})|">-</button>
+                            <span class="counter-val" th:id="'qty' + ${product.id}" th:data-name="${product.name}" th:data-price="${product.price}">0</span>
+                            <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', 1, ${product.price}, ${product.stock})|">+</button>
                         </div>
-                    </div>
-                    <div class="product-card">
-                        <img th:src="@{/images/letsbe.jpg}" class="product-img letsbe-img" alt="레쓰비">
-                        <div class="product-info">
-                            <div class="product-name">레쓰비 마일드 커피</div>
-                            <div class="product-price">1,200원</div>
-                        </div>
-                        <div class="counter-group">
-                            <button class="counter-btn" onclick="changeQty('qty2', -1, 1200)">-</button>
-                            <span class="counter-val" id="qty2">0</span>
-                            <button class="counter-btn" onclick="changeQty('qty2', 1, 1200)">+</button>
+                        <!-- 재고 표시 (선택사항) -->
+                        <div style="font-size: 12px; color: #94a3b8; margin-top: -10px;">
+                            남은 재고: <span th:text="${product.stock}">0</span>개
                         </div>
                     </div>
                 </div>
@@ -270,33 +265,51 @@
     <script th:inline="javascript">
         const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
 
-        function changeQty(elementId, change, pricePerItem) {
+        // changeQty 함수가 이제 maxStock(재고)을 인자로 받아 제한을 체크합니다.
+        function changeQty(elementId, change, pricePerItem, maxStock) {
             const qtyElement = document.getElementById(elementId);
             let newQty = parseInt(qtyElement.innerText) + change;
+            
             if (newQty < 0) newQty = 0;
+            if (newQty > maxStock) {
+                alert('해당 상품의 재고가 부족합니다. (최대 ' + maxStock + '개 선택 가능)');
+                return;
+            }
+            
             qtyElement.innerText = newQty;
             calculateTotal();
         }
 
         function calculateTotal() {
-            const qty1 = parseInt(document.getElementById('qty1').innerText);
-            const qty2 = parseInt(document.getElementById('qty2').innerText);
-            document.getElementById('total-count').innerText = qty1 + qty2;
-            document.getElementById('total-price').innerText = ((qty1 * 1500) + (qty2 * 1200)).toLocaleString();
+            let totalCount = 0;
+            let totalPrice = 0;
+            
+            // 모든 qty 클래스를 가진 요소들의 값을 합산합니다.
+            document.querySelectorAll('.counter-val').forEach(el => {
+                const qty = parseInt(el.innerText);
+                const price = parseInt(el.getAttribute('data-price'));
+                totalCount += qty;
+                totalPrice += (qty * price);
+            });
+            
+            document.getElementById('total-count').innerText = totalCount;
+            document.getElementById('total-price').innerText = totalPrice.toLocaleString();
         }
 
         async function processOrder() {
-            const qty1 = parseInt(document.getElementById('qty1').innerText);
-            const qty2 = parseInt(document.getElementById('qty2').innerText);
+            let items = [];
+            document.querySelectorAll('.counter-val').forEach(el => {
+                const qty = parseInt(el.innerText);
+                const name = el.getAttribute('data-name');
+                for (let i = 0; i < qty; i++) {
+                    items.push(name);
+                }
+            });
 
-            if (qty1 === 0 && qty2 === 0) {
+            if (items.length === 0) {
                 alert('상품을 선택해주세요.');
                 return;
             }
-
-            let items = [];
-            for (let i = 0; i < qty1; i++) items.push('펩시 콜라');
-            for (let i = 0; i < qty2; i++) items.push('레쓰비 마일드 커피');
 
             try {
                 const requests = items.map(name => fetch('/purchase', {
@@ -441,21 +454,6 @@
             sidebar.classList.remove('open');
             overlay.classList.remove('show');
         });
-    }
-
-    function changeQty(elementId, change, pricePerItem) {
-        const qtyElement = document.getElementById(elementId);
-        let newQty = parseInt(qtyElement.innerText) + change;
-        if (newQty < 0) newQty = 0;
-        qtyElement.innerText = newQty;
-        calculateTotal();
-    }
-
-    function calculateTotal() {
-        const qty1 = parseInt(document.getElementById('qty1').innerText);
-        const qty2 = parseInt(document.getElementById('qty2').innerText);
-        document.getElementById('total-count').innerText = qty1 + qty2;
-        document.getElementById('total-price').innerText = ((qty1 * 1500) + (qty2 * 1200)).toLocaleString();
     }
 </script>
 

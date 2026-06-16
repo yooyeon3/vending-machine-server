@@ -407,7 +407,7 @@
                             <form th:action="@{/admin/stock/update}" method="post" style="margin: 0; display: flex;">
                                 <input type="hidden" name="productId" th:value="${product.id}">
                                 <input type="hidden" name="amount" value="1">
-                                <button type="submit" class="stock-btn btn-plus" th:disabled="${product.stock >= 2}">+</button>
+                                <button type="submit" class="stock-btn btn-plus">+</button>
                             </form>
 
                         </div>
