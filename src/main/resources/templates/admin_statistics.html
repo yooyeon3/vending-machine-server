@@ -39,12 +39,18 @@
             align-items: center;
             margin-bottom: 30px;
         }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
         .header h1 {
             font-size: 28px;
             font-weight: 800;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            margin: 0;
         }
         .back-btn {
             text-decoration: none;
@@ -166,7 +172,13 @@
 
 <div class="dashboard">
     <div class="header">
-        <h1>PIMTO Analytics</h1>
+        <div class="header-left">
+            <!-- 💡 로고 크기를 키우고 클릭 시 관리자 메인으로 이동하도록 링크 적용 -->
+            <a href="/admin" style="display: flex; align-items: center; text-decoration: none;">
+                <img src="/images/vending-logo.png" alt="PIMTO 로고" style="height: 55px; object-fit: contain; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
+            </a>
+            <h1>Analytics</h1>
+        </div>
         <a href="/admin" class="back-btn">← 관리자 메인으로</a>
     </div>
 
@@ -300,6 +312,9 @@
 
     const { productCounts } = processAndRender();
 
+    // 💡 차트 플러그인 전역 등록 (안정성 확보)
+    Chart.register(ChartDataLabels);
+
     // 차트 1: 선형 차트 (시간대별)
     const ctxLine = document.getElementById('salesChart').getContext('2d');
     new Chart(ctxLine, {
@@ -330,32 +345,60 @@
 
     // 차트 2: 도넛 차트 (상품 비중)
     const ctxPie = document.getElementById('productChart').getContext('2d');
+    
+    // 💡 판매량이 많은 순으로 내림차순 정렬
+    const sortedProducts = Object.entries(productCounts).sort((a, b) => b[1] - a[1]);
+    const sortedLabels = sortedProducts.map(item => item[0]);
+    const sortedDataValues = sortedProducts.map(item => item[1]);
+
+    const totalCount = sortedDataValues.reduce((a, b) => a + b, 0);
+
     new Chart(ctxPie, {
         type: 'doughnut',
-        plugins: [ChartDataLabels], // 💡 플러그인 활성화
         data: {
-            labels: Object.keys(productCounts),
+            // 범례에 이름과 %를 함께 표시
+            labels: sortedLabels.map((name, index) => {
+                const count = sortedDataValues[index];
+                const pct = totalCount > 0 ? ((count / totalCount) * 100).toFixed(1) : 0;
+                return `${name} (${pct}%)`;
+            }),
             datasets: [{
-                data: Object.values(productCounts),
+                data: sortedDataValues,
                 backgroundColor: ['#6e8efb', '#a777e3', '#f472b6'],
-                borderWidth: 0,
-                hoverOffset: 10
+                borderWidth: 4, // 💡 흰색 선을 더 두껍게
+                borderColor: '#ffffff',
+                hoverOffset: 8
             }]
         },
         options: {
-            cutout: '70%',
+            cutout: '60%', // 중앙 여백 (도넛 두께 증가)
+            rotation: -90, // 💡 0은 위쪽(12시), -90은 왼쪽(9시)부터 시작
+            layout: { padding: 15 },
             plugins: {
-                legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } },
-                // 💡 퍼센트 레이블 설정
+                legend: { 
+                    position: 'bottom', 
+                    labels: { 
+                        usePointStyle: true, 
+                        padding: 25,
+                        font: { family: "'Pretendard', sans-serif", size: 14, weight: '600' },
+                        color: '#1e293b'
+                    } 
+                },
                 datalabels: {
-                    color: '#fff',
-                    font: { weight: 'bold', size: 14 },
-                    formatter: (value, ctx) => {
-                        let sum = 0;
-                        let dataArr = ctx.chart.data.datasets[0].data;
-                        dataArr.map(data => { sum += data; });
-                        let percentage = (value * 100 / sum).toFixed(1) + "%";
-                        return percentage;
+                    color: '#ffffff',
+                    font: { family: "'Pretendard', sans-serif", weight: '800', size: 18 }, // 💡 폰트 더 크고 뚜렷하게
+                    formatter: (value) => {
+                        if(totalCount === 0 || value === 0) return "";
+                        return Math.round((value / totalCount) * 100) + "%";
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label.split(' (')[0];
+                            const value = context.raw;
+                            return ` ${label}: ${value}개`;
+                        }
                     }
                 }
             }
