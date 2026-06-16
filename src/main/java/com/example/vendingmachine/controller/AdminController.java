@@ -52,7 +52,7 @@ public class AdminController {
         if (product != null) {
             int newStock = product.getStock() + amount;
             if (newStock < 0) newStock = 0;
-            if (newStock > 20) newStock = 20;
+            if (newStock > 2) newStock = 2;
             product.setStock(newStock);
             productRepository.save(product);
         }

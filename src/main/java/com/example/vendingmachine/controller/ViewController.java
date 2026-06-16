@@ -24,13 +24,11 @@ public class ViewController {
         if (authentication != null && authentication.isAuthenticated()
                 && !authentication.getName().equals("anonymousUser")) {
 
-            // 관리자이면 바로 관리자 페이지로
             if (authentication.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
                 return "redirect:/admin";
             }
 
-            // loginMember 세션이 끊겼으면 DB에서 다시 복구
             Member loginMember = (Member) session.getAttribute("loginMember");
             if (loginMember == null) {
                 memberRepository.findByUsername(authentication.getName()).ifPresent(m -> {
@@ -50,5 +48,10 @@ public class ViewController {
     @GetMapping("/login")
     public String loginPage() {
         return "login";
+    }
+
+    @GetMapping("/signup")
+    public String signupPage() {
+        return "signup";
     }
 }
