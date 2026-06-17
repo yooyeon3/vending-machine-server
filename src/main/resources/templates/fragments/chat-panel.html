@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head></head>
+<body>
+<div th:fragment="chatPanel" th:if="${session.loginMember != null}">
+
+<style>
+  .chat-panel { position:fixed; top:65px; right:16px; width:280px; height:450px; background:white; border-radius:16px; box-shadow:0 12px 48px rgba(0,0,0,0.22); z-index:500; display:none; flex-direction:column; overflow:hidden; border:1.5px solid #94a3b8; }
+  .chat-panel.open { display:flex; }
+  .cp-overlay { display:none; position:fixed; inset:0; z-index:499; }
+  .cp-overlay.show { display:block; }
+  .cp-header { background:#1e293b; color:white; padding:13px 14px; display:flex; justify-content:space-between; align-items:center; flex-shrink:0; }
+  .cp-header-title { font-weight:700; font-size:14px; }
+  .cp-close { background:none; border:none; color:rgba(255,255,255,0.75); font-size:17px; cursor:pointer; padding:2px 6px; border-radius:4px; transition:background 0.2s; line-height:1; }
+  .cp-close:hover { background:rgba(255,255,255,0.15); color:white; }
+  .cp-messages { flex:1; overflow-y:auto; padding:12px 10px; display:flex; flex-direction:column; gap:7px; background:#f8fafc; }
+  .cp-loading { text-align:center; color:#94a3b8; font-size:12px; margin-top:20px; }
+  .cp-empty { text-align:center; color:#94a3b8; font-size:12px; margin-top:40px; line-height:1.8; }
+  .cp-msg-row { display:flex; align-items:flex-end; gap:5px; }
+  .cp-msg-row.mine { flex-direction:row-reverse; }
+  .cp-avatar { width:27px; height:27px; border-radius:50%; background:#475569; color:white; font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .cp-msg-content { display:flex; flex-direction:column; gap:2px; max-width:75%; }
+  .cp-msg-row.mine .cp-msg-content { align-items:flex-end; }
+  .cp-sender { font-size:10px; color:#64748b; font-weight:600; margin-bottom:1px; }
+  .cp-bubble { padding:7px 11px; border-radius:14px; font-size:12px; line-height:1.5; word-break:break-word; box-shadow:0 1px 2px rgba(0,0,0,0.08); }
+  .cp-bubble.admin { background:white; border:1px solid #e2e8f0; border-top-left-radius:3px; color:#1e293b; }
+  .cp-bubble.mine { background:#fee500; border-top-right-radius:3px; color:#1e293b; }
+  .cp-time { font-size:10px; color:#94a3b8; }
+  .cp-footer { background:white; border-top:1px solid #e2e8f0; padding:8px 10px; display:flex; gap:7px; align-items:center; flex-shrink:0; }
+  .cp-input { flex:1; padding:8px 12px; border:1.5px solid #e2e8f0; border-radius:20px; font-size:12px; font-family:'Pretendard',sans-serif; outline:none; }
+  .cp-input:focus { border-color:#475569; }
+  .cp-send { width:34px; height:34px; background:#1e293b; border:none; border-radius:50%; color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s; flex-shrink:0; }
+  .cp-send:hover { background:#334155; }
+</style>
+
+<div id="chatPanel" class="chat-panel">
+    <div class="cp-header">
+        <span class="cp-header-title">💬 PIMTO 고객지원</span>
+        <button class="cp-close" onclick="toggleChatPanel()">✕</button>
+    </div>
+    <div class="cp-messages" id="cpMessages">
+        <div class="cp-loading">불러오는 중...</div>
+    </div>
+    <div class="cp-footer">
+        <input class="cp-input" id="cpInput" placeholder="메시지를 입력하세요..." autocomplete="off">
+        <button class="cp-send" onclick="cpSendMessage()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+        </button>
+    </div>
+</div>
+<div id="chatPanelOverlay" class="cp-overlay" onclick="toggleChatPanel()"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<script>
+    let cpStompClient = null;
+    let cpPanelOpen = false;
+    let cpHistoryLoaded = false;
+
+    function toggleChatPanel() {
+        cpPanelOpen = !cpPanelOpen;
+        document.getElementById('chatPanel').classList.toggle('open', cpPanelOpen);
+        document.getElementById('chatPanelOverlay').classList.toggle('show', cpPanelOpen);
+        if (cpPanelOpen) {
+            if (!cpHistoryLoaded) loadChatHistory();
+            const badge = document.getElementById('chatBadge');
+            if (badge) badge.style.display = 'none';
+        }
+    }
+
+    function loadChatHistory() {
+        fetch('/api/chat/history')
+            .then(r => r.json())
+            .then(messages => {
+                cpHistoryLoaded = true;
+                const container = document.getElementById('cpMessages');
+                container.innerHTML = '';
+                if (messages.length === 0) {
+                    container.innerHTML = '<div class="cp-empty">아직 대화가 없어요 😊<br>먼저 말을 걸어보세요!</div>';
+                    return;
+                }
+                messages.forEach(msg => cpRenderMessage(msg, false));
+                container.scrollTop = container.scrollHeight;
+            });
+    }
+
+    function cpRenderMessage(msg, scroll) {
+        const container = document.getElementById('cpMessages');
+        const emptyEl = container.querySelector('.cp-empty, .cp-loading');
+        if (emptyEl) emptyEl.remove();
+
+        const row = document.createElement('div');
+        row.className = msg.fromAdmin ? 'cp-msg-row' : 'cp-msg-row mine';
+        const time = msg.time || new Date().toLocaleTimeString('ko-KR', {hour:'2-digit', minute:'2-digit', hour12:false});
+        if (msg.fromAdmin) {
+            row.innerHTML = `<div class="cp-avatar">관</div><div class="cp-msg-content"><span class="cp-sender">관리자</span><div class="cp-bubble admin">${escHtml(msg.content)}</div><span class="cp-time">${time}</span></div>`;
+        } else {
+            row.innerHTML = `<div class="cp-msg-content"><div class="cp-bubble mine">${escHtml(msg.content)}</div><span class="cp-time">${time}</span></div>`;
+        }
+        container.appendChild(row);
+        if (scroll !== false) container.scrollTop = container.scrollHeight;
+    }
+
+    function cpSendMessage() {
+        const input = document.getElementById('cpInput');
+        const content = input.value.trim();
+        if (!content || !cpStompClient) return;
+        cpStompClient.send('/app/chat/user/send', {}, JSON.stringify({content}));
+        cpRenderMessage({content, fromAdmin: false});
+        input.value = '';
+    }
+
+    function escHtml(t) { return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    document.getElementById('cpInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); cpSendMessage(); }
+    });
+
+    (function connectWS() {
+        const socket = new SockJS('/ws');
+        cpStompClient = Stomp.over(socket);
+        cpStompClient.debug = null;
+        cpStompClient.connect({}, function() {
+            cpStompClient.subscribe('/user/queue/chat', function(frame) {
+                const msg = JSON.parse(frame.body);
+                if (!msg.fromAdmin) return;
+                if (cpPanelOpen) {
+                    cpRenderMessage(msg);
+                } else {
+                    const badge = document.getElementById('chatBadge');
+                    if (badge) {
+                        const cur = parseInt(badge.textContent) || 0;
+                        badge.textContent = cur + 1;
+                        badge.style.display = 'flex';
+                    }
+                }
+            });
+        });
+    })();
+</script>
+
+</div>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.example.vendingmachine.controller;
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.domain.PurchaseHistory;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
+import com.example.vendingmachine.service.ChatService;
 import com.example.vendingmachine.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class OrderViewController {
 
     private final PurchaseHistoryRepository purchaseHistoryRepository;
     private final MemberService memberService;
+    private final ChatService chatService;
 
     @GetMapping("/my")
     public String myOrders(HttpSession session, Model model) {
@@ -55,6 +57,7 @@ public class OrderViewController {
         model.addAttribute("totalEarnedPoints", orders.stream().mapToInt(o -> o.getEarnedPoints() != null ? o.getEarnedPoints() : 0).sum());
         model.addAttribute("orderCount", orders.size());
         model.addAttribute("now", java.time.LocalDateTime.now());
+        model.addAttribute("unreadCount", chatService.countUnreadForUser(loginMember.getUsername()));
 
         return "order-history";
     }
