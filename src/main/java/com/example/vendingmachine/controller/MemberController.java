@@ -30,11 +30,17 @@ public class MemberController {
 
     // 3. 회원가입 처리하기
     @PostMapping("/signup")
-    public String signup(@ModelAttribute Member member) {
+    public String signup(@ModelAttribute Member member, Model model) {
         System.out.println("=== 회원가입 컨트롤러 요청 도착 ===");
         System.out.println("아이디: " + member.getUsername());
 
-        memberService.join(member);
+        try {
+            memberService.join(member);
+        } catch (IllegalStateException e) {
+            model.addAttribute("error", e.getMessage());
+            model.addAttribute("member", member);
+            return "signup";
+        }
 
         System.out.println("=== 서비스 로직 실행 후 리다이렉트 ===");
         return "redirect:/login";
