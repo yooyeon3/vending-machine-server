@@ -162,4 +162,56 @@ public class MemberService {
     public Member findById(Long id) {
         return memberRepository.findById(id).orElse(null);
     }
+
+    // 아이디 찾기
+    public String findUsername(String name, String phoneNumber) {
+        if (name == null || phoneNumber == null) return null;
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+        
+        return memberRepository.findAll().stream()
+                .filter(m -> m.getName() != null && m.getName().equals(name.trim()))
+                .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
+                .map(Member::getUsername)
+                .findFirst()
+                .orElse(null);
+    }
+
+    // 본인 확인 (side-effect 없음)
+    public boolean verifyMember(String username, String phoneNumber) {
+        if (username == null || phoneNumber == null) return false;
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+
+        return memberRepository.findByUsername(username.trim())
+                .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
+                .isPresent();
+    }
+
+    // 임시 비밀번호 발급
+    public String issueTemporaryPassword(String username, String phoneNumber) {
+        if (username == null || phoneNumber == null) return null;
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+
+        return memberRepository.findByUsername(username.trim())
+                .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
+                .map(member -> {
+                    String tempPw = java.util.UUID.randomUUID().toString().substring(0, 8);
+                    member.setPassword(passwordEncoder.encode(tempPw));
+                    memberRepository.save(member);
+                    return tempPw;
+                }).orElse(null);
+    }
+
+    // 비밀번호 재설정 (기존 메서드 유지하되 유연하게 수정)
+    public boolean resetPassword(String username, String phoneNumber, String newPassword) {
+        if (username == null || phoneNumber == null || newPassword == null) return false;
+        String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
+
+        return memberRepository.findByUsername(username.trim())
+                .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
+                .map(member -> {
+                    member.setPassword(passwordEncoder.encode(newPassword));
+                    memberRepository.save(member);
+                    return true;
+                }).orElse(false);
+    }
 }
