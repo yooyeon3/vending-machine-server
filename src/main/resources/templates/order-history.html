@@ -244,6 +244,8 @@
 
 <div id="toast">PIN 번호가 복사되었습니다!</div>
 
+<th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
+
 <script th:inline="javascript">
     // 프로그레스 바 애니메이션
     window.onload = () => {
