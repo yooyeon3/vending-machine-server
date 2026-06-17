@@ -338,14 +338,19 @@
             }
 
             try {
-                const requests = items.map(name => fetch('/purchase', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                    body: 'productName=' + encodeURIComponent(name)
-                }));
-                await Promise.all(requests);
+                let lastUrl = "/";
+                for (const name of items) {
+                    const response = await fetch('/purchase', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
+                        body: 'productName=' + encodeURIComponent(name)
+                    });
+                    if (response.redirected) {
+                        lastUrl = response.url;
+                    }
+                }
                 alert('결제가 완료되었습니다!');
-                location.reload();
+                location.href = lastUrl;
             } catch (error) {
                 alert('구매 처리 중 오류가 발생했습니다.');
             }

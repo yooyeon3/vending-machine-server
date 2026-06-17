@@ -1,6 +1,8 @@
 package com.example.vendingmachine.controller;
 
 import com.example.vendingmachine.domain.Member;
+import com.example.vendingmachine.repository.MemberRepository;
+import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
 import com.example.vendingmachine.repository.InquiryRepository;
 import com.example.vendingmachine.service.MemberService;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 public class AdminMemberController {
 
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
+    private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
     private final InquiryRepository inquiryRepository;
 
@@ -27,9 +31,17 @@ public class AdminMemberController {
     public String memberListPage(Model model) {
         List<Member> members = memberService.findAll();
         
-        Map<String, Integer> productPrices = new HashMap<>();
-        productPrices.put("펩시 콜라", 1500);
-        productPrices.put("레쓰비 마일드 커피", 1200);
+        // DB의 모든 상품 정보를 가져와 가격 맵 생성
+        Map<String, Integer> productPrices = productRepository.findAll().stream()
+                .collect(Collectors.toMap(
+                    com.example.vendingmachine.domain.Product::getName,
+                    com.example.vendingmachine.domain.Product::getPrice,
+                    (existing, replacement) -> existing // 중복 이름 발생 시 기존 값 유지
+                ));
+        
+        // 기본 상품들 보정 (혹시 이름이 바뀌었을 경우 대비)
+        productPrices.putIfAbsent("펩시 콜라", 1500);
+        productPrices.putIfAbsent("레쓰비 마일드 커피", 1200);
 
         int totalRevenue = 0;
         int diamondCount = 0;
@@ -42,7 +54,7 @@ public class AdminMemberController {
             List<com.example.vendingmachine.domain.PurchaseHistory> histories = purchaseHistoryRepository.findByBuyerName(buyerName);
             
             int totalSpent = histories.stream()
-                    .mapToInt(h -> productPrices.getOrDefault(h.getProductName(), 0))
+                    .mapToInt(h -> h.getPaidPrice() != null ? h.getPaidPrice() : productPrices.getOrDefault(h.getProductName(), 0))
                     .sum();
             
             stat.put("purchaseCount", histories.size());

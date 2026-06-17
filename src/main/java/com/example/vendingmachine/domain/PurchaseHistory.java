@@ -18,6 +18,10 @@ public class PurchaseHistory {
     private String buyerName;   // 구매자 이름
     private String phoneNumber; // 구매자 전화번호
 
+    private String pinCode;     // 발급된 PIN 번호
+    private LocalDateTime expiryDate; // PIN 만료 일시
+    private boolean isUsed = false;   // 사용 여부
+
     private LocalDateTime purchaseTime; // 구매한 시간
 
     // DB에 저장되기 직전에 현재 시간을 자동으로 기록해줍니다.

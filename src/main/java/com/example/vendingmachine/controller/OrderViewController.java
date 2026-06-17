@@ -41,6 +41,7 @@ public class OrderViewController {
         model.addAttribute("grade", grade);
         model.addAttribute("totalSpent", orders.stream().mapToInt(o -> o.getPaidPrice() != null ? o.getPaidPrice() : 0).sum());
         model.addAttribute("orderCount", orders.size());
+        model.addAttribute("now", java.time.LocalDateTime.now());
 
         return "order-history";
     }

@@ -67,6 +67,27 @@
         .back-btn { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; color: var(--text-sub); text-decoration: none; font-size: 14px; font-weight: 600; transition: color 0.2s; }
         .back-btn:hover { color: var(--primary); }
 
+        /* PIN 번호 표시 */
+        .order-pin-box { margin-top: 12px; padding: 10px 15px; background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .pin-info { display: flex; align-items: center; gap: 10px; }
+        .pin-label-mini { font-size: 11px; color: var(--text-sub); font-weight: 700; text-transform: uppercase; }
+        .pin-text { font-family: 'Monaco', 'Consolas', monospace; font-weight: 700; color: var(--text-main); font-size: 14px; letter-spacing: 0.5px; }
+        .pin-status { font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; }
+        .status-valid { background: #dcfce7; color: #15803d; }
+        .status-expired { background: #fee2e2; color: #b91c1c; }
+        .status-used { background: #f1f5f9; color: #64748b; }
+        .copy-btn { background: var(--primary); color: white; border: none; font-size: 11px; font-weight: 700; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: opacity 0.2s; }
+        .copy-btn:hover { opacity: 0.8; }
+
+        #toast { visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 10px; padding: 12px; position: fixed; z-index: 1000; bottom: 30px; left: 50%; transform: translateX(-50%); font-size: 13px; }
+        #toast.show { visibility: visible; animation: fadeInOut 2s; }
+        @keyframes fadeInOut {
+            0% { opacity: 0; bottom: 0; }
+            20% { opacity: 1; bottom: 30px; }
+            80% { opacity: 1; bottom: 30px; }
+            100% { opacity: 0; bottom: 20px; }
+        }
+
         @media (max-width: 640px) {
             .summary-grid { grid-template-columns: 1fr; }
             .order-item { flex-direction: column; align-items: flex-start; gap: 20px; }
@@ -111,17 +132,36 @@
     </div>
 
     <div class="order-list" th:if="${not #lists.isEmpty(orders)}">
-        <div class="order-item" th:each="order : ${orders}">
-            <div class="order-info">
-                <div class="order-icon" th:text="${order.productName.contains('커피') ? '☕' : '🥤'}">🥤</div>
-                <div class="order-details">
-                    <div class="order-name" th:text="${order.productName}">상품명</div>
-                    <div class="order-date" th:text="${#temporals.format(order.purchaseTime, 'yyyy.MM.dd HH:mm:ss')}">2026.06.16 12:00:00</div>
+        <div style="display: flex; flex-direction: column; gap: 16px;" th:each="order : ${orders}">
+            <div class="order-item">
+                <div class="order-info">
+                    <div class="order-icon" th:text="${order.productName.contains('커피') ? '☕' : '🥤'}">🥤</div>
+                    <div class="order-details">
+                        <div class="order-name" th:text="${order.productName}">상품명</div>
+                        <div class="order-date" th:text="${#temporals.format(order.purchaseTime, 'yyyy.MM.dd HH:mm:ss')}">2026.06.16 12:00:00</div>
+                    </div>
+                </div>
+                <div class="order-meta">
+                    <div class="order-price" th:text="${#numbers.formatInteger(order.paidPrice ?: 0, 0, 'COMMA')} + '원'">0원</div>
+                    <div class="order-points" th:if="${order.earnedPoints > 0}" th:text="'+ ' + ${order.earnedPoints} + 'P 적립'">+0P 적립</div>
                 </div>
             </div>
-            <div class="order-meta">
-                <div class="order-price" th:text="${#numbers.formatInteger(order.paidPrice ?: 0, 0, 'COMMA')} + '원'">0원</div>
-                <div class="order-points" th:if="${order.earnedPoints > 0}" th:text="'+ ' + ${order.earnedPoints} + 'P 적립'">+0P 적립</div>
+            <!-- PIN 번호 및 상태 표시 (구매 내역 바로 아래) -->
+            <div class="order-pin-box" th:if="${order.pinCode != null}">
+                <div class="pin-info">
+                    <span class="pin-label-mini">PIN</span>
+                    <span class="pin-text" th:id="'pin-' + ${order.id}" th:text="${order.pinCode}">A4B9-8K2L</span>
+                    
+                    <!-- 상태 표시 로직 -->
+                    <th:block th:if="${order.used}">
+                        <span class="pin-status status-used">사용됨</span>
+                    </th:block>
+                    <th:block th:if="${!order.used}">
+                        <span th:if="${now.isBefore(order.expiryDate)}" class="pin-status status-valid">유효함</span>
+                        <span th:if="${now.isAfter(order.expiryDate)}" class="pin-status status-expired">만료됨</span>
+                    </th:block>
+                </div>
+                <button class="copy-btn" th:onclick="|copyPin('${order.id}')|">복사</button>
             </div>
         </div>
     </div>
@@ -133,6 +173,19 @@
         <a href="/" class="btn-primary" style="display: inline-block; margin-top: 20px; padding: 12px 24px; background: var(--text-main); color: white; border-radius: 12px; text-decoration: none; font-weight: 700;">쇼핑하러 가기</a>
     </div>
 </div>
+
+<div id="toast">PIN 번호가 복사되었습니다!</div>
+
+<script th:inline="javascript">
+    function copyPin(id) {
+        const pinText = document.getElementById('pin-' + id).innerText;
+        navigator.clipboard.writeText(pinText).then(() => {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = ""; }, 2000);
+        });
+    }
+</script>
 
 <div style="height: 60px;"></div>
 
