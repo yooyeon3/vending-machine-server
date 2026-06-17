@@ -1,6 +1,7 @@
 package com.example.vendingmachine.controller;
 
 import com.example.vendingmachine.domain.Member;
+import com.example.vendingmachine.service.ChatService;
 import com.example.vendingmachine.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class MemberController {
 
     private final MemberService memberService;
+    private final ChatService chatService;
 
     // 1. 로그인 화면 보여주기
     @GetMapping("/login")
@@ -128,7 +130,8 @@ public class MemberController {
         
         model.addAttribute("member", member);
         model.addAttribute("progress", progress);
-        
+        model.addAttribute("unreadCount", chatService.countUnreadForUser(member.getUsername()));
+
         return "mypage";
     }
 
