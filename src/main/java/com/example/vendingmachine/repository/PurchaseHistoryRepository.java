@@ -13,6 +13,7 @@ public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory
     long countByBuyerName(String buyerName);
     List<PurchaseHistory> findByBuyerName(String buyerName);
     List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeDesc(String buyerName, LocalDateTime since);
+    List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(String buyerName, LocalDateTime since);
 
     @Query("SELECT p.productName, COUNT(p) as count FROM PurchaseHistory p WHERE p.buyerName = :buyerName GROUP BY p.productName ORDER BY count DESC")
     List<Object[]> findTopProductsByBuyerName(@Param("buyerName") String buyerName, Pageable pageable);

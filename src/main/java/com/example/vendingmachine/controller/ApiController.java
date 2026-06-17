@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @CrossOrigin(origins = "*")
@@ -38,35 +40,91 @@ public class ApiController {
     @GetMapping("/api/delivery/status")
     public Map<String, Object> getDeliveryStatus(HttpSession session) {
         Member loginMember = (Member) session.getAttribute("loginMember");
-        if (loginMember == null) {
-            return Map.of("active", false);
+        if (loginMember == null) return Map.of("active", false);
+
+        LocalDateTime since = LocalDateTime.now().minusMinutes(30);
+        List<PurchaseHistory> orders = purchaseHistoryRepository
+                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(loginMember.getName(), since);
+
+        if (orders.isEmpty()) return Map.of("active", false);
+
+        // 로봇 일정 시뮬레이션: 5분 배달 + 2분 복귀 = 7분 사이클
+        final int DELIVERY_SECS = 300;
+        final int CYCLE_SECS = 420;
+        LocalDateTime now = LocalDateTime.now();
+
+        // 로봇 사이클(7분) 안에 들어온 주문은 같은 배달 묶음으로 처리
+        // (로봇이 이동 중이면 추가 주문도 함께 가져옴)
+        List<List<PurchaseHistory>> batches = new ArrayList<>();
+        List<PurchaseHistory> group = new ArrayList<>();
+        LocalDateTime cycleEnd = orders.get(0).getPurchaseTime().plusSeconds(CYCLE_SECS);
+        group.add(orders.get(0));
+        for (int i = 1; i < orders.size(); i++) {
+            LocalDateTime orderTime = orders.get(i).getPurchaseTime();
+            if (!orderTime.isAfter(cycleEnd)) {
+                group.add(orders.get(i));
+            } else {
+                batches.add(new ArrayList<>(group));
+                group.clear();
+                group.add(orders.get(i));
+                cycleEnd = orderTime.plusSeconds(CYCLE_SECS);
+            }
+        }
+        batches.add(group);
+
+        List<LocalDateTime> deliveryStarts = new ArrayList<>();
+        LocalDateTime robotFreeAt = null;
+        for (List<PurchaseHistory> batch : batches) {
+            LocalDateTime batchTime = batch.get(0).getPurchaseTime();
+            LocalDateTime start = (robotFreeAt == null || batchTime.isAfter(robotFreeAt))
+                    ? batchTime : robotFreeAt;
+            deliveryStarts.add(start);
+            robotFreeAt = start.plusSeconds(CYCLE_SECS);
         }
 
-        LocalDateTime since = LocalDateTime.now().minusMinutes(6);
-        List<PurchaseHistory> recent = purchaseHistoryRepository
-                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeDesc(loginMember.getName(), since);
-
-        if (recent.isEmpty()) {
-            return Map.of("active", false);
+        // 현재 진행 중인 배달 묶음 찾기
+        int activeIdx = -1;
+        for (int i = 0; i < batches.size(); i++) {
+            LocalDateTime start = deliveryStarts.get(i);
+            if (!now.isBefore(start) && now.isBefore(start.plusSeconds(CYCLE_SECS))) {
+                activeIdx = i;
+                break;
+            }
         }
+        if (activeIdx == -1) return Map.of("active", false);
 
-        PurchaseHistory latest = recent.get(0);
-        long elapsed = ChronoUnit.SECONDS.between(latest.getPurchaseTime(), LocalDateTime.now());
-        int totalSec = 300; // 5분 배달 시뮬레이션 (로봇 연동 시 실제 좌표로 교체)
-        int progress = (int) Math.min(100, elapsed * 100L / totalSec);
+        List<PurchaseHistory> activeBatch = batches.get(activeIdx);
+        LocalDateTime deliveryStart = deliveryStarts.get(activeIdx);
+        long elapsed = ChronoUnit.SECONDS.between(deliveryStart, now);
+        boolean arrived = elapsed >= DELIVERY_SECS;
+        int progress = (int) Math.min(100, elapsed * 100L / DELIVERY_SECS);
+
+        // 품목별 갯수 요약 (ex. "콜라 x2, 사이다")
+        Map<String, Long> counts = activeBatch.stream()
+                .collect(Collectors.groupingBy(PurchaseHistory::getProductName, Collectors.counting()));
+        String productSummary = counts.entrySet().stream()
+                .map(e -> e.getKey() + (e.getValue() > 1 ? " x" + e.getValue() : ""))
+                .collect(Collectors.joining(", "));
+
+        // 대기 큐
+        int queueCount = batches.size() - activeIdx - 1;
+        String nextProductName = queueCount > 0
+                ? batches.get(activeIdx + 1).get(0).getProductName() : null;
+
+        long remaining = Math.max(0, DELIVERY_SECS - elapsed);
+        String eta = arrived ? "도착!" : (remaining / 60) + "분 " + (remaining % 60) + "초";
 
         // 출발지(8,12) → 목적지(85,80): 로봇 연동 시 실제 좌표로 교체
         double startX = 8.0, startY = 12.0, endX = 85.0, endY = 80.0;
-        double t = progress / 100.0;
-
-        long remaining = Math.max(0, totalSec - elapsed);
-        String eta = (remaining / 60) + "분 " + (remaining % 60) + "초";
+        double t = Math.min(1.0, (double) elapsed / DELIVERY_SECS);
 
         Map<String, Object> result = new HashMap<>();
         result.put("active", true);
         result.put("progress", progress);
-        result.put("arrived", progress >= 100);
-        result.put("productName", latest.getProductName());
+        result.put("arrived", arrived);
+        result.put("productName", productSummary);
+        result.put("queueCount", queueCount);
+        result.put("nextProductName", nextProductName);
         result.put("robotX", startX + (endX - startX) * t);
         result.put("robotY", startY + (endY - startY) * t);
         result.put("destX", endX);

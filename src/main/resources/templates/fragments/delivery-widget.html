@@ -13,9 +13,9 @@
   #dw-widget {
     position: fixed; bottom: 20px; right: 20px; width: 276px;
     background: white; border-radius: 18px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.16); z-index: 9000;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22); z-index: 9000;
     font-family: 'Pretendard', sans-serif; overflow: hidden;
-    border: 1px solid #e2e8f0; display: none;
+    border: 2px solid #64748b; display: none;
   }
   #dw-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -23,9 +23,9 @@
     background: linear-gradient(135deg, #6e8efb, #a777e3); color: white;
     cursor: pointer;
   }
-  #dw-header-left { display: flex; flex-direction: column; gap: 1px; }
+  #dw-header-left { display: flex; flex-direction: column; gap: 2px; }
   #dw-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 5px; }
-  #dw-product-label { font-size: 11px; opacity: 0.85; font-weight: 500; }
+  #dw-product-label { font-size: 11px; opacity: 0.9; font-weight: 500; }
   #dw-toggle-btn {
     background: none; border: none; color: rgba(255,255,255,0.8);
     cursor: pointer; font-size: 18px; padding: 0 2px; line-height: 1;
@@ -36,7 +36,7 @@
   #dw-map {
     position: relative; margin: 10px 12px 8px; height: 148px;
     background: #f8fafc; border-radius: 12px; overflow: hidden;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #cbd5e1;
   }
   #dw-grid {
     position: absolute; inset: 0;
@@ -72,7 +72,7 @@
     display: none; text-align: center; padding: 22px 0 8px;
     font-size: 15px; font-weight: 700; color: #22c55e;
   }
-  #dw-footer { padding: 0 12px 12px; }
+  #dw-footer { padding: 0 12px 10px; }
   #dw-progress-bg {
     height: 6px; background: #f1f5f9; border-radius: 6px;
     overflow: hidden; margin-bottom: 7px;
@@ -85,6 +85,12 @@
   #dw-eta-row {
     display: flex; justify-content: space-between;
     font-size: 12px; color: #475569; font-weight: 600;
+  }
+  #dw-queue-info {
+    display: none; margin-top: 7px; padding: 6px 10px;
+    background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;
+    font-size: 11px; color: #64748b; font-weight: 500;
+    text-align: center;
   }
 </style>
 
@@ -119,6 +125,7 @@
         <span id="dw-eta-text">대기 중...</span>
         <span id="dw-pct-text">0%</span>
       </div>
+      <div id="dw-queue-info"></div>
     </div>
   </div>
 </div>
@@ -175,21 +182,35 @@
         if (!data.active) { widget.style.display = 'none'; return; }
 
         widget.style.display = 'block';
-        document.getElementById('dw-product-label').textContent = data.productName;
-        document.getElementById('dw-progress-fill').style.width  = data.progress + '%';
+
+        // 헤더 레이블: 축소 시에도 품목+갯수+ETA 보임
+        var label = data.productName;
+        if (!data.arrived) label += ' · ' + data.eta;
+        document.getElementById('dw-product-label').textContent = label;
+
+        document.getElementById('dw-progress-fill').style.width = data.progress + '%';
         document.getElementById('dw-pct-text').textContent = data.progress + '%';
 
         if (data.arrived) {
           document.getElementById('dw-eta-text').textContent = '도착 완료!';
           document.getElementById('dw-map').style.display     = 'none';
-          document.getElementById('dw-arrived').style.display = '';
-          document.getElementById('dw-footer').style.display  = '';
+          document.getElementById('dw-arrived').style.display = 'block';
           document.getElementById('dw-progress-fill').style.width = '100%';
         } else {
           document.getElementById('dw-eta-text').textContent  = '예상 도착: ' + data.eta;
           document.getElementById('dw-map').style.display     = '';
           document.getElementById('dw-arrived').style.display = 'none';
           setPos(data.robotX, data.robotY, data.destX, data.destY);
+        }
+
+        // 대기 큐 표시
+        var queueEl = document.getElementById('dw-queue-info');
+        if (data.queueCount > 0) {
+          queueEl.textContent = '⏳ 다음 대기: ' + data.nextProductName
+            + (data.queueCount > 1 ? ' 외 ' + (data.queueCount - 1) + '건' : '');
+          queueEl.style.display = 'block';
+        } else {
+          queueEl.style.display = 'none';
         }
       })
       .catch(function () {});
