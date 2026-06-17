@@ -21,4 +21,16 @@ public class Member {
     private String name;     // 회원 이름
 
     private String phoneNumber; // 전화번호
+
+    private java.time.LocalDateTime createdAt; // 가입일
+
+    @Column(columnDefinition = "TEXT")
+    private String adminMemo; // 관리자용 메모
+
+    private Integer points = 0; // 고객 보유 포인트
+
+    @PrePersist
+    public void prePersist() {
+        this.createdAt = java.time.LocalDateTime.now();
+    }
 }

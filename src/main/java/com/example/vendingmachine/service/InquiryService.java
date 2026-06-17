@@ -57,17 +57,17 @@ public class InquiryService {
 
     // 사용자용 - 안읽은 관리자 답글 개수
     public long countUnreadReplies(String username) {
-        return inquiryReplyRepository.countByInquiry_UsernameAndAdminReplyTrueAndReadFalse(username);
+        return inquiryReplyRepository.countByInquiry_UsernameAndAdminReplyTrueAndIsReadFalse(username);
     }
 
     // 관리자용 - 사용자가 남긴 안읽은 답글 개수
     public long countUnreadUserReplies() {
-        return inquiryReplyRepository.countByAdminReplyFalseAndReadFalse();
+        return inquiryReplyRepository.countByAdminReplyFalseAndIsReadFalse();
     }
 
     // 사용자용 - 안읽은 관리자 답글이 있는 문의 ID 집합 (빨간 점 표시용)
     public Set<Long> getUnreadInquiryIdsForUser(String username) {
-        return inquiryReplyRepository.findByInquiry_UsernameAndAdminReplyTrueAndReadFalse(username)
+        return inquiryReplyRepository.findByInquiry_UsernameAndAdminReplyTrueAndIsReadFalse(username)
                 .stream()
                 .map(r -> r.getInquiry().getId())
                 .collect(Collectors.toSet());
@@ -77,7 +77,7 @@ public class InquiryService {
     public Set<Long> getUnreadInquiryIdsForAdmin() {
         Set<Long> ids = new HashSet<>();
         inquiryRepository.findByRepliesEmpty().forEach(i -> ids.add(i.getId()));
-        inquiryReplyRepository.findByAdminReplyFalseAndReadFalse().forEach(r -> ids.add(r.getInquiry().getId()));
+        inquiryReplyRepository.findByAdminReplyFalseAndIsReadFalse().forEach(r -> ids.add(r.getInquiry().getId()));
         return ids;
     }
 

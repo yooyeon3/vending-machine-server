@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>결제 성공 - PIMTO</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; color: #1e293b; padding: 20px; }
+        
+        .success-container { max-width: 450px; width: 100%; animation: slideUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ticket { background: #ffffff; border-radius: 28px; overflow: hidden; box-shadow: 0 20px 50px rgba(30, 41, 59, 0.15); position: relative; }
+        
+        /* 티켓 상단 - 성공 메시지 */
+        .ticket-header { background: linear-gradient(135deg, #6e8efb, #a777e3); padding: 40px 30px; text-align: center; color: white; position: relative; }
+        .success-icon { width: 64px; height: 64px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 15px; border: 2px solid rgba(255, 255, 255, 0.5); }
+        .ticket-header h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+        .ticket-header p { margin: 8px 0 0; font-size: 15px; opacity: 0.9; }
+
+        /* 티켓 중단 - 상품 정보 */
+        .ticket-body { padding: 30px; position: relative; border-bottom: 2px dashed #e2e8f0; }
+        .ticket-body::before, .ticket-body::after { content: ''; position: absolute; bottom: -12px; width: 24px; height: 24px; background: #f1f5f9; border-radius: 50%; z-index: 2; }
+        .ticket-body::before { left: -12px; }
+        .ticket-body::after { right: -12px; }
+
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 20px; }
+        .info-label { font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .info-value { font-size: 16px; color: #1e293b; font-weight: 700; text-align: right; }
+        .product-name { font-size: 20px; color: #6e8efb; }
+
+        /* 티켓 하단 - PIN 번호 */
+        .ticket-footer { padding: 40px 30px; text-align: center; background-color: #f8fafc; }
+        .pin-label { font-size: 14px; color: #64748b; font-weight: 700; margin-bottom: 15px; }
+        .pin-code-container { background: white; border: 2px solid #e2e8f0; border-radius: 16px; padding: 20px; margin-bottom: 20px; position: relative; cursor: pointer; transition: all 0.2s; }
+        .pin-code-container:hover { border-color: #6e8efb; transform: scale(1.02); }
+        .pin-code { font-family: 'Monaco', 'Consolas', monospace; font-size: 32px; font-weight: 800; color: #1e293b; letter-spacing: 2px; }
+        
+        .copy-hint { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+
+        .expiry-info { font-size: 13px; color: #ef4444; font-weight: 600; background: #fee2e2; padding: 6px 12px; border-radius: 8px; display: inline-block; margin-top: 10px; }
+
+        /* 바코드 스타일 */
+        .barcode { margin-top: 30px; height: 60px; display: flex; justify-content: center; align-items: flex-end; gap: 2px; opacity: 0.7; }
+        .barcode span { background: #1e293b; width: 2px; height: 100%; }
+        .barcode span:nth-child(2n) { width: 4px; }
+        .barcode span:nth-child(3n) { height: 70%; }
+        .barcode span:nth-child(4n) { width: 1px; }
+
+        /* 하단 버튼 */
+        .action-buttons { display: flex; gap: 12px; margin-top: 30px; width: 100%; }
+        .btn { flex: 1; padding: 16px; border-radius: 16px; font-size: 16px; font-weight: 700; text-decoration: none; text-align: center; transition: all 0.2s; border: none; cursor: pointer; }
+        .btn-primary { background: #1e293b; color: white; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2); }
+        .btn-primary:hover { background: #334155; transform: translateY(-2px); }
+        .btn-secondary { background: white; color: #475569; border: 1px solid #e2e8f0; }
+        .btn-secondary:hover { background: #f8fafc; border-color: #cbd5e1; }
+
+        /* 알림 메시지 스타일 */
+        #toast { visibility: hidden; min-width: 200px; background-color: #333; color: #fff; text-align: center; border-radius: 10px; padding: 16px; position: fixed; z-index: 1000; bottom: 30px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        #toast.show { visibility: visible; animation: fadeInOut 2.5s; }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; bottom: 0; }
+            20% { opacity: 1; bottom: 30px; }
+            80% { opacity: 1; bottom: 30px; }
+            100% { opacity: 0; bottom: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="success-container">
+        <div class="ticket">
+            <div class="ticket-header">
+                <div class="success-icon">✓</div>
+                <h1>결제가 완료되었습니다!</h1>
+                <p>상품 수령을 위한 PIN 번호가 발급되었습니다.</p>
+            </div>
+            
+            <div class="ticket-body">
+                <div class="info-row">
+                    <span class="info-label">상품명</span>
+                    <span class="info-value product-name" th:text="${history.productName}">펩시 콜라</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">결제 금액</span>
+                    <span class="info-value" th:text="${#numbers.formatInteger(history.paidPrice, 0, 'COMMA') + '원'}">1,500원</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">주문 일시</span>
+                    <span class="info-value" th:text="${#temporals.format(history.purchaseTime, 'yyyy-MM-dd HH:mm')}">2026-06-17 14:30</span>
+                </div>
+                <div class="info-row" style="margin-bottom: 0;">
+                    <span class="info-label">구매자</span>
+                    <span class="info-value" th:text="${history.buyerName}">홍길동</span>
+                </div>
+            </div>
+            
+            <div class="ticket-footer">
+                <div class="pin-label">기기 입력용 PIN 번호</div>
+                <div class="pin-code-container" onclick="copyPin()">
+                    <div class="pin-code" id="pinCode" th:text="${history.pinCode}">A4B9-8K2L</div>
+                    <div class="copy-hint">터치하여 번호 복사하기</div>
+                </div>
+                
+                <div class="expiry-info">
+                    ⏳ 만료 일시: <span th:text="${#temporals.format(history.expiryDate, 'MM/dd HH:mm')}">06/18 14:30</span> 까지
+                </div>
+
+                <div class="barcode">
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="/" class="btn btn-secondary">홈으로 이동</a>
+            <a href="/orders/my" class="btn btn-primary">주문내역 확인</a>
+        </div>
+    </div>
+
+    <div id="toast">PIN 번호가 복사되었습니다!</div>
+
+    <script th:inline="javascript">
+        function copyPin() {
+            const pinText = document.getElementById('pinCode').innerText;
+            navigator.clipboard.writeText(pinText).then(() => {
+                showToast();
+            }).catch(err => {
+                console.error('복사 실패:', err);
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "show";
+            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
+        }
+    </script>
+</body>
+</html>

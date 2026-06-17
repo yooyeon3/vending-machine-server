@@ -18,6 +18,7 @@ public class ViewController {
     private final ChatService chatService;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
+    private final com.example.vendingmachine.service.MemberService memberService;
 
     @GetMapping("/")
     public String home(Authentication authentication, HttpSession session, Model model) {
@@ -39,6 +40,12 @@ public class ViewController {
 
             if (loginMember != null) {
                 model.addAttribute("unreadCount", chatService.countUnreadForUser(loginMember.getUsername()));
+                
+                // 등급 및 혜택 정보 추가
+                String grade = memberService.getGrade(loginMember);
+                model.addAttribute("grade", grade);
+                model.addAttribute("discountRate", (int)(memberService.getDiscountRate(grade) * 100));
+                model.addAttribute("pointRate", (int)(memberService.getPointRate(grade) * 100));
             }
         }
         model.addAttribute("products", productRepository.findAll());

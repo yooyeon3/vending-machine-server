@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
@@ -277,7 +277,7 @@
             }
 
             // 2. 총 매출 및 상품별 집계
-            const price = productPrices[productName] || 0;
+            const price = item.paidPrice !== null ? item.paidPrice : (productPrices[productName] || 0);
             totalRevenue += price;
             productCounts[productName] = (productCounts[productName] || 0) + 1;
         });

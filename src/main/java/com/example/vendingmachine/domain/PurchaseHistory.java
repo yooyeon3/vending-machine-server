@@ -13,8 +13,14 @@ public class PurchaseHistory {
     private Long id;
 
     private String productName; // 구매한 상품명
+    private Integer paidPrice;  // 실제 결제 금액
+    private Integer earnedPoints; // 이번 구매로 적립된 포인트
     private String buyerName;   // 구매자 이름
     private String phoneNumber; // 구매자 전화번호
+
+    private String pinCode;     // 발급된 PIN 번호
+    private LocalDateTime expiryDate; // PIN 만료 일시
+    private boolean isUsed = false;   // 사용 여부
 
     private LocalDateTime purchaseTime; // 구매한 시간
 

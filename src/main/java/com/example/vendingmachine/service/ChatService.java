@@ -27,24 +27,24 @@ public class ChatService {
     }
 
     public long countUnreadForUser(String username) {
-        return chatMessageRepository.countByUserUsernameAndFromAdminTrueAndReadFalse(username);
+        return chatMessageRepository.countByUserUsernameAndFromAdminTrueAndIsReadFalse(username);
     }
 
     public long countUnreadForAdmin() {
-        return chatMessageRepository.countByFromAdminFalseAndReadFalse();
+        return chatMessageRepository.countByFromAdminFalseAndIsReadFalse();
     }
 
     public long countUnreadFromUser(String username) {
-        return chatMessageRepository.countByUserUsernameAndFromAdminFalseAndReadFalse(username);
+        return chatMessageRepository.countByUserUsernameAndFromAdminFalseAndIsReadFalse(username);
     }
 
     public void markAdminMessagesAsRead(String username) {
-        chatMessageRepository.findByUserUsernameAndFromAdminTrueAndReadFalse(username)
+        chatMessageRepository.findByUserUsernameAndFromAdminTrueAndIsReadFalse(username)
                 .forEach(ChatMessage::markAsRead);
     }
 
     public void markUserMessagesAsRead(String username) {
-        chatMessageRepository.findByUserUsernameAndFromAdminFalseAndReadFalse(username)
+        chatMessageRepository.findByUserUsernameAndFromAdminFalseAndIsReadFalse(username)
                 .forEach(ChatMessage::markAsRead);
     }
 
@@ -64,7 +64,7 @@ public class ChatService {
                 item.put("lastTime", "");
                 item.put("sortKey", null);
             }
-            item.put("unreadCount", chatMessageRepository.countByUserUsernameAndFromAdminFalseAndReadFalse(username));
+            item.put("unreadCount", chatMessageRepository.countByUserUsernameAndFromAdminFalseAndIsReadFalse(username));
             return item;
         }).sorted((a, b) -> {
             var ta = (java.time.LocalDateTime) a.get("sortKey");

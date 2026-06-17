@@ -8,8 +8,13 @@ import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDateTime;
+import java.security.SecureRandom;
 
 @Controller
 public class PurchaseController {
@@ -17,14 +22,21 @@ public class PurchaseController {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+    private final com.example.vendingmachine.service.MemberService memberService;
+
+    // PIN 생성을 위한 문자열 및 랜덤 객체
+    private static final String PIN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private final SecureRandom random = new SecureRandom();
 
     // 생성자를 통해 의존성 주입
     public PurchaseController(MemberRepository memberRepository,
                               ProductRepository productRepository,
-                              PurchaseHistoryRepository purchaseHistoryRepository) {
+                              PurchaseHistoryRepository purchaseHistoryRepository,
+                              com.example.vendingmachine.service.MemberService memberService) {
         this.memberRepository = memberRepository;
         this.productRepository = productRepository;
         this.purchaseHistoryRepository = purchaseHistoryRepository;
+        this.memberService = memberService;
     }
 
     @PostMapping("/purchase")
@@ -44,7 +56,6 @@ public class PurchaseController {
             product = productRepository.findById(productId).orElse(null);
         }
         
-        // ID로 못 찾았거나 이름이 넘어왔다면 이름으로 다시 시도
         if (product == null && productName != null) {
             product = productRepository.findAll().stream()
                     .filter(p -> p.getName().equals(productName))
@@ -53,20 +64,74 @@ public class PurchaseController {
 
         // 3. 구매 처리
         if (member != null && product != null && product.getStock() > 0) {
+            // 등급에 따른 혜택 계산
+            String grade = memberService.getGrade(member);
+            double discountRate = memberService.getDiscountRate(grade);
+            double pointRate = memberService.getPointRate(grade);
+
+            int originalPrice = product.getPrice();
+            int discountAmount = (int) (originalPrice * discountRate);
+            int finalPrice = originalPrice - discountAmount;
+            int earnedPoints = (int) (finalPrice * pointRate);
+
+            // 재고 차감 및 포인트 적립
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
+
+            int currentPoints = member.getPoints() != null ? member.getPoints() : 0;
+            member.setPoints(currentPoints + earnedPoints);
+            memberRepository.save(member);
+            
+            // 세션 정보 갱신 (포인트 등)
+            session.setAttribute("loginMember", member);
+
+            // PIN 생성 (XXXX-XXXX 형식)
+            String pinCode = generatePin();
 
             PurchaseHistory history = new PurchaseHistory();
             history.setBuyerName(member.getName());
             history.setPhoneNumber(member.getPhoneNumber());
             history.setProductName(product.getName());
-            purchaseHistoryRepository.save(history);
+            history.setPaidPrice(finalPrice);
+            history.setEarnedPoints(earnedPoints);
+            history.setPinCode(pinCode);
+            history.setExpiryDate(LocalDateTime.now().plusDays(1)); // 유효기간 1일
             
-            System.out.println(">>> 구매 성공: " + product.getName() + " (구매자: " + member.getName() + ")");
+            PurchaseHistory savedHistory = purchaseHistoryRepository.save(history);
+            
+            System.out.println(">>> 구매 성공: " + product.getName() + 
+                               " (PIN: " + pinCode + ", 결제: " + finalPrice + "원)");
+            
+            return "redirect:/purchase/success?id=" + savedHistory.getId();
         } else {
             System.out.println(">>> 구매 실패: 상품 없음 또는 재고 부족 (ID: " + productId + ", Name: " + productName + ")");
         }
 
         return "redirect:/";
+    }
+
+    @GetMapping("/purchase/success")
+    public String purchaseSuccess(@RequestParam("id") Long id, HttpSession session, Model model) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null) return "redirect:/login";
+
+        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+        
+        // 권한 체크: 자신의 구매 내역만 볼 수 있음
+        if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
+            return "redirect:/";
+        }
+
+        model.addAttribute("history", history);
+        return "purchase-success";
+    }
+
+    private String generatePin() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 8; i++) {
+            if (i == 4) sb.append("-");
+            sb.append(PIN_CHARS.charAt(random.nextInt(PIN_CHARS.length())));
+        }
+        return sb.toString();
     }
 }
