@@ -42,6 +42,7 @@ public class PurchaseController {
     @PostMapping("/purchase")
     public String buyProduct(@RequestParam(value = "productId", required = false) Long productId,
                              @RequestParam(value = "productName", required = false) String productName,
+                             @RequestParam(value = "usedPoints", defaultValue = "0") int usedPoints,
                              HttpSession session) {
 
         // 1. 세션 확인
@@ -71,15 +72,22 @@ public class PurchaseController {
 
             int originalPrice = product.getPrice();
             int discountAmount = (int) (originalPrice * discountRate);
-            int finalPrice = originalPrice - discountAmount;
+            int basePrice = originalPrice - discountAmount;
+            
+            // 포인트 사용 처리
+            int actualUsedPoints = Math.min(usedPoints, basePrice); // 결제 금액을 초과하여 포인트를 사용할 수 없음
+            int memberCurrentPoints = member.getPoints() != null ? member.getPoints() : 0;
+            actualUsedPoints = Math.min(actualUsedPoints, memberCurrentPoints); // 보유 포인트를 초과할 수 없음
+
+            int finalPrice = basePrice - actualUsedPoints;
             int earnedPoints = (int) (finalPrice * pointRate);
 
-            // 재고 차감 및 포인트 적립
+            // 데이터 반영
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
 
-            int currentPoints = member.getPoints() != null ? member.getPoints() : 0;
-            member.setPoints(currentPoints + earnedPoints);
+            // 포인트 차감 및 적립
+            member.setPoints(memberCurrentPoints - actualUsedPoints + earnedPoints);
             memberRepository.save(member);
             
             // 세션 정보 갱신 (포인트 등)
@@ -100,7 +108,7 @@ public class PurchaseController {
             PurchaseHistory savedHistory = purchaseHistoryRepository.save(history);
             
             System.out.println(">>> 구매 성공: " + product.getName() + 
-                               " (PIN: " + pinCode + ", 결제: " + finalPrice + "원)");
+                               " (PIN: " + pinCode + ", 결제: " + finalPrice + "원, 포인트사용: " + actualUsedPoints + ")");
             
             return "redirect:/purchase/success?id=" + savedHistory.getId();
         } else {

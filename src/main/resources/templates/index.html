@@ -258,6 +258,15 @@
                         <span>등급 할인 (<span th:text="${discountRate}">0</span>%)</span>
                         <span class="summary-val">-<span id="discount-amount">0</span>원</span>
                     </div>
+                    <!-- 포인트 사용 행 추가 -->
+                    <div class="summary-row" style="border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 5px;">
+                        <span style="font-size: 14px; color: #64748b;">포인트 사용 (보유: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P)</span>
+                        <div style="display: flex; align-items: center; gap: 5px;">
+                            <input type="number" id="point-use-input" value="0" min="0" 
+                                   style="width: 80px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; text-align: right; font-size: 14px;">
+                            <button onclick="useAllPoints()" style="padding: 4px 8px; font-size: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">전체사용</button>
+                        </div>
+                    </div>
                     <div class="summary-row" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
                         <span>총 결제 금액</span>
                         <span class="total-price-text"><span id="total-price">0</span>원</span>
@@ -283,6 +292,7 @@
     <script th:inline="javascript">
         const csrfToken = document.querySelector('input[name="_csrf"]')?.value;
         const discountRate = /*[[${discountRate ?: 0}]]*/ 0;
+        const availablePoints = /*[[${session.loginMember.points ?: 0}]]*/ 0;
 
         // changeQty 함수가 이제 maxStock(재고)을 인자로 받아 제한을 체크합니다.
         function changeQty(elementId, change, pricePerItem, maxStock) {
@@ -299,6 +309,23 @@
             calculateTotal();
         }
 
+        function useAllPoints() {
+            const baseTotalPrice = calculateBaseTotalPrice();
+            document.getElementById('point-use-input').value = Math.min(availablePoints, baseTotalPrice);
+            calculateTotal();
+        }
+
+        function calculateBaseTotalPrice() {
+            let originalTotalPrice = 0;
+            document.querySelectorAll('.counter-val').forEach(el => {
+                const qty = parseInt(el.innerText);
+                const price = parseInt(el.getAttribute('data-price'));
+                originalTotalPrice += (qty * price);
+            });
+            const discountAmount = Math.floor(originalTotalPrice * (discountRate / 100));
+            return originalTotalPrice - discountAmount;
+        }
+
         function calculateTotal() {
             let totalCount = 0;
             let originalTotalPrice = 0;
@@ -312,7 +339,15 @@
             });
 
             const discountAmount = Math.floor(originalTotalPrice * (discountRate / 100));
-            const finalPrice = originalTotalPrice - discountAmount;
+            const basePrice = originalTotalPrice - discountAmount;
+            
+            let usedPoints = parseInt(document.getElementById('point-use-input').value) || 0;
+            if (usedPoints < 0) usedPoints = 0;
+            if (usedPoints > availablePoints) usedPoints = availablePoints;
+            if (usedPoints > basePrice) usedPoints = basePrice;
+            
+            document.getElementById('point-use-input').value = usedPoints;
+            const finalPrice = basePrice - usedPoints;
             
             document.getElementById('total-count').innerText = totalCount;
             if (document.getElementById('discount-amount')) {
@@ -320,6 +355,9 @@
             }
             document.getElementById('total-price').innerText = finalPrice.toLocaleString();
         }
+
+        // 포인트 입력 시 실시간 반영
+        document.getElementById('point-use-input').addEventListener('input', calculateTotal);
 
         async function processOrder() {
             let items = [];
@@ -336,14 +374,27 @@
                 return;
             }
 
+            let remainingPointsToUse = parseInt(document.getElementById('point-use-input').value) || 0;
+
             try {
                 let lastUrl = "/";
                 for (const name of items) {
+                    // 각 개별 상품의 할인가 계산
+                    const productEl = Array.from(document.querySelectorAll('.counter-val')).find(el => el.getAttribute('data-name') === name);
+                    const itemOriginalPrice = parseInt(productEl.getAttribute('data-price'));
+                    const itemBasePrice = itemOriginalPrice - Math.floor(itemOriginalPrice * (discountRate / 100));
+                    
+                    // 남은 포인트 범위 내에서 차감
+                    const pointsForThisItem = Math.min(itemBasePrice, remainingPointsToUse);
+                    
                     const response = await fetch('/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                        body: 'productName=' + encodeURIComponent(name)
+                        body: 'productName=' + encodeURIComponent(name) + '&usedPoints=' + pointsForThisItem
                     });
+                    
+                    remainingPointsToUse -= pointsForThisItem;
+
                     if (response.redirected) {
                         lastUrl = response.url;
                     }
