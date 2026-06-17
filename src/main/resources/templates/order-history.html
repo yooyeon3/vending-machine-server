@@ -125,6 +125,7 @@
     </div>
     <div class="nav" style="display:flex; align-items:center; gap:16px;">
         <a href="/">홈으로</a>
+        <a href="/mypage">마이페이지</a>
         <!-- 채팅 아이콘 -->
         <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
@@ -278,6 +279,9 @@
         });
     }
 </script>
+
+<!-- 채팅 위젯 통합 -->
+<th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 
 </body>
 </html>

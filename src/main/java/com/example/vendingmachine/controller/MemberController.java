@@ -2,12 +2,14 @@ package com.example.vendingmachine.controller;
 
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.service.MemberService;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Controller
 @RequiredArgsConstructor
@@ -109,5 +111,59 @@ public class MemberController {
         }
         
         return "redirect:/login?resetSuccess=true";
+    }
+
+    // 9. 마이페이지 (메인)
+    @GetMapping("/mypage")
+    public String myPage(HttpSession session, Model model) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null) return "redirect:/login";
+
+        // 최신 회원 정보 동기화
+        Member member = memberService.findById(loginMember.getId());
+        session.setAttribute("loginMember", member);
+
+        // 등급 정보 조회
+        MemberService.GradeProgress progress = memberService.getGradeProgress(member);
+        
+        model.addAttribute("member", member);
+        model.addAttribute("progress", progress);
+        
+        return "mypage";
+    }
+
+    // 10. 프로필 수정 처리
+    @PostMapping("/mypage/update")
+    public String updateProfile(@RequestParam String name, @RequestParam String phoneNumber, HttpSession session) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null) return "redirect:/login";
+
+        memberService.updateProfile(loginMember.getId(), name, phoneNumber);
+        return "redirect:/mypage?updateSuccess=true";
+    }
+
+    // 11. 비밀번호 변경 처리
+    @PostMapping("/mypage/password")
+    public String changePassword(@RequestParam String oldPassword, @RequestParam String newPassword, 
+                                 HttpSession session, Model model) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null) return "redirect:/login";
+
+        boolean success = memberService.changePassword(loginMember.getId(), oldPassword, newPassword);
+        if (!success) {
+            return "redirect:/mypage?pwError=true";
+        }
+        return "redirect:/mypage?pwSuccess=true";
+    }
+
+    // 12. 회원 탈퇴 처리
+    @PostMapping("/mypage/withdraw")
+    public String withdraw(HttpSession session) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember != null) {
+            memberService.withdraw(loginMember.getId());
+            session.invalidate(); // 세션 만료
+        }
+        return "redirect:/?withdraw=true";
     }
 }

@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.security.SecureRandom;
 
@@ -42,6 +45,7 @@ public class PurchaseController {
     @PostMapping("/purchase")
     public String buyProduct(@RequestParam(value = "productId", required = false) Long productId,
                              @RequestParam(value = "productName", required = false) String productName,
+                             @RequestParam(value = "usedPoints", defaultValue = "0") int usedPoints,
                              HttpSession session) {
 
         // 1. 세션 확인
@@ -71,15 +75,22 @@ public class PurchaseController {
 
             int originalPrice = product.getPrice();
             int discountAmount = (int) (originalPrice * discountRate);
-            int finalPrice = originalPrice - discountAmount;
+            int basePrice = originalPrice - discountAmount;
+            
+            // 포인트 사용 처리
+            int actualUsedPoints = Math.min(usedPoints, basePrice); // 결제 금액을 초과하여 포인트를 사용할 수 없음
+            int memberCurrentPoints = member.getPoints() != null ? member.getPoints() : 0;
+            actualUsedPoints = Math.min(actualUsedPoints, memberCurrentPoints); // 보유 포인트를 초과할 수 없음
+
+            int finalPrice = basePrice - actualUsedPoints;
             int earnedPoints = (int) (finalPrice * pointRate);
 
-            // 재고 차감 및 포인트 적립
+            // 데이터 반영
             product.setStock(product.getStock() - 1);
             productRepository.save(product);
 
-            int currentPoints = member.getPoints() != null ? member.getPoints() : 0;
-            member.setPoints(currentPoints + earnedPoints);
+            // 포인트 차감 및 적립
+            member.setPoints(memberCurrentPoints - actualUsedPoints + earnedPoints);
             memberRepository.save(member);
             
             // 세션 정보 갱신 (포인트 등)
@@ -100,7 +111,7 @@ public class PurchaseController {
             PurchaseHistory savedHistory = purchaseHistoryRepository.save(history);
             
             System.out.println(">>> 구매 성공: " + product.getName() + 
-                               " (PIN: " + pinCode + ", 결제: " + finalPrice + "원)");
+                               " (PIN: " + pinCode + ", 결제: " + finalPrice + "원, 포인트사용: " + actualUsedPoints + ")");
             
             return "redirect:/purchase/success?id=" + savedHistory.getId();
         } else {
@@ -111,19 +122,39 @@ public class PurchaseController {
     }
 
     @GetMapping("/purchase/success")
-    public String purchaseSuccess(@RequestParam("id") Long id, HttpSession session, Model model) {
+    public String purchaseSuccess(@RequestParam(value = "id", required = false) Long id,
+                                 @RequestParam(value = "ids", required = false) String ids,
+                                 HttpSession session, Model model) {
         Member loginMember = (Member) session.getAttribute("loginMember");
         if (loginMember == null) return "redirect:/login";
 
-        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
-        
-        // 권한 체크: 자신의 구매 내역만 볼 수 있음
-        if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
-            return "redirect:/";
+        if (ids != null && !ids.isEmpty()) {
+            List<Long> idList = Arrays.stream(ids.split(","))
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+            List<PurchaseHistory> histories = purchaseHistoryRepository.findAllById(idList);
+            
+            // 권한 체크 및 필터링
+            histories = histories.stream()
+                    .filter(h -> h.getBuyerName().equals(loginMember.getName()))
+                    .collect(Collectors.toList());
+            
+            if (histories.isEmpty()) return "redirect:/";
+            
+            model.addAttribute("histories", histories);
+            model.addAttribute("history", histories.get(0)); // 호환성 유지
+            return "purchase-success";
+        } else if (id != null) {
+            PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+            if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
+                return "redirect:/";
+            }
+            model.addAttribute("history", history);
+            model.addAttribute("histories", Arrays.asList(history));
+            return "purchase-success";
         }
 
-        model.addAttribute("history", history);
-        return "purchase-success";
+        return "redirect:/";
     }
 
     private String generatePin() {
