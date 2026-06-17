@@ -4,6 +4,7 @@ import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.repository.MemberRepository;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.service.ChatService;
+import com.example.vendingmachine.service.MemberService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -18,7 +19,7 @@ public class ViewController {
     private final ChatService chatService;
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
-    private final com.example.vendingmachine.service.MemberService memberService;
+    private final MemberService memberService;
 
     @GetMapping("/")
     public String home(Authentication authentication, HttpSession session, Model model) {
