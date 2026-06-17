@@ -17,6 +17,49 @@ public class MemberService {
     private final com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository;
     private final com.example.vendingmachine.repository.InquiryRepository inquiryRepository;
 
+    @Transactional(readOnly = true)
+    public GradeProgress getGradeProgress(Member member) {
+        int score = getActivityScore(member);
+        String currentGrade = getGrade(member);
+        String nextGrade;
+        int nextThreshold;
+        int currentThreshold;
+
+        if (score >= 100) {
+            nextGrade = "MAX";
+            nextThreshold = 100;
+            currentThreshold = 100;
+        } else if (score >= 50) {
+            nextGrade = "DIAMOND";
+            nextThreshold = 100;
+            currentThreshold = 50;
+        } else if (score >= 20) {
+            nextGrade = "GOLD";
+            nextThreshold = 50;
+            currentThreshold = 20;
+        } else {
+            nextGrade = "SILVER";
+            nextThreshold = 20;
+            currentThreshold = 0;
+        }
+
+        int pointsToNext = Math.max(0, nextThreshold - score);
+        double progress = currentGrade.equals("DIAMOND") ? 100.0 : 
+                         ((double)(score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+
+        return new GradeProgress(score, currentGrade, nextGrade, pointsToNext, (int)progress);
+    }
+
+    @lombok.AllArgsConstructor
+    @lombok.Getter
+    public static class GradeProgress {
+        private int score;
+        private String currentGrade;
+        private String nextGrade;
+        private int pointsToNext;
+        private int progressPercentage;
+    }
+
     public int getActivityScore(Member member) {
         if (member == null) return 0;
         String buyerName = member.getName() != null ? member.getName() : "";
