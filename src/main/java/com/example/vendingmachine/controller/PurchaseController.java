@@ -13,6 +13,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.security.SecureRandom;
 
@@ -119,19 +122,39 @@ public class PurchaseController {
     }
 
     @GetMapping("/purchase/success")
-    public String purchaseSuccess(@RequestParam("id") Long id, HttpSession session, Model model) {
+    public String purchaseSuccess(@RequestParam(value = "id", required = false) Long id,
+                                 @RequestParam(value = "ids", required = false) String ids,
+                                 HttpSession session, Model model) {
         Member loginMember = (Member) session.getAttribute("loginMember");
         if (loginMember == null) return "redirect:/login";
 
-        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
-        
-        // 권한 체크: 자신의 구매 내역만 볼 수 있음
-        if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
-            return "redirect:/";
+        if (ids != null && !ids.isEmpty()) {
+            List<Long> idList = Arrays.stream(ids.split(","))
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+            List<PurchaseHistory> histories = purchaseHistoryRepository.findAllById(idList);
+            
+            // 권한 체크 및 필터링
+            histories = histories.stream()
+                    .filter(h -> h.getBuyerName().equals(loginMember.getName()))
+                    .collect(Collectors.toList());
+            
+            if (histories.isEmpty()) return "redirect:/";
+            
+            model.addAttribute("histories", histories);
+            model.addAttribute("history", histories.get(0)); // 호환성 유지
+            return "purchase-success";
+        } else if (id != null) {
+            PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+            if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
+                return "redirect:/";
+            }
+            model.addAttribute("history", history);
+            model.addAttribute("histories", Arrays.asList(history));
+            return "purchase-success";
         }
 
-        model.addAttribute("history", history);
-        return "purchase-success";
+        return "redirect:/";
     }
 
     private String generatePin() {

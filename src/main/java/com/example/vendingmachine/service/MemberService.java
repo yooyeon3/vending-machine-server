@@ -138,6 +138,31 @@ public class MemberService {
         return member;
     }
 
+    // [사용자] 프로필 수정 (이름, 전화번호)
+    public void updateProfile(Long id, String name, String phoneNumber) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
+        member.setName(name);
+        member.setPhoneNumber(phoneNumber);
+        memberRepository.save(member);
+    }
+
+    // [사용자] 비밀번호 변경
+    public boolean changePassword(Long id, String oldPassword, String newPassword) {
+        Member member = memberRepository.findById(id).orElse(null);
+        if (member == null || !passwordEncoder.matches(oldPassword, member.getPassword())) {
+            return false;
+        }
+        member.setPassword(passwordEncoder.encode(newPassword));
+        memberRepository.save(member);
+        return true;
+    }
+
+    // [사용자] 회원 탈퇴
+    public void withdraw(Long id) {
+        memberRepository.deleteById(id);
+    }
+
     // [관리자 전용] 모든 회원 목록 조회
     public java.util.List<Member> findAll() {
         return memberRepository.findAll();

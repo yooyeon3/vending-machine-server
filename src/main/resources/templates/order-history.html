@@ -123,9 +123,20 @@
     <div class="logo">
         <a href="/"><img th:src="@{/images/vending-logo.png}" alt="PIMTO"></a>
     </div>
-    <div class="nav">
+    <div class="nav" style="display: flex; align-items: center;">
         <a href="/">홈으로</a>
-        <a href="/logout" style="color: #ef4444;">로그아웃</a>
+        <a href="/mypage">마이페이지</a>
+        <!-- 채팅 알림 아이콘 -->
+        <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer; margin-left: 20px;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span id="chatBadge"
+                  th:text="${unreadCount}"
+                  th:style="${unreadCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+            </span>
+        </div>
+        <a href="/logout" style="color: #ef4444; margin-left: 20px;">로그아웃</a>
     </div>
 </div>
 
@@ -267,6 +278,9 @@
         });
     }
 </script>
+
+<!-- 채팅 위젯 통합 -->
+<th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 
 </body>
 </html>
