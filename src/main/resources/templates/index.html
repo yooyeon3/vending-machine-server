@@ -6,89 +6,89 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; }
-        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #f8fafc; display: flex; flex-direction: column; min-height: 100vh; color: #333; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); position: sticky; top: 0; z-index: 100; }
+        body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #faf8f4; display: flex; flex-direction: column; min-height: 100vh; color: #3d2c1e; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #f2ede4; border-bottom: 1px solid #e8dfd4; position: sticky; top: 0; z-index: 100; }
         .header .logo { display: flex; align-items: center; }
         .logo-image { height: 45px; transition: transform 0.3s ease; }
         .logo-image:hover { transform: scale(1.05); }
-        .header .nav a { margin-left: 25px; text-decoration: none; color: #475569; font-weight: 600; font-size: 16px; transition: color 0.3s ease; }
-        .header .nav a:hover { color: #6e8efb; }
+        .header .nav a { margin-left: 25px; text-decoration: none; color: #9e8c7a; font-weight: 600; font-size: 16px; transition: color 0.3s ease; }
+        .header .nav a:hover { color: #c47d4a; }
         .main { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; }
-        .title { font-size: 64px; font-weight: 800; margin-bottom: 12px; letter-spacing: 4px; background: linear-gradient(135deg, #6e8efb, #a777e3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .recommend-message { font-size: 18px; font-weight: 500; color: #64748b; margin-bottom: 55px; letter-spacing: -0.5px; text-align: center; line-height: 1.5; }
+        .title { font-size: 64px; font-weight: 800; margin-bottom: 12px; letter-spacing: 4px; color: #3d2c1e; }
+        .recommend-message { font-size: 18px; font-weight: 500; color: #9e8c7a; margin-bottom: 55px; letter-spacing: -0.5px; text-align: center; line-height: 1.5; }
         .box-container { display: flex; gap: 40px; max-width: 900px; width: 100%; justify-content: center; flex-wrap: wrap; }
-        .box-left { width: 320px; height: 380px; background-color: #ffffff; border-radius: 24px; padding: 40px; box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); display: flex; flex-direction: column; }
-        .box-left:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(148, 163, 184, 0.25); }
-        .usage-title { font-size: 24px; font-weight: 800; color: #1e293b; margin-bottom: 25px; text-align: left; border-bottom: 2px solid #f1f5f9; padding-bottom: 15px; }
-        .usage-list { list-style: none; padding: 0; margin: 0; font-size: 16px; line-height: 2.4; font-weight: 600; color: #475569; }
+        .box-left { width: 320px; height: 380px; background-color: #ffffff; border-radius: 24px; padding: 40px; box-shadow: 0 10px 40px rgba(61, 44, 30, 0.05); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); display: flex; flex-direction: column; border: 1px solid #e8dfd4; }
+        .box-left:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(61, 44, 30, 0.1); }
+        .usage-title { font-size: 24px; font-weight: 800; color: #3d2c1e; margin-bottom: 25px; text-align: left; border-bottom: 2px solid #faf8f4; padding-bottom: 15px; }
+        .usage-list { list-style: none; padding: 0; margin: 0; font-size: 16px; line-height: 2.4; font-weight: 600; color: #3d2c1e; }
         .usage-list li { position: relative; padding-left: 24px; }
         .usage-list li::before { content: '✨'; position: absolute; left: -2px; font-size: 14px; }
-        .box-right { width: 320px; height: 380px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(148, 163, 184, 0.15); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); background-color: #1e293b; cursor: pointer; }
+        .box-right { width: 320px; height: 380px; border-radius: 24px; position: relative; overflow: hidden; box-shadow: 0 10px 40px rgba(61, 44, 30, 0.05); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); background-color: #3d2c1e; cursor: pointer; border: 1px solid #e8dfd4; }
         .vending-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1); filter: contrast(1.1) saturate(1.15) brightness(0.85); }
-        .box-right::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(15, 23, 42, 0.9) 0%, rgba(110, 142, 251, 0.2) 50%, rgba(255, 255, 255, 0) 100%); pointer-events: none; }
+        .box-right::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(61, 44, 30, 0.8) 0%, transparent 100%); pointer-events: none; }
         .image-caption { position: absolute; bottom: 30px; left: 30px; right: 30px; color: #ffffff; z-index: 2; transition: transform 0.4s ease; }
         .image-caption h3 { margin: 0 0 6px 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
         .image-caption p { margin: 0; font-size: 14px; font-weight: 400; color: rgba(255, 255, 255, 0.8); }
-        .box-right:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(167, 119, 227, 0.3); }
-        .box-right:hover .vending-image { transform: scale(1.08); filter: contrast(1.15) saturate(1.2) brightness(1.05); }
+        .box-right:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(196, 125, 74, 0.2); }
+        .box-right:hover .vending-image { transform: scale(1.08); filter: brightness(1.0); }
         .box-right:hover .image-caption { transform: translateY(-5px); }
-        .footer { background-color: #ffffff; border-top: 1px solid #f1f5f9; padding: 25px 40px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #94a3b8; }
+        .footer { background-color: #ffffff; border-top: 1px solid #e8dfd4; padding: 25px 40px; margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #9e8c7a; }
         .footer-info { margin: 0; }
-        .footer-links a { margin-left: 20px; text-decoration: none; color: #94a3b8; transition: color 0.3s; }
-        .footer-links a:hover { color: #6e8efb; }
+        .footer-links a { margin-left: 20px; text-decoration: none; color: #9e8c7a; transition: color 0.3s; }
+        .footer-links a:hover { color: #c47d4a; }
 
         /* 등급 뱃지 스타일 */
-        .grade-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-        .grade-badge.diamond { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
-        .grade-badge.gold { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .grade-badge.silver { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-        .grade-badge.bronze { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .grade-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #fff; }
+        .grade-badge.diamond { background: #3498db; }
+        .grade-badge.gold { background: #f1c40f; }
+        .grade-badge.silver { background: #bdc3c7; }
+        .grade-badge.bronze { background: #e67e22; }
 
         /* 대시보드 */
-        .dash-container { flex: 1; display: flex; flex-direction: column; background-color: #f1f5f9; }
-        .dash-header { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 15px 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .dash-header-left { display: flex; align-items: center; gap: 15px; font-size: 24px; font-weight: 800; color: #1e293b; letter-spacing: 1px; }
-        .dash-menu-icon { cursor: pointer; font-size: 28px; color: #64748b; }
-        .dash-header-right { font-size: 16px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 20px; }
+        .dash-container { flex: 1; display: flex; flex-direction: column; background-color: #faf8f4; }
+        .dash-header { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 15px 30px; border-bottom: 1px solid #e8dfd4; }
+        .dash-header-left { display: flex; align-items: center; gap: 15px; font-size: 24px; font-weight: 800; color: #3d2c1e; letter-spacing: 1px; }
+        .dash-menu-icon { cursor: pointer; font-size: 28px; color: #3d2c1e; }
+        .dash-header-right { font-size: 16px; font-weight: 600; color: #3d2c1e; display: flex; align-items: center; gap: 20px; }
         .dash-header-right a { color: #ef4444; text-decoration: none; font-size: 14px; }
         .dash-body { display: flex; flex: 1; padding: 30px; gap: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
         .dash-left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 400px; }
         .product-grid { display: flex; gap: 15px; }
-        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 1px solid #ffffff; }
-        .product-img { width: 100%; height: 160px; border-radius: 12px; object-fit: contain; background-color: #ffffff !important; border: 1px solid #ffffff !important; padding: 10px; }
+        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(61, 44, 30, 0.03); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 1px solid #ffffff; }
+        .product-img { width: 100%; height: 160px; border-radius: 12px; object-fit: contain; background-color: #ffffff !important; padding: 10px; }
         .letsbe-img { padding: 15px; }
         .product-info { text-align: center; }
-        .product-name { font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
-        .product-price { font-size: 16px; font-weight: 600; color: #6e8efb; }
-        .counter-group { display: flex; align-items: center; gap: 10px; background: #f8fafc; padding: 8px 12px; border-radius: 12px; width: 100%; justify-content: center; }
-        .counter-btn { width: 36px; height: 36px; border: none; background: #ffffff; border-radius: 8px; font-size: 20px; font-weight: bold; color: #475569; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: 0.1s; }
-        .counter-btn:active { background: #e2e8f0; transform: scale(0.95); }
+        .product-name { font-size: 18px; font-weight: 700; color: #3d2c1e; margin-bottom: 5px; }
+        .product-price { font-size: 16px; font-weight: 600; color: #c47d4a; }
+        .counter-group { display: flex; align-items: center; gap: 10px; background: #faf8f4; padding: 8px 12px; border-radius: 12px; width: 100%; justify-content: center; }
+        .counter-btn { width: 36px; height: 36px; border: none; background: #ffffff; border-radius: 8px; font-size: 20px; font-weight: bold; color: #3d2c1e; cursor: pointer; box-shadow: 0 2px 5px rgba(61,44,30,0.05); transition: 0.1s; }
+        .counter-btn:active { background: #f2ede4; transform: scale(0.95); }
         .counter-val { font-size: 18px; font-weight: 700; width: 30px; text-align: center; }
-        .summary-box { background: #ffffff; padding: 25px 30px; border-radius: 20px; border: 2px dashed #cbd5e1; display: flex; flex-direction: column; gap: 15px; margin-top: auto; }
-        .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 600; color: #475569; }
-        .summary-val { font-weight: 800; color: #1e293b; font-size: 20px; }
-        .total-price-text { font-size: 24px; color: #6e8efb; font-weight: 800; }
-        .pay-btn { padding: 20px; background: #1e293b; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(30, 41, 59, 0.2); }
-        .pay-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(30, 41, 59, 0.3); }
+        .summary-box { background: #ffffff; padding: 25px 30px; border-radius: 20px; border: 2px dashed #e8dfd4; display: flex; flex-direction: column; gap: 15px; margin-top: auto; }
+        .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 600; color: #3d2c1e; }
+        .summary-val { font-weight: 800; color: #3d2c1e; font-size: 20px; }
+        .total-price-text { font-size: 24px; color: #c47d4a; font-weight: 800; }
+        .pay-btn { padding: 20px; background: #3d2c1e; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(61, 44, 30, 0.1); }
+        .pay-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(61, 44, 30, 0.15); }
         .dash-right-panel { flex: 1.5; display: flex; flex-direction: column; gap: 20px; }
-        .dash-view { flex: 1; background-color: #e2e8f0; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; min-height: 400px; }
-        .view-crosshair { position: absolute; font-size: 40px; color: rgba(100, 116, 139, 0.5); font-weight: 300; pointer-events: none; }
-        .view-play { position: absolute; bottom: 30px; left: 30px; width: 50px; height: 50px; background: rgba(255,255,255,0.8); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #333; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .view-label { position: absolute; top: 20px; left: 20px; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; letter-spacing: 1px; }
-        .call-btn { padding: 25px; background: linear-gradient(135deg, #6e8efb, #a777e3); color: #ffffff; border: none; border-radius: 20px; font-size: 24px; font-weight: 800; letter-spacing: 2px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(110, 142, 251, 0.4); display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .call-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(110, 142, 251, 0.5); }
+        .dash-view { flex: 1; background-color: #f2ede4; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; min-height: 400px; }
+        .view-crosshair { position: absolute; font-size: 40px; color: rgba(196, 125, 74, 0.3); font-weight: 300; pointer-events: none; }
+        .view-play { position: absolute; bottom: 30px; left: 30px; width: 50px; height: 50px; background: rgba(255,255,255,0.8); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #3d2c1e; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .view-label { position: absolute; top: 20px; left: 20px; background: #c47d4a; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; letter-spacing: 1px; }
+        .call-btn { padding: 25px; background: #c47d4a; color: #ffffff; border: none; border-radius: 20px; font-size: 24px; font-weight: 800; letter-spacing: 2px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(196, 125, 74, 0.2); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .call-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(196, 125, 74, 0.3); }
 
         /* 사이드바 */
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.2); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(61, 44, 30, 0.2); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
         .sidebar-overlay.show { opacity: 1; pointer-events: all; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 220px; height: 100vh; background: white; border-right: 2px solid #e2e8f0; z-index: 200; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
+        .sidebar { position: fixed; top: 0; left: 0; width: 220px; height: 100vh; background: white; border-right: 2px solid #e8dfd4; z-index: 200; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
         .sidebar.open { transform: translateX(0); }
-        .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 18px 22px 14px; border-bottom: 1px solid #e2e8f0; }
+        .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 18px 22px 14px; border-bottom: 1px solid #e8dfd4; } 
         .sidebar-logo img { height: 28px; object-fit: contain; }
-        .sidebar-logo span { font-size: 15px; font-weight: 700; color: #1e293b; }
+        .sidebar-logo span { font-size: 15px; font-weight: 700; color: #3d2c1e; }
         .sidebar-menu { list-style: none; padding: 0; margin: 0; }
-        .sidebar-menu li a { display: flex; align-items: center; gap: 10px; padding: 13px 22px; font-size: 14px; font-weight: 500; color: #64748b; text-decoration: none; border-left: 3px solid transparent; transition: all 0.2s; }
-        .sidebar-menu li a:hover { background: #f8fafc; color: #6e8efb; border-left-color: #6e8efb; }
+        .sidebar-menu li a { display: flex; align-items: center; gap: 10px; padding: 13px 22px; font-size: 14px; font-weight: 500; color: #9e8c7a; text-decoration: none; border-left: 3px solid transparent; transition: all 0.2s; }
+        .sidebar-menu li a:hover { background: #faf8f4; color: #c47d4a; border-left-color: #c47d4a; }
         .menu-badge { margin-left: auto; background: #ef4444; color: white; border-radius: 50%; min-width: 18px; height: 18px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
 
         @media (max-width: 900px) {
@@ -113,7 +113,7 @@
     <ul class="sidebar-menu">
         <li><a href="/">🛒 메뉴판</a></li>
         <li><a href="/mypage">👤 마이페이지</a></li>
-        <li><a href="#"><img th:src="@{/images/pimto.png}" style="width:18px;height:18px;object-fit:contain;"> 로봇</a></li>
+        <li><a href="#"><img th:src="@{/images/pimto.png}" style="width:18px;height:18px;object-fit:contain;"> 로봇</a></li>       
         <li><a href="#">🗺️ 지도</a></li>
         <li><a href="/orders/my">📋 주문내역</a></li>
     </ul>
@@ -133,7 +133,7 @@
     <div class="main">
         <div class="title">PIMTO</div>
         <div class="recommend-message">
-            내 손안의 스마트 자판기, <span style="color: #6e8efb; font-weight: 700;">PIMTO</span>와 함께 언제 어디서나 더 편리한 일상을 경험해 보세요.
+            내 손안의 스마트 자판기, <span style="color: #c47d4a; font-weight: 700;">PIMTO</span>와 함께 언제 어디서나 더 편리한 일상을 경험해 보세요.
         </div>
         <div class="box-container">
             <div class="box-left">
@@ -176,17 +176,17 @@
             </div>
             <div class="dash-header-right">
                 <div style="text-align: right; margin-right: 15px;">
-                    <div style="font-size: 14px; color: #64748b; font-weight: 700;">
+                    <div style="font-size: 14px; color: #9e8c7a; font-weight: 700;">
                         <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${grade.toLowerCase()}">GRADE</span>
-                        <span th:text="${session.loginMember.name}" style="color: #1e293b; margin-left: 5px;">사용자</span>님
+                        <span th:text="${session.loginMember.name}" style="color: #3d2c1e; margin-left: 5px;">사용자</span>님      
                     </div>
-                    <div style="font-size: 13px; color: #6e8efb; font-weight: 800; margin-top: 2px;">
+                    <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">
                         보유 포인트: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P
                     </div>
                 </div>
                 <!-- 채팅 알림 아이콘 -->
-                <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2">
+                <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">     
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9e8c7a" stroke-width="2">
                         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                     </svg>
                     <span id="chatBadge"
@@ -203,19 +203,17 @@
                 <div class="product-grid">
                     <!-- DB의 상품 목록을 동적으로 반복 출력합니다. -->
                     <div class="product-card" th:each="product : ${products}">
-                        <img th:src="${product.imageUrl}" class="product-img" th:alt="${product.name}" 
+                        <img th:src="${product.imageUrl}" class="product-img" th:alt="${product.name}"
                              th:classappend="${product.name.contains('레쓰비')} ? 'letsbe-img' : ''">
                         <div class="product-info">
                             <div class="product-name" th:text="${product.name}">상품명</div>
                             <div class="product-price" th:text="${#numbers.formatInteger(product.price, 0, 'COMMA') + '원'}">0원</div>
                         </div>
                         <div class="counter-group">
-                            <!-- changeQty 함수에 해당 상품의 재고(stock) 정보를 함께 넘깁니다. -->
                             <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', -1, ${product.price}, ${product.stock})|">-</button>
                             <span class="counter-val" th:id="'qty' + ${product.id}" th:data-name="${product.name}" th:data-price="${product.price}">0</span>
                             <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', 1, ${product.price}, ${product.stock})|">+</button>
                         </div>
-                        <!-- 재고 표시 (선택사항) -->
                         <div style="font-size: 12px; color: #94a3b8; margin-top: -10px;">
                             남은 재고: <span th:text="${product.stock}">0</span>개
                         </div>
@@ -231,16 +229,15 @@
                         <span>등급 할인 (<span th:text="${discountRate}">0</span>%)</span>
                         <span class="summary-val">-<span id="discount-amount">0</span>원</span>
                     </div>
-                    <!-- 포인트 사용 행 추가 -->
-                    <div class="summary-row" style="border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 5px;">
-                        <span style="font-size: 14px; color: #64748b;">포인트 사용 (보유: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P)</span>
+                    <div class="summary-row" style="border-top: 1px solid #f2ede4; padding-top: 10px; margin-top: 5px;">
+                        <span style="font-size: 14px; color: #9e8c7a;">포인트 사용 (보유: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P)</span>
                         <div style="display: flex; align-items: center; gap: 5px;">
-                            <input type="number" id="point-use-input" value="0" min="0" 
-                                   style="width: 80px; padding: 4px 8px; border: 1px solid #e2e8f0; border-radius: 6px; text-align: right; font-size: 14px;">
-                            <button onclick="useAllPoints()" style="padding: 4px 8px; font-size: 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px; cursor: pointer;">전체사용</button>
+                            <input type="number" id="point-use-input" value="0" min="0"
+                                   style="width: 80px; padding: 4px 8px; border: 1px solid #e8dfd4; border-radius: 6px; text-align: right; font-size: 14px; background:#faf8f4;">
+                            <button onclick="useAllPoints()" style="padding: 4px 8px; font-size: 12px; background: #f2ede4; border: 1px solid #e8dfd4; border-radius: 6px; cursor: pointer; color:#3d2c1e; font-weight:700;">전체사용</button>
                         </div>
                     </div>
-                    <div class="summary-row" style="border-top: 1px solid #e2e8f0; padding-top: 15px; margin-top: 5px;">
+                    <div class="summary-row" style="border-top: 1px solid #e8dfd4; padding-top: 15px; margin-top: 5px;">
                         <span>총 결제 금액</span>
                         <span class="total-price-text"><span id="total-price">0</span>원</span>
                     </div>
@@ -267,17 +264,11 @@
         const discountRate = /*[[${discountRate ?: 0}]]*/ 0;
         const availablePoints = /*[[${session.loginMember.points ?: 0}]]*/ 0;
 
-        // changeQty 함수가 이제 maxStock(재고)을 인자로 받아 제한을 체크합니다.
         function changeQty(elementId, change, pricePerItem, maxStock) {
             const qtyElement = document.getElementById(elementId);
             let newQty = parseInt(qtyElement.innerText) + change;
-            
             if (newQty < 0) newQty = 0;
-            if (newQty > maxStock) {
-                alert('해당 상품의 재고가 부족합니다. (최대 ' + maxStock + '개 선택 가능)');
-                return;
-            }
-            
+            if (newQty > maxStock) { alert('해당 상품의 재고가 부족합니다. (최대 ' + maxStock + '개 선택 가능)'); return; }
             qtyElement.innerText = newQty;
             calculateTotal();
         }
@@ -302,34 +293,25 @@
         function calculateTotal() {
             let totalCount = 0;
             let originalTotalPrice = 0;
-            
-            // 모든 qty 클래스를 가진 요소들의 값을 합산합니다.
             document.querySelectorAll('.counter-val').forEach(el => {
                 const qty = parseInt(el.innerText);
                 const price = parseInt(el.getAttribute('data-price'));
                 totalCount += qty;
                 originalTotalPrice += (qty * price);
             });
-
             const discountAmount = Math.floor(originalTotalPrice * (discountRate / 100));
             const basePrice = originalTotalPrice - discountAmount;
-            
             let usedPoints = parseInt(document.getElementById('point-use-input').value) || 0;
             if (usedPoints < 0) usedPoints = 0;
             if (usedPoints > availablePoints) usedPoints = availablePoints;
             if (usedPoints > basePrice) usedPoints = basePrice;
-            
             document.getElementById('point-use-input').value = usedPoints;
             const finalPrice = basePrice - usedPoints;
-            
             document.getElementById('total-count').innerText = totalCount;
-            if (document.getElementById('discount-amount')) {
-                document.getElementById('discount-amount').innerText = discountAmount.toLocaleString();
-            }
+            if (document.getElementById('discount-amount')) document.getElementById('discount-amount').innerText = discountAmount.toLocaleString();
             document.getElementById('total-price').innerText = finalPrice.toLocaleString();
         }
 
-        // 포인트 입력 시 실시간 반영
         document.getElementById('point-use-input').addEventListener('input', calculateTotal);
 
         async function processOrder() {
@@ -337,58 +319,38 @@
             document.querySelectorAll('.counter-val').forEach(el => {
                 const qty = parseInt(el.innerText);
                 const name = el.getAttribute('data-name');
-                for (let i = 0; i < qty; i++) {
-                    items.push(name);
-                }
+                for (let i = 0; i < qty; i++) items.push(name);
             });
-
-            if (items.length === 0) {
-                alert('상품을 선택해주세요.');
-                return;
-            }
-
+            if (items.length === 0) { alert('상품을 선택해주세요.'); return; }
             let remainingPointsToUse = parseInt(document.getElementById('point-use-input').value) || 0;
             let purchasedIds = [];
-
             try {
                 for (const name of items) {
-                    // 각 개별 상품의 할인가 계산
                     const productEl = Array.from(document.querySelectorAll('.counter-val')).find(el => el.getAttribute('data-name') === name);
                     const itemOriginalPrice = parseInt(productEl.getAttribute('data-price'));
                     const itemBasePrice = itemOriginalPrice - Math.floor(itemOriginalPrice * (discountRate / 100));
-                    
-                    // 남은 포인트 범위 내에서 차감
                     const pointsForThisItem = Math.min(itemBasePrice, remainingPointsToUse);
-                    
                     const response = await fetch('/purchase', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
                         body: 'productName=' + encodeURIComponent(name) + '&usedPoints=' + pointsForThisItem
                     });
-                    
                     remainingPointsToUse -= pointsForThisItem;
-
-                    // 리다이렉트된 URL에서 ID 추출
                     const resUrl = new URL(response.url);
                     const id = resUrl.searchParams.get('id');
                     if (id) purchasedIds.push(id);
                 }
                 alert('결제가 완료되었습니다!');
-                if (purchasedIds.length > 0) {
-                    location.href = '/purchase/success?ids=' + purchasedIds.join(',');
-                } else {
-                    location.href = "/";
-                }
-            } catch (error) {
-                alert('구매 처리 중 오류가 발생했습니다.');
-            }
+                if (purchasedIds.length > 0) location.href = '/purchase/success?ids=' + purchasedIds.join(',');
+                else location.href = "/";
+            } catch (error) { alert('구매 처리 중 오류가 발생했습니다.'); }
         }
     </script>
 </th:block>
 
-<th:block th:replace="~{fragments/chat-panel :: chatPanel}"></th:block>
-
-<th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
+<th:block th:if="${session.loginMember != null}">
+    <!-- 채팅 위젯 통합 -->
+    <th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 
 <script>
     // 사이드바 hover 제어

@@ -18,6 +18,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminController {
 
+
+
     private final ChatService chatService;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
@@ -28,6 +30,13 @@ public class AdminController {
         model.addAttribute("products", productRepository.findAll());
         return "admin";
     }
+
+    // 로봇 관제 시스템 페이지 연결
+    @GetMapping("/admin/robot-control")
+    public String robotControlPage() {
+        return "robot-control"; // 조금 전 만든 robot-control.html을 불러옴
+    }
+
 
     @PostMapping("/admin/product/add")
     public String addProduct(
