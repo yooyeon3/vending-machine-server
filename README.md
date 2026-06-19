@@ -47,8 +47,7 @@
 ## 📂 Architecture & Directory Structure
 철저한 **MVC 패턴**과 도메인 중심(Domain-driven) 계층형 아키텍처를 적용하여 유지보수성과 확장성을 극대화했습니다.
 
-```text``
-`
+```text
 📦 PIMTO-Project
  ┣ 📂 src/main/java/com/example/vendingmachine
  │  ┣ ⚙️ config       # Spring Security, WebSocket, Data Init 등 전역 환경 설정
@@ -61,3 +60,98 @@
     ┣ 🖼️ static       # CSS, JS, 상품/로봇 이미지 로고 등 정적 리소스
     ┗ 🖥️ templates    # Thymeleaf 기반 동적 HTML 뷰 (MVC - View)
        ┗ 🧩 fragments # 재사용 가능한 UI 컴포넌트 모듈화 (네비게이션, 채팅 위젯 등)
+```
+
+---
+
+## 기술 스택
+
+| 분류 | 기술 |
+|------|------|
+| Language | Java 21 |
+| Framework | Spring Boot 3.2.5 |
+| View | Thymeleaf |
+| Security | Spring Security 6 (BCrypt) |
+| DB | MariaDB (운영) / H2 (개발) |
+| ORM | Spring Data JPA |
+| Real-time | WebSocket |
+| Build | Gradle |
+| Etc | Lombok |
+
+---
+
+## 실행 방법
+
+### 1. DB 설정
+
+MariaDB에 `vending_machine` 데이터베이스를 생성합니다.
+
+```sql
+CREATE DATABASE vending_machine CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+`src/main/resources/application.properties`에서 DB 접속 정보를 확인·수정합니다.
+
+```properties
+spring.datasource.url=jdbc:mariadb://localhost:3306/vending_machine?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+spring.datasource.username=root
+spring.datasource.password=mysql1234
+```
+
+### 2. 빌드 및 실행
+
+```bash
+./gradlew bootRun
+```
+
+접속 주소: `http://localhost:8080`
+
+### 3. 기본 관리자 계정
+
+| 아이디 | 비밀번호 |
+|--------|----------|
+| admin | admin |
+
+---
+
+## 커밋 컨벤션
+
+```
+<type>(<scope>): <subject>
+```
+
+| type | 설명 |
+|------|------|
+| feat | 새 기능 추가 |
+| fix | 버그 수정 |
+| refactor | 리팩토링 (기능 변경 없음) |
+| style | UI / CSS 변경 |
+| chore | 빌드·설정 변경 |
+| docs | 문서 수정 |
+
+**예시**
+
+```
+feat(member): 마이페이지 포인트 기능 추가
+fix(inquiry): 비밀글 접근 권한 오류 수정
+style(admin): 관리자 페이지 모바일 레이아웃 수정
+```
+
+---
+
+## 개발 규칙
+
+1. **브랜치 보호** — `master`에 직접 커밋하지 않습니다.
+2. **PR 필수** — `test → master` 병합은 반드시 PR을 통해 진행합니다.
+3. **application.properties 보호** — DB 비밀번호 등 민감 정보는 커밋 전 확인합니다.
+4. **DDL 자동 생성** — `spring.jpa.hibernate.ddl-auto=update` 설정이므로 Entity 변경 시 팀원에게 공유합니다.
+5. **네이밍** — 클래스는 PascalCase, 변수·메서드는 camelCase, URL은 kebab-case를 사용합니다.
+
+---
+
+## 팀원
+
+| 역할 | 이름 |
+|------|------|
+| 문의·채팅·관리자 기능 | kwantae |
+| 마이페이지·포인트·회원 기능 | yooyeon |
