@@ -115,6 +115,19 @@
             .dashboard-grid { grid-template-columns: 1fr; }
             .favorite-item { min-width: 100%; }
         }
+
+        @media (max-width: 600px) {
+            .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
+            .nav { justify-content: center; flex-wrap: wrap; gap: 10px; }
+            .nav a { margin-left: 10px; font-size: 14px; }
+            .container { margin: 20px auto; }
+            .grade-card::before { display: none; }
+            .grade-name-big { font-size: 26px; }
+            .order-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .order-meta { text-align: left; }
+            .order-pin-box { margin-left: 0; flex-direction: column; gap: 10px; align-items: flex-start; }
+            .copy-btn { width: 100%; padding: 8px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>

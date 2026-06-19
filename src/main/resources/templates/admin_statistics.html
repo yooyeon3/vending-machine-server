@@ -164,6 +164,14 @@
         @media (max-width: 1024px) {
             .content-grid { grid-template-columns: 1fr; }
         }
+
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .header { flex-direction: column; gap: 15px; align-items: flex-start; }
+            .summary-card, .content-card { padding: 20px; }
+            .card-title { font-size: 16px; }
+            .summary-card .value { font-size: 26px; }
+        }
     </style>
 </head>
 <body>

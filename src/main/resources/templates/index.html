@@ -92,12 +92,26 @@
         .menu-badge { margin-left: auto; background: #ef4444; color: white; border-radius: 50%; min-width: 18px; height: 18px; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; padding: 0 4px; }
 
         @media (max-width: 900px) {
-            .dash-body { flex-direction: column; }
+            .dash-body { flex-direction: column; padding: 15px; }
+            .dash-left-panel { min-width: 0; width: 100%; }
             .product-grid { flex-direction: column; }
             .dash-view { min-height: 350px; }
             .footer { flex-direction: column; gap: 15px; text-align: center; padding: 20px; }
-            .footer-links { display: flex; gap: 15px; justify-content: center; }
+            .footer-links { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; }
             .footer-links a { margin: 0; }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
+            .header .nav a { margin: 0 10px; font-size: 14px; }
+            .main { padding: 40px 20px; }
+            .title { font-size: 40px; letter-spacing: 2px; }
+            .recommend-message { font-size: 15px; margin-bottom: 30px; }
+            .box-container { gap: 20px; }
+            .box-left, .box-right { width: 100%; height: auto; min-height: 300px; }
+            
+            .dash-header { padding: 15px 20px; flex-direction: column; align-items: flex-start; gap: 15px; }
+            .dash-header-right { width: 100%; justify-content: space-between; }
         }
     </style>
 </head>
