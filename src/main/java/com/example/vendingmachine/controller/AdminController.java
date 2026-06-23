@@ -18,11 +18,24 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdminController {
 
-
-
     private final ChatService chatService;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+
+    // ✅ 추가 — 재고 변경 시 Node.js 서버에 알림을 보내는 공통 메서드
+    private void notifyStockChange() {
+        try {
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create("http://192.168.1.106:4000/api/stock-updated"))
+                    .POST(java.net.http.HttpRequest.BodyPublishers.noBody())
+                    .build();
+            client.send(request, java.net.http.HttpResponse.BodyHandlers.discarding());
+            System.out.println("📦 [재고 알림] Node.js 서버에 재고 변경 알림 전송 완료");
+        } catch (Exception e) {
+            System.out.println("⚠️ [재고 알림] Node.js 서버 알림 전송 실패: " + e.getMessage());
+        }
+    }
 
     @GetMapping("/admin")
     public String adminPage(Model model) {
@@ -34,9 +47,8 @@ public class AdminController {
     // 로봇 관제 시스템 페이지 연결
     @GetMapping("/admin/robot-control")
     public String robotControlPage() {
-        return "robot-control"; // 조금 전 만든 robot-control.html을 불러옴
+        return "robot-control";
     }
-
 
     @PostMapping("/admin/product/add")
     public String addProduct(
@@ -52,6 +64,7 @@ public class AdminController {
                 .imageUrl(imageUrl)
                 .build();
         productRepository.save(product);
+        notifyStockChange(); // ✅ 추가
         return "redirect:/admin";
     }
 
@@ -63,6 +76,7 @@ public class AdminController {
             if (newStock < 0) newStock = 0;
             product.setStock(newStock);
             productRepository.save(product);
+            notifyStockChange(); // ✅ 추가
         }
         return "redirect:/admin";
     }

@@ -224,9 +224,9 @@
                             <div class="product-price" th:text="${#numbers.formatInteger(product.price, 0, 'COMMA') + '원'}">0원</div>
                         </div>
                         <div class="counter-group">
-                            <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', -1, ${product.price}, ${product.stock})|">-</button>
+                            <button class="counter-btn" th:data-qty-id="'qty' + ${product.id}" th:data-price="${product.price}" th:data-stock="${product.stock}" onclick="changeQty(this.getAttribute('data-qty-id'), -1, parseInt(this.getAttribute('data-price')), parseInt(this.getAttribute('data-stock')))">-</button>
                             <span class="counter-val" th:id="'qty' + ${product.id}" th:data-name="${product.name}" th:data-price="${product.price}">0</span>
-                            <button class="counter-btn" th:onclick="|changeQty('qty${product.id}', 1, ${product.price}, ${product.stock})|">+</button>
+                            <button class="counter-btn" th:data-qty-id="'qty' + ${product.id}" th:data-price="${product.price}" th:data-stock="${product.stock}" onclick="changeQty(this.getAttribute('data-qty-id'), 1, parseInt(this.getAttribute('data-price')), parseInt(this.getAttribute('data-stock')))">+</button>
                         </div>
                         <div style="font-size: 12px; color: #94a3b8; margin-top: -10px;">
                             남은 재고: <span th:text="${product.stock}">0</span>개

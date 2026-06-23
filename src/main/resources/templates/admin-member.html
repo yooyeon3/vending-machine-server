@@ -269,10 +269,20 @@
                             </td>
                             <td>
                                 <div class="actions">
-                                    <div class="action-icon" th:onclick="|openRichModal('${stat.info.id}', '${stat.info.name}', '${stat.info.phoneNumber}', '${stat.info.adminMemo != null ? stat.info.adminMemo : ''}')|" title="정보 수정">
+                                    <div class="action-icon" 
+                                         th:data-id="${stat.info.id}"
+                                         th:data-name="${stat.info.name}"
+                                         th:data-phone="${stat.info.phoneNumber}"
+                                         th:data-memo="${stat.info.adminMemo != null ? stat.info.adminMemo : ''}"
+                                         onclick="openRichModal(this.getAttribute('data-id'), this.getAttribute('data-name'), this.getAttribute('data-phone'), this.getAttribute('data-memo'))" 
+                                         title="정보 수정">
                                         ⚙️
                                     </div>
-                                    <div class="action-icon delete" th:if="${stat.info.username != 'admin'}" th:onclick="|deleteMember('${stat.info.id}')|" title="회원 탈퇴">
+                                    <div class="action-icon delete" 
+                                         th:if="${stat.info.username != 'admin'}" 
+                                         th:data-id="${stat.info.id}"
+                                         onclick="deleteMember(this.getAttribute('data-id'))" 
+                                         title="회원 탈퇴">
                                         🗑️
                                     </div>
                                 </div>
