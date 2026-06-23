@@ -21,13 +21,22 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.6; padding-bottom: 60px; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.6; }
 
         .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #f2ede4; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
         .logo img { height: 40px; }
         .nav a { margin-left: 20px; text-decoration: none; color: var(--text-sub); font-weight: 600; font-size: 15px; }
 
-        .container { max-width: 900px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.6s ease-out; }
+        /* 사이드바 레이아웃 */
+        .page-wrapper { display: flex; min-height: calc(100vh - 71px); }
+
+        .side-nav { width: 220px; flex-shrink: 0; background: white; border-right: 1px solid var(--border); padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 71px; height: calc(100vh - 71px); overflow-y: auto; }
+        .side-nav-title { font-size: 11px; font-weight: 700; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1px; padding: 8px 12px 6px; margin-top: 8px; }
+        .menu-link { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 12px; text-decoration: none; color: var(--text-sub); font-weight: 600; font-size: 14px; transition: all 0.2s; }
+        .menu-link:hover { background: var(--primary-light); color: var(--primary); }
+        .menu-link.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
+
+        .container { flex: 1; max-width: 860px; padding: 30px 32px; animation: fadeIn 0.6s ease-out; padding-bottom: 60px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .page-title { font-size: 24px; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
@@ -140,9 +149,18 @@
     </div>
 </div>
 
-<div class="container">
-    <a href="/" class="back-btn">← 메뉴판으로 돌아가기</a>
+<div class="page-wrapper">
 
+<!-- 고정 사이드바 -->
+<div class="side-nav">
+    <span class="side-nav-title">메뉴</span>
+    <a href="/" class="menu-link">🏠 홈</a>
+    <a href="/mypage" class="menu-link">👤 마이페이지</a>
+    <a href="/orders/my" class="menu-link active">📋 주문 내역</a>
+    <a href="/inquiry/list" class="menu-link">💬 문의</a>
+</div>
+
+<div class="container">
     <h1 class="page-title">✨ 내 주문 & 혜택 정보</h1>
 
     <div class="dashboard-grid">
@@ -252,6 +270,8 @@
         </div>
     </div>
 </div>
+
+</div><!-- /page-wrapper -->
 
 <div id="toast">PIN 번호가 복사되었습니다!</div>
 

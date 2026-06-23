@@ -111,10 +111,8 @@
         <span>PIMTO</span>
     </div>
     <ul class="sidebar-menu">
-        <li><a href="/">🛒 메뉴판</a></li>
+        <li><a href="/">🏠 홈</a></li>
         <li><a href="/mypage">👤 마이페이지</a></li>
-        <li><a href="#"><img th:src="@{/images/pimto.png}" style="width:18px;height:18px;object-fit:contain;"> 로봇</a></li>       
-        <li><a href="#">🗺️ 지도</a></li>
         <li><a href="/orders/my">📋 주문내역</a></li>
     </ul>
 </div>
@@ -318,31 +316,24 @@
             let items = [];
             document.querySelectorAll('.counter-val').forEach(el => {
                 const qty = parseInt(el.innerText);
-                const name = el.getAttribute('data-name');
-                for (let i = 0; i < qty; i++) items.push(name);
+                if (qty > 0) items.push({ name: el.getAttribute('data-name'), qty });
             });
             if (items.length === 0) { alert('상품을 선택해주세요.'); return; }
-            let remainingPointsToUse = parseInt(document.getElementById('point-use-input').value) || 0;
-            let purchasedIds = [];
+
+            const usedPoints = parseInt(document.getElementById('point-use-input').value) || 0;
+
             try {
-                for (const name of items) {
-                    const productEl = Array.from(document.querySelectorAll('.counter-val')).find(el => el.getAttribute('data-name') === name);
-                    const itemOriginalPrice = parseInt(productEl.getAttribute('data-price'));
-                    const itemBasePrice = itemOriginalPrice - Math.floor(itemOriginalPrice * (discountRate / 100));
-                    const pointsForThisItem = Math.min(itemBasePrice, remainingPointsToUse);
-                    const response = await fetch('/purchase', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': csrfToken },
-                        body: 'productName=' + encodeURIComponent(name) + '&usedPoints=' + pointsForThisItem
-                    });
-                    remainingPointsToUse -= pointsForThisItem;
-                    const resUrl = new URL(response.url);
-                    const id = resUrl.searchParams.get('id');
-                    if (id) purchasedIds.push(id);
+                const response = await fetch('/purchase/batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items, usedPoints })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    location.href = '/purchase/success?id=' + result.id;
+                } else {
+                    alert(result.message || '구매 처리 중 오류가 발생했습니다.');
                 }
-                alert('결제가 완료되었습니다!');
-                if (purchasedIds.length > 0) location.href = '/purchase/success?ids=' + purchasedIds.join(',');
-                else location.href = "/";
             } catch (error) { alert('구매 처리 중 오류가 발생했습니다.'); }
         }
     </script>
@@ -369,6 +360,9 @@
         });
     }
 </script>
+
+<!-- 배달 위젯 -->
+<th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
 
 </body>
 </html>

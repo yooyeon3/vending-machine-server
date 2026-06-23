@@ -6,7 +6,7 @@
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Pretendard', sans-serif; background: #f1f5f9; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { font-family: 'Pretendard', sans-serif; background: #faf8f4; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         .header {
             background: white;
@@ -14,20 +14,20 @@
             display: flex;
             align-items: center;
             gap: 14px;
-            border-bottom: 1px solid #e2e8f0;
+            border-bottom: 1px solid #e8dfd4;
             flex-shrink: 0;
         }
         .back-btn {
-            color: #64748b;
+            color: #9e8c7a;
             text-decoration: none;
             font-size: 20px;
             padding: 4px 8px;
             border-radius: 6px;
             transition: background 0.2s;
         }
-        .back-btn:hover { background: #f1f5f9; }
-        .header-title { font-size: 18px; font-weight: 700; color: #1e293b; }
-        .header-count { font-size: 13px; color: #64748b; margin-left: auto; }
+        .back-btn:hover { background: #f2ede4; }
+        .header-title { font-size: 18px; font-weight: 700; color: #3d2c1e; }
+        .header-count { font-size: 13px; color: #9e8c7a; margin-left: auto; }
 
         .chat-list { flex: 1; overflow-y: auto; }
 
@@ -37,21 +37,21 @@
             gap: 14px;
             padding: 16px 20px;
             background: white;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f2ede4;
             text-decoration: none;
             color: inherit;
             transition: background 0.15s;
             position: relative;
         }
-        .chat-item:hover { background: #f8fafc; }
-        .chat-item.has-unread { background: #fff7ed; }
-        .chat-item.has-unread:hover { background: #fef3e2; }
+        .chat-item:hover { background: #faf8f4; }
+        .chat-item.has-unread { background: #fef6ef; }
+        .chat-item.has-unread:hover { background: #fdeede; }
 
         .avatar {
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(135deg, #c47d4a, #9e8c7a);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -62,11 +62,11 @@
         }
 
         .chat-info { flex: 1; min-width: 0; }
-        .chat-username { font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 4px; }
-        .chat-last-msg { font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-username { font-size: 15px; font-weight: 700; color: #3d2c1e; margin-bottom: 4px; }
+        .chat-last-msg { font-size: 13px; color: #9e8c7a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         .chat-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0; }
-        .chat-time { font-size: 11px; color: #94a3b8; }
+        .chat-time { font-size: 11px; color: #9e8c7a; }
         .unread-badge {
             background: #ef4444;
             color: white;

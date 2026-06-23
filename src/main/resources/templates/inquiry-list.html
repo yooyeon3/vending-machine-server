@@ -56,8 +56,6 @@
     </div>
     <ul class="sidebar-menu">
         <li><a href="/">🏠 홈</a></li>
-        <li><a href="#">🛒 메뉴판</a></li>
-        <li><a href="#">🗺️ 지도</a></li>
         <li><a href="#">📋 주문내역</a></li>
         <li><a href="/inquiry/list" class="active">💬 문의</a></li>
     </ul>
@@ -119,6 +117,8 @@
     sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
 </script>
 
+<!-- 배달 위젯 -->
+<th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
 <!-- 채팅 위젯 통합 -->
 <th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 

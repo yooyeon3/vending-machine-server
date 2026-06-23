@@ -13,8 +13,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.ResponseBody;
+
 import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.security.SecureRandom;
@@ -155,6 +163,106 @@ public class PurchaseController {
         }
 
         return "redirect:/";
+    }
+
+    // 묶음 주문용 내부 DTO
+    public static class BatchPurchaseRequest {
+        private List<ItemRequest> items;
+        private int usedPoints;
+        public List<ItemRequest> getItems() { return items; }
+        public void setItems(List<ItemRequest> items) { this.items = items; }
+        public int getUsedPoints() { return usedPoints; }
+        public void setUsedPoints(int usedPoints) { this.usedPoints = usedPoints; }
+
+        public static class ItemRequest {
+            private String name;
+            private int qty;
+            public String getName() { return name; }
+            public void setName(String name) { this.name = name; }
+            public int getQty() { return qty; }
+            public void setQty(int qty) { this.qty = qty; }
+        }
+    }
+
+    @PostMapping("/purchase/batch")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> buyBatch(
+            @RequestBody BatchPurchaseRequest request,
+            HttpSession session) {
+
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null)
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "로그인이 필요합니다."));
+
+        Member member = memberRepository.findById(loginMember.getId()).orElse(null);
+        if (member == null)
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "회원 정보를 찾을 수 없습니다."));
+
+        // 1단계: 유효성 검사 + 데이터 수집
+        LinkedHashMap<Product, Integer> purchaseMap = new LinkedHashMap<>();
+        List<String> productLabels = new ArrayList<>();
+        int totalOriginalPrice = 0;
+
+        for (BatchPurchaseRequest.ItemRequest item : request.getItems()) {
+            if (item.getQty() <= 0) continue;
+            Product product = productRepository.findAll().stream()
+                    .filter(p -> p.getName().equals(item.getName()))
+                    .findFirst().orElse(null);
+            if (product == null)
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", item.getName() + " 상품을 찾을 수 없습니다."));
+            if (product.getStock() < item.getQty())
+                return ResponseEntity.badRequest().body(Map.of("success", false, "message", item.getName() + " 재고가 부족합니다."));
+
+            purchaseMap.put(product, item.getQty());
+            productLabels.add(product.getName() + (item.getQty() > 1 ? " x" + item.getQty() : ""));
+            totalOriginalPrice += product.getPrice() * item.getQty();
+        }
+
+        if (purchaseMap.isEmpty())
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "선택된 상품이 없습니다."));
+
+        // 2단계: 가격 계산
+        String grade = memberService.getGrade(member);
+        double discountRate = memberService.getDiscountRate(grade);
+        double pointRate = memberService.getPointRate(grade);
+
+        int discountAmount = (int) (totalOriginalPrice * discountRate);
+        int basePrice = totalOriginalPrice - discountAmount;
+        int memberCurrentPoints = member.getPoints() != null ? member.getPoints() : 0;
+        int actualUsedPoints = Math.min(request.getUsedPoints(), Math.min(basePrice, memberCurrentPoints));
+        int finalPrice = basePrice - actualUsedPoints;
+        int earnedPoints = (int) (finalPrice * pointRate);
+
+        // 3단계: 재고 차감
+        for (Map.Entry<Product, Integer> entry : purchaseMap.entrySet()) {
+            Product p = entry.getKey();
+            p.setStock(p.getStock() - entry.getValue());
+            productRepository.save(p);
+        }
+
+        // 4단계: 포인트 반영
+        member.setPoints(memberCurrentPoints - actualUsedPoints + earnedPoints);
+        memberRepository.save(member);
+        session.setAttribute("loginMember", member);
+
+        // 5단계: 주문 내역 1건 + PIN 1개 생성
+        String pinCode = generatePin();
+        String combinedName = String.join(", ", productLabels);
+
+        PurchaseHistory history = new PurchaseHistory();
+        history.setBuyerName(member.getName());
+        history.setPhoneNumber(member.getPhoneNumber());
+        history.setProductName(combinedName);
+        history.setPaidPrice(finalPrice);
+        history.setEarnedPoints(earnedPoints);
+        history.setPinCode(pinCode);
+        history.setExpiryDate(LocalDateTime.now().plusDays(1));
+
+        PurchaseHistory saved = purchaseHistoryRepository.save(history);
+
+        System.out.println(">>> 묶음 주문 완료: [" + combinedName + "] PIN: " + pinCode + " / " + finalPrice + "원");
+
+        return ResponseEntity.ok(Map.of("success", true, "id", saved.getId()));
     }
 
     private String generatePin() {

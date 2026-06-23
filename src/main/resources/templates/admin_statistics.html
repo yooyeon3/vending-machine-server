@@ -23,13 +23,62 @@
             font-family: 'Pretendard', sans-serif;
             background-color: var(--bg);
             color: var(--primary-text);
-            padding: 40px;
             line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
         }
 
+        /* 고정 사이드바 */
+        .admin-sidebar {
+            width: 220px;
+            flex-shrink: 0;
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px 18px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-logo img { height: 28px; object-fit: contain; }
+        .sidebar-logo span { font-size: 15px; font-weight: 700; color: var(--primary-text); }
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--sub-text);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 16px 18px 6px;
+        }
+        .sidebar-menu { list-style: none; padding: 0 10px; }
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--sub-text);
+            transition: all 0.2s;
+            margin-bottom: 2px;
+        }
+        .sidebar-menu li a:hover { background: var(--header-bg); color: var(--accent); }
+        .sidebar-menu li a.active { background: var(--header-bg); color: var(--accent); font-weight: 700; }
+
         .dashboard {
-            max-width: 1200px;
-            margin: 0 auto;
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
         }
 
         /* 헤더 섹션 */
@@ -168,14 +217,25 @@
 </head>
 <body>
 
+<!-- 고정 사이드바 -->
+<div class="admin-sidebar">
+    <div class="sidebar-logo">
+        <img th:src="@{/images/vending-logo.png}" alt="PIMTO">
+        <span>관리자</span>
+    </div>
+    <div class="sidebar-section-title">관리 메뉴</div>
+    <ul class="sidebar-menu">
+        <li><a href="/admin">🏠 관리자 메인</a></li>
+        <li><a href="/admin/member">👥 회원 관리</a></li>
+        <li><a href="/admin/statistics" class="active">📊 매출 통계</a></li>
+        <li><a href="/admin/robot-control">🤖 로봇 관제</a></li>
+    </ul>
+</div>
+
 <div class="dashboard">
     <div class="header">
         <div class="header-left">
-            <!-- 💡 로고 크기를 키우고 클릭 시 관리자 메인으로 이동하도록 링크 적용 -->
-            <a href="/admin" style="display: flex; align-items: center; text-decoration: none;">
-                <img src="/images/vending-logo.png" alt="PIMTO 로고" style="height: 55px; object-fit: contain; transition: transform 0.2s; cursor: pointer;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'">
-            </a>
-            <h1>Analytics</h1>
+            <h1>📊 Analytics</h1>
         </div>
         <a href="/admin" class="back-btn">← 관리자 메인으로</a>
     </div>
