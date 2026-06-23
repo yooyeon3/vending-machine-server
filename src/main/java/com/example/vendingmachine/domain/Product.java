@@ -1,14 +1,12 @@
 package com.example.vendingmachine.domain;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
+@Table(name = "products")
 @Getter
 @NoArgsConstructor
 public class Product {
@@ -20,7 +18,9 @@ public class Product {
     private String name;
     private int price;
     private int stock;
-    private String imageUrl; // 💡 사진 경로를 저장할 변수 추가!
+
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Builder
     public Product(String name, int price, int stock, String imageUrl) {

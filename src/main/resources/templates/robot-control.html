@@ -160,6 +160,24 @@
   .status-disconnected { background: #ef4444; }
   .status-connecting { background: #f59e0b; }
   .status-connected { background: #10b981; }
+
+  /* ROS2D 생성 캔버스를 컨테이너에 맞게 스케일링 */
+  #map canvas {
+    width: 100% !important;
+    height: auto !important;
+    aspect-ratio: 1;
+  }
+
+  @media (max-width: 800px) {
+    body { padding: 15px; }
+    .header { padding: 20px; }
+    .controls { flex-direction: column; align-items: stretch; gap: 10px; }
+    .input-group { justify-content: space-between; }
+    .btn { width: 100%; }
+    .back-link { margin-left: 0; text-align: center; display: block; margin-top: 10px; }
+    .map-container { padding: 15px; }
+    .map-wrapper { width: 100%; height: auto; aspect-ratio: 1; }
+  }
 </style>
 <script>
 // 전역 변수 선언

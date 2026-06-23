@@ -10,17 +10,16 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    // 💡 ObjectProvider를 사용하면 빈 생성 시점의 충돌을 방지할 수 있습니다.
     private final ObjectProvider<MemberRepository> memberRepositoryProvider;
 
     public SecurityConfig(ObjectProvider<MemberRepository> memberRepositoryProvider) {
@@ -72,7 +71,7 @@ public class SecurityConfig {
             if ("admin".equals(username)) {
                 return User.builder()
                         .username("admin")
-                        .password(passwordEncoder().encode("admin"))
+                        .password("admin") // :white_check_mark: 평문으로 수정
                         .roles("ADMIN")
                         .build();
             }
@@ -88,8 +87,9 @@ public class SecurityConfig {
         };
     }
 
+    // :white_check_mark: 평문 비교 허용
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return NoOpPasswordEncoder.getInstance();
     }
 }

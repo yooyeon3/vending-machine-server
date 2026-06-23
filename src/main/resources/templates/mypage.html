@@ -86,8 +86,25 @@
         .danger-title { color: var(--danger); }
 
         @media (max-width: 900px) {
-            .container { grid-template-columns: 1fr; }
-            .side-nav { display: none; }
+            .container { grid-template-columns: 1fr; gap: 20px; }
+            .side-nav { display: block; margin-bottom: 10px; }
+            .user-summary { display: flex; align-items: center; gap: 15px; text-align: left; padding-bottom: 15px; }
+            .user-avatar { margin: 0; width: 60px; height: 60px; font-size: 24px; }
+            .menu-list { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; white-space: nowrap; }
+            .menu-item { margin: 0; flex: 0 0 auto; }
+            .menu-link { padding: 10px 15px; font-size: 13px; }
+        }
+
+        @media (max-width: 600px) {
+            .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
+            .nav { justify-content: center; flex-wrap: wrap; gap: 10px; }
+            .nav a { margin-left: 10px; font-size: 14px; }
+            .container { margin: 20px auto; }
+            .section-card { padding: 20px; }
+            .grade-box { padding: 20px; }
+            .grade-header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .grade-header > div { text-align: left !important; }
+            .grade-value { font-size: 24px; }
         }
     </style>
 </head>

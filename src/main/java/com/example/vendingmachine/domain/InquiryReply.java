@@ -7,6 +7,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "inquiry_reply")
 @Getter
 @Setter
 @NoArgsConstructor

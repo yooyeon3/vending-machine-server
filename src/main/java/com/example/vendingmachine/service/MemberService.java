@@ -3,7 +3,6 @@ package com.example.vendingmachine.service;
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberService {
 
     private final MemberRepository memberRepository;
-    private final PasswordEncoder passwordEncoder;
+    // :white_check_mark: PasswordEncoder 제거
     private final com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository;
     private final com.example.vendingmachine.repository.InquiryRepository inquiryRepository;
 
@@ -44,8 +43,8 @@ public class MemberService {
         }
 
         int pointsToNext = Math.max(0, nextThreshold - score);
-        double progress = currentGrade.equals("DIAMOND") ? 100.0 : 
-                         ((double)(score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
+        double progress = currentGrade.equals("DIAMOND") ? 100.0 :
+                ((double)(score - currentThreshold) / (nextThreshold - currentThreshold)) * 100;
 
         return new GradeProgress(score, currentGrade, nextGrade, pointsToNext, (int)progress);
     }
@@ -77,7 +76,6 @@ public class MemberService {
         return "BRONZE";
     }
 
-    // 등급별 할인율 (DIAMOND 20%, GOLD 10%, SILVER 5%)
     public double getDiscountRate(String grade) {
         if (grade == null) return 0.0;
         return switch (grade) {
@@ -88,7 +86,6 @@ public class MemberService {
         };
     }
 
-    // 등급별 포인트 적립률 (DIAMOND 10%, GOLD 5%, 나머지 1%)
     public double getPointRate(String grade) {
         if (grade == null) return 0.01;
         return switch (grade) {
@@ -106,39 +103,29 @@ public class MemberService {
     }
 
     public void join(Member member) {
-        // [로그 추가] 가입 시도 확인
         System.out.println("가입 시도 확인! 이름: " + member.getUsername());
 
-        // 1. 아이디 중복 체크
         memberRepository.findByUsername(member.getUsername()).ifPresent(m -> {
             throw new IllegalStateException("이미 존재하는 회원입니다.");
         });
 
-        // 2. 비밀번호 암호화 후 저장
-        String encodedPassword = passwordEncoder.encode(member.getPassword());
-        member.setPassword(encodedPassword);
-
+        // :white_check_mark: 평문 그대로 저장 (encode 제거)
         memberRepository.save(member);
 
-        // [로그 추가] DB 저장 완료
         System.out.println("DB 저장 완료!");
     }
 
     public Member login(String username, String password) {
-        // 1. DB에서 아이디로 회원 찾아보기
-        Member member = memberRepository.findByUsername(username)
-                .orElse(null); // 회원이 없으면 null 반환
+        Member member = memberRepository.findByUsername(username).orElse(null);
 
-        // 2. 회원이 없거나, 비밀번호가 일치하지 않으면 null 반환
-        if (member == null || !passwordEncoder.matches(password, member.getPassword())) {
-            return null; // 로그인 실패
+        // :white_check_mark: 평문 비교 (passwordEncoder.matches 제거)
+        if (member == null || !password.equals(member.getPassword())) {
+            return null;
         }
 
-        // 3. 모두 통과하면 회원 정보 반환 (로그인 성공)
         return member;
     }
 
-    // [사용자] 프로필 수정 (이름, 전화번호)
     public void updateProfile(Long id, String name, String phoneNumber) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
@@ -147,28 +134,26 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    // [사용자] 비밀번호 변경
     public boolean changePassword(Long id, String oldPassword, String newPassword) {
         Member member = memberRepository.findById(id).orElse(null);
-        if (member == null || !passwordEncoder.matches(oldPassword, member.getPassword())) {
+        // :white_check_mark: 평문 비교
+        if (member == null || !oldPassword.equals(member.getPassword())) {
             return false;
         }
-        member.setPassword(passwordEncoder.encode(newPassword));
+        // :white_check_mark: 평문 저장
+        member.setPassword(newPassword);
         memberRepository.save(member);
         return true;
     }
 
-    // [사용자] 회원 탈퇴
     public void withdraw(Long id) {
         memberRepository.deleteById(id);
     }
 
-    // [관리자 전용] 모든 회원 목록 조회
     public java.util.List<Member> findAll() {
         return memberRepository.findAll();
     }
 
-    // [관리자 전용] 회원 정보 수정 (메모 포함)
     public void updateMember(Long id, String name, String phoneNumber, String adminMemo) {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원입니다."));
@@ -178,21 +163,18 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    // [관리자 전용] 회원 삭제 (강제 탈퇴)
     public void deleteMember(Long id) {
         memberRepository.deleteById(id);
     }
 
-    // [관리자 전용] ID로 회원 찾기
     public Member findById(Long id) {
         return memberRepository.findById(id).orElse(null);
     }
 
-    // 아이디 찾기
     public String findUsername(String name, String phoneNumber) {
         if (name == null || phoneNumber == null) return null;
         String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
-        
+
         return memberRepository.findAll().stream()
                 .filter(m -> m.getName() != null && m.getName().equals(name.trim()))
                 .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
@@ -201,7 +183,6 @@ public class MemberService {
                 .orElse(null);
     }
 
-    // 본인 확인 (side-effect 없음)
     public boolean verifyMember(String username, String phoneNumber) {
         if (username == null || phoneNumber == null) return false;
         String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
@@ -211,7 +192,6 @@ public class MemberService {
                 .isPresent();
     }
 
-    // 임시 비밀번호 발급
     public String issueTemporaryPassword(String username, String phoneNumber) {
         if (username == null || phoneNumber == null) return null;
         String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
@@ -220,13 +200,13 @@ public class MemberService {
                 .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
                 .map(member -> {
                     String tempPw = java.util.UUID.randomUUID().toString().substring(0, 8);
-                    member.setPassword(passwordEncoder.encode(tempPw));
+                    // :white_check_mark: 평문 저장
+                    member.setPassword(tempPw);
                     memberRepository.save(member);
                     return tempPw;
                 }).orElse(null);
     }
 
-    // 비밀번호 재설정 (기존 메서드 유지하되 유연하게 수정)
     public boolean resetPassword(String username, String phoneNumber, String newPassword) {
         if (username == null || phoneNumber == null || newPassword == null) return false;
         String cleanPhone = phoneNumber.replaceAll("[^0-9]", "");
@@ -234,7 +214,8 @@ public class MemberService {
         return memberRepository.findByUsername(username.trim())
                 .filter(m -> m.getPhoneNumber() != null && m.getPhoneNumber().replaceAll("[^0-9]", "").equals(cleanPhone))
                 .map(member -> {
-                    member.setPassword(passwordEncoder.encode(newPassword));
+                    // :white_check_mark: 평문 저장
+                    member.setPassword(newPassword);
                     memberRepository.save(member);
                     return true;
                 }).orElse(false);
