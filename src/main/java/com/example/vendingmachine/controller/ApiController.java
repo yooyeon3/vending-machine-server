@@ -132,4 +132,44 @@ public class ApiController {
         result.put("eta", eta);
         return result;
     }
+
+    // Pi 3 전용 - 세션 없이 최근 주문 기반으로 동일한 시뮬레이션
+    @GetMapping("/api/robot/delivery/status")
+    public Map<String, Object> getRobotDeliveryStatus() {
+        final int DELIVERY_SECS = 60;
+        final int CYCLE_SECS = 120;
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime since = now.minusSeconds(CYCLE_SECS);
+
+        List<PurchaseHistory> orders = purchaseHistoryRepository
+                .findByDeliveryStatusAndPurchaseTimeAfterOrderByPurchaseTimeAsc(
+                        PurchaseHistory.DeliveryStatus.PENDING, since);
+
+        if (orders.isEmpty()) return Map.of("active", false, "state", "IDLE");
+
+        PurchaseHistory order = orders.get(0);
+        long elapsed = ChronoUnit.SECONDS.between(order.getPurchaseTime(), now);
+        boolean arrived = elapsed >= DELIVERY_SECS;
+        int progress = (int) Math.min(100, elapsed * 100L / DELIVERY_SECS);
+        long remaining = Math.max(0, DELIVERY_SECS - elapsed);
+        String eta = arrived ? "도착!" : (remaining / 60) + "분 " + (remaining % 60) + "초";
+
+        double t = Math.min(1.0, (double) elapsed / DELIVERY_SECS);
+        double startX = 8.0, startY = 12.0, endX = 85.0, endY = 80.0;
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("active",      true);
+        result.put("state",       arrived ? "ARRIVED" : "MOVING");
+        result.put("arrived",     arrived);
+        result.put("progress",    progress);
+        result.put("eta",         eta);
+        result.put("orderId",     order.getId());
+        result.put("pinCode",     order.getPinCode());
+        result.put("productName", order.getProductName());
+        result.put("robotX",      startX + (endX - startX) * t);
+        result.put("robotY",      startY + (endY - startY) * t);
+        result.put("destX",       endX);
+        result.put("destY",       endY);
+        return result;
+    }
 }

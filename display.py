@@ -60,26 +60,15 @@ class Poller(QObject):
             time.sleep(3)
 
     def _poll(self):
-        r = requests.get(f"{SERVER}/api/orders/pending", timeout=5)
-        orders = r.json()
-        if not orders:
+        r = requests.get(f"{SERVER}/api/robot/delivery/status", timeout=5)
+        data = r.json()
+
+        if not data.get("active"):
             self.state_changed.emit("IDLE", None)
             return
-        order = orders[-1]
-        try:
-            pt = datetime.fromisoformat(order.get("purchaseTime", ""))
-            arrived = (datetime.now() - pt).total_seconds() >= 60
-        except Exception:
-            arrived = False
-        if arrived:
-            self.state_changed.emit("ARRIVED", order)
-            try:
-                requests.post(f"{SERVER}/api/orders/{order['id']}/status",
-                              json={"status": "DELIVERING"}, timeout=3)
-            except Exception:
-                pass
-        else:
-            self.state_changed.emit("MOVING", order)
+
+        state = data.get("state", "MOVING")
+        self.state_changed.emit(state, data)
 
 
 # ── 공통 스타일 ────────────────────────────────────────────
@@ -314,9 +303,11 @@ class MovingPage(QWidget):
 
         layout.addWidget(body, stretch=1)
 
-    def set_order(self, order):
-        if order:
-            self.product_lbl.setText(order.get("productName", ""))
+    def set_order(self, data):
+        if data:
+            eta = data.get("eta", "")
+            name = data.get("productName", "")
+            self.product_lbl.setText(f"{name}  ·  {eta}" if eta else name)
 
 
 # ── ARRIVED 화면 ───────────────────────────────────────────
@@ -376,12 +367,12 @@ class ArrivedPage(QWidget):
         bl.addWidget(pin_box, alignment=Qt.AlignVCenter)
         layout.addWidget(body, stretch=1)
 
-    def set_order(self, order):
-        if not order:
+    def set_order(self, data):
+        if not data:
             return
-        pin = order.get("pinCode", "----")
+        pin = data.get("pinCode", "----")
         self.pin_val.setText(pin)
-        self.prod_lbl.setText(order.get("productName", ""))
+        self.prod_lbl.setText(data.get("productName", ""))
         self._make_qr(pin)
 
     def _make_qr(self, pin):
