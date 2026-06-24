@@ -44,7 +44,10 @@ public class ApiController {
 
         LocalDateTime since = LocalDateTime.now().minusMinutes(30);
         List<PurchaseHistory> orders = purchaseHistoryRepository
-                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(loginMember.getName(), since);
+                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(loginMember.getName(), since)
+                .stream()
+                .filter(o -> !o.isUsed() && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.DELIVERED)
+                .collect(Collectors.toList());
 
         if (orders.isEmpty()) return Map.of("active", false);
 
@@ -143,7 +146,10 @@ public class ApiController {
 
         List<PurchaseHistory> orders = purchaseHistoryRepository
                 .findByDeliveryStatusAndPurchaseTimeAfterOrderByPurchaseTimeAsc(
-                        PurchaseHistory.DeliveryStatus.PENDING, since);
+                        PurchaseHistory.DeliveryStatus.PENDING, since)
+                .stream()
+                .filter(o -> !o.isUsed())
+                .collect(Collectors.toList());
 
         if (orders.isEmpty()) return Map.of("active", false, "state", "IDLE");
 
