@@ -1,6 +1,7 @@
 package com.example.vendingmachine.repository;
 
 import com.example.vendingmachine.domain.PurchaseHistory;
+import com.example.vendingmachine.domain.PurchaseHistory.DeliveryStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
@@ -14,6 +15,10 @@ public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory
     List<PurchaseHistory> findByBuyerName(String buyerName);
     List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeDesc(String buyerName, LocalDateTime since);
     List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(String buyerName, LocalDateTime since);
+
+    PurchaseHistory findByPinCode(String pinCode);
+
+    List<PurchaseHistory> findByDeliveryStatus(DeliveryStatus deliveryStatus);
 
     @Query("SELECT p.productName, COUNT(p) as count FROM PurchaseHistory p WHERE p.buyerName = :buyerName GROUP BY p.productName ORDER BY count DESC")
     List<Object[]> findTopProductsByBuyerName(@Param("buyerName") String buyerName, Pageable pageable);

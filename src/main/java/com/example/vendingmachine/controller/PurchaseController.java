@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -263,6 +264,70 @@ public class PurchaseController {
         System.out.println(">>> 묶음 주문 완료: [" + combinedName + "] PIN: " + pinCode + " / " + finalPrice + "원");
 
         return ResponseEntity.ok(Map.of("success", true, "id", saved.getId()));
+    }
+
+    // 라파3가 PIN 조회하는 API
+    @GetMapping("/api/pin/{id}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> getPin(@PathVariable Long id) {
+        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+        if (history == null) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(Map.of(
+                "pinCode", history.getPinCode(),
+                "productName", history.getProductName()
+        ));
+    }
+
+    // 라파3가 새 주문(PENDING) 폴링하는 API
+    @GetMapping("/api/orders/pending")
+    @ResponseBody
+    public ResponseEntity<List<Map<String, Object>>> getPendingOrders() {
+        List<PurchaseHistory> pending = purchaseHistoryRepository
+                .findByDeliveryStatus(PurchaseHistory.DeliveryStatus.PENDING);
+        List<Map<String, Object>> result = pending.stream().map(h -> Map.<String, Object>of(
+                "id", h.getId(),
+                "productName", h.getProductName(),
+                "buyerName", h.getBuyerName(),
+                "pinCode", h.getPinCode(),
+                "purchaseTime", h.getPurchaseTime().toString()
+        )).toList();
+        return ResponseEntity.ok(result);
+    }
+
+    // 라파3가 배달 상태 업데이트하는 API
+    @PostMapping("/api/orders/{id}/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> updateDeliveryStatus(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+        if (history == null) return ResponseEntity.notFound().build();
+        try {
+            history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.valueOf(body.get("status")));
+            purchaseHistoryRepository.save(history);
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "유효하지 않은 상태값"));
+        }
+    }
+
+    // 고객이 PIN 입력했을때 확인하는 API
+    @PostMapping("/api/pin/verify")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> verifyPin(@RequestBody Map<String, String> body) {
+        String pinCode = body.get("pinCode");
+        PurchaseHistory history = purchaseHistoryRepository.findByPinCode(pinCode);
+        if (history == null)
+            return ResponseEntity.ok(Map.of("success", false, "message", "존재하지 않는 PIN"));
+        if (history.isUsed())
+            return ResponseEntity.ok(Map.of("success", false, "message", "이미 사용된 PIN"));
+        if (history.getExpiryDate() != null && history.getExpiryDate().isBefore(LocalDateTime.now()))
+            return ResponseEntity.ok(Map.of("success", false, "message", "만료된 PIN"));
+
+        history.setUsed(true);
+        history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DELIVERED);
+        purchaseHistoryRepository.save(history);
+        return ResponseEntity.ok(Map.of("success", true, "productName", history.getProductName()));
     }
 
     private String generatePin() {

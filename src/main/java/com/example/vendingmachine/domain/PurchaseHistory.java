@@ -19,11 +19,18 @@ public class PurchaseHistory {
     private String buyerName;   // 구매자 이름
     private String phoneNumber; // 구매자 전화번호
 
-    private String pinCode;     // 발급된 PIN 번호
-    private LocalDateTime expiryDate; // PIN 만료 일시
-    private boolean isUsed = false;   // 사용 여부
+    private String pinCode;
+    private LocalDateTime expiryDate;
+    private boolean isUsed = false;
 
-    private LocalDateTime purchaseTime; // 구매한 시간
+    @Enumerated(EnumType.STRING)
+    private DeliveryStatus deliveryStatus = DeliveryStatus.PENDING;
+
+    private LocalDateTime purchaseTime;
+
+    public enum DeliveryStatus {
+        PENDING, DELIVERING, DELIVERED
+    }
 
     // DB에 저장되기 직전에 현재 시간을 자동으로 기록해줍니다.
     @PrePersist
