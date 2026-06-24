@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>배달 현황 - PIMTO</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background: #faf8f4;
+            color: #3d2c1e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .topbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            background: white; padding: 14px 24px;
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid #e8dfd4; z-index: 100;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 24px 40px;
+            text-align: center;
+        }
+
+        /* ── 배달 중 상태 ── */
+        #state-delivering { display: flex; flex-direction: column; align-items: center; gap: 28px; }
+
+        .delivering-icon {
+            width: 88px; height: 88px;
+            background: #f2ede4;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 44px;
+        }
+
+        .delivering-title {
+            font-size: 22px; font-weight: 800; color: #3d2c1e;
+        }
+
+        .product-badge {
+            background: #f2ede4; border: 1px solid #e8dfd4;
+            border-radius: 20px; padding: 6px 18px;
+            font-size: 14px; font-weight: 700; color: #c47d4a;
+        }
+
+        .eta-box {
+            background: white; border: 2px solid #e8dfd4;
+            border-radius: 24px; padding: 28px 48px;
+            box-shadow: 0 4px 20px rgba(61,44,30,0.06);
+        }
+        .eta-label { font-size: 13px; font-weight: 600; color: #9e8c7a; margin-bottom: 10px; }
+        .eta-time  { font-size: 52px; font-weight: 900; color: #3d2c1e; letter-spacing: -2px; font-variant-numeric: tabular-nums; }
+        .eta-unit  { font-size: 18px; font-weight: 600; color: #9e8c7a; margin-top: 4px; }
+
+        .progress-wrap { width: 320px; max-width: 100%; }
+        .progress-bg   { height: 8px; background: #f1f5f9; border-radius: 8px; overflow: hidden; }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #c47d4a, #3d2c1e);
+            border-radius: 8px;
+            transition: width 2.8s linear;
+            width: 0;
+        }
+        .progress-pct  { margin-top: 8px; font-size: 13px; font-weight: 700; color: #9e8c7a; text-align: right; }
+
+        /* ── 도착 상태 ── */
+        #state-arrived {
+            display: none;
+            flex-direction: column; align-items: center; gap: 28px;
+            animation: popIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.85); }
+            to   { opacity: 1; transform: scale(1); }
+        }
+
+        .arrived-icon {
+            width: 96px; height: 96px;
+            background: linear-gradient(135deg, #c47d4a, #3d2c1e);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 8px 32px rgba(196,125,74,0.35);
+        }
+        .arrived-title {
+            font-size: 30px; font-weight: 900; color: #3d2c1e; letter-spacing: -1px;
+        }
+        .arrived-sub {
+            font-size: 15px; color: #9e8c7a; font-weight: 500;
+        }
+
+        .pin-section {
+            background: white; border: 2px solid #e8dfd4;
+            border-radius: 28px; padding: 32px 40px;
+            width: 100%; max-width: 380px;
+            box-shadow: 0 8px 32px rgba(61,44,30,0.07);
+        }
+        .pin-section-label {
+            font-size: 13px; font-weight: 700; color: #9e8c7a;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .pin-hint {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px; color: #c47d4a; font-weight: 700;
+            background: #fdf6f0; border: 1px dashed #c47d4a;
+            border-radius: 10px; padding: 8px 14px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .pin-hint:hover { background: #f5ede3; }
+
+        .pin-input-row {
+            display: flex; gap: 10px;
+        }
+        .pin-input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #e8dfd4;
+            border-radius: 14px;
+            font-size: 18px; font-weight: 700;
+            font-family: 'Monaco', 'Consolas', monospace;
+            color: #3d2c1e;
+            outline: none;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: border-color 0.2s;
+        }
+        .pin-input:focus { border-color: #c47d4a; }
+        .pin-input.error { border-color: #ef4444; }
+
+        .btn-verify {
+            padding: 14px 22px;
+            background: #3d2c1e; color: white;
+            border: none; border-radius: 14px;
+            font-size: 15px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s;
+            font-family: 'Pretendard', sans-serif;
+            white-space: nowrap;
+        }
+        .btn-verify:hover { background: #c47d4a; transform: translateY(-1px); }
+        .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .verify-result {
+            margin-top: 14px; font-size: 14px; font-weight: 700;
+            padding: 10px 16px; border-radius: 12px; display: none;
+        }
+        .verify-result.success {
+            background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
+            display: block;
+        }
+        .verify-result.fail {
+            background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;
+            display: block;
+        }
+
+        /* ── 완료 상태 ── */
+        #state-done {
+            display: none;
+            flex-direction: column; align-items: center; gap: 20px;
+            animation: popIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+        }
+        .done-icon {
+            width: 96px; height: 96px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px;
+            box-shadow: 0 8px 32px rgba(34,197,94,0.3);
+        }
+        .done-title { font-size: 28px; font-weight: 900; color: #3d2c1e; }
+        .done-sub   { font-size: 15px; color: #9e8c7a; }
+
+        .btn-home {
+            margin-top: 10px;
+            padding: 16px 40px;
+            background: #3d2c1e; color: white;
+            border: none; border-radius: 16px;
+            font-size: 16px; font-weight: 700;
+            cursor: pointer; text-decoration: none;
+            transition: all 0.2s; display: inline-block;
+        }
+        .btn-home:hover { background: #c47d4a; transform: translateY(-2px); }
+
+        @media (max-width: 480px) {
+            .eta-time { font-size: 40px; }
+            .eta-box  { padding: 22px 32px; }
+            .pin-section { padding: 24px 20px; }
+            .arrived-title { font-size: 24px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <a href="/"><img th:src="@{/images/vending-logo.png}" alt="PIMTO 로고" style="height: 34px;"></a>
+    <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9e8c7a" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span id="chatBadge"
+              th:text="${unreadCount}"
+              th:style="${unreadCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+        </span>
+    </div>
+</div>
+
+<div class="main">
+
+    <!-- 배달 중 -->
+    <div id="state-delivering">
+        <div class="delivering-icon">🤖</div>
+        <div class="delivering-title">PIMTO가 배달 중이에요</div>
+        <div class="product-badge" th:text="${history.productName}">상품명</div>
+
+        <div class="eta-box">
+            <div class="eta-label">예상 도착까지</div>
+            <div class="eta-time" id="etaTime">--:--</div>
+            <div class="eta-unit">분 : 초</div>
+        </div>
+
+        <div class="progress-wrap">
+            <div class="progress-bg">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-pct" id="progressPct">0%</div>
+        </div>
+    </div>
+
+    <!-- 도착 -->
+    <div id="state-arrived">
+        <div class="arrived-icon">📍</div>
+        <div class="arrived-title">로봇이 도착했어요!</div>
+        <div class="arrived-sub">아래에 PIN 번호를 입력하면 음료가 배출됩니다.</div>
+
+        <div class="pin-section">
+            <div class="pin-section-label">내 PIN 번호</div>
+            <div class="pin-hint" id="pinHint" onclick="fillPin()" th:text="${history.pinCode}">XXXX-XXXX</div>
+
+            <div class="pin-input-row">
+                <input type="text" class="pin-input" id="pinInput"
+                       placeholder="PIN 입력" maxlength="9" autocomplete="off" />
+                <button class="btn-verify" id="verifyBtn" onclick="verifyPin()">확인</button>
+            </div>
+            <div class="verify-result" id="verifyResult"></div>
+        </div>
+    </div>
+
+    <!-- 배출 완료 -->
+    <div id="state-done">
+        <div class="done-icon">✓</div>
+        <div class="done-title">배출 완료!</div>
+        <div class="done-sub">음료를 가져가세요. 이용해주셔서 감사합니다.</div>
+        <a href="/" class="btn-home">홈으로</a>
+    </div>
+
+</div>
+
+<th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
+
+<script th:inline="javascript">
+    var myPin = [[${history.pinCode}]];
+    var isDone = false;
+
+    function fillPin() {
+        document.getElementById('pinInput').value = myPin;
+    }
+
+    function verifyPin() {
+        var pin = document.getElementById('pinInput').value.trim();
+        if (!pin) return;
+
+        var btn = document.getElementById('verifyBtn');
+        btn.disabled = true;
+        btn.textContent = '확인 중...';
+
+        fetch('/api/pin/verify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pinCode: pin })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            var resultEl = document.getElementById('verifyResult');
+            var inputEl  = document.getElementById('pinInput');
+
+            if (data.success) {
+                isDone = true;
+                document.getElementById('state-arrived').style.display = 'none';
+                document.getElementById('state-done').style.display = 'flex';
+            } else {
+                inputEl.classList.add('error');
+                resultEl.className = 'verify-result fail';
+                resultEl.textContent = data.message || 'PIN이 올바르지 않습니다.';
+                btn.disabled = false;
+                btn.textContent = '확인';
+                setTimeout(function() { inputEl.classList.remove('error'); }, 1500);
+            }
+        })
+        .catch(function() {
+            document.getElementById('verifyBtn').disabled = false;
+            document.getElementById('verifyBtn').textContent = '확인';
+        });
+    }
+
+    document.getElementById('pinInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') verifyPin();
+    });
+
+    function updateUI(data) {
+        if (isDone) return;
+
+        if (!data.active) return;
+
+        if (data.arrived) {
+            document.getElementById('state-delivering').style.display = 'none';
+            document.getElementById('state-arrived').style.display    = 'flex';
+        } else {
+            document.getElementById('state-delivering').style.display = 'flex';
+            document.getElementById('state-arrived').style.display    = 'none';
+
+            // ETA 포맷: "X분 Y초" → "MM:SS"
+            var etaStr = data.eta || '';
+            var mins = 0, secs = 0;
+            var mMatch = etaStr.match(/(\d+)분/);
+            var sMatch = etaStr.match(/(\d+)초/);
+            if (mMatch) mins = parseInt(mMatch[1]);
+            if (sMatch) secs = parseInt(sMatch[1]);
+            var mm = String(mins).padStart(2, '0');
+            var ss = String(secs).padStart(2, '0');
+            document.getElementById('etaTime').textContent = mm + ':' + ss;
+
+            document.getElementById('progressFill').style.width = data.progress + '%';
+            document.getElementById('progressPct').textContent  = data.progress + '%';
+        }
+    }
+
+    function poll() {
+        fetch('/api/delivery/status')
+            .then(function(r) { return r.json(); })
+            .then(updateUI)
+            .catch(function() {});
+    }
+
+    poll();
+    setInterval(poll, 3000);
+</script>
+
+</body>
+</html>

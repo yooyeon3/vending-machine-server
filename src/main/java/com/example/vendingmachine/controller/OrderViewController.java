@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
@@ -60,5 +61,20 @@ public class OrderViewController {
         model.addAttribute("unreadCount", chatService.countUnreadForUser(loginMember.getUsername()));
 
         return "order-history";
+    }
+
+    @GetMapping("/delivery/{id}")
+    public String deliveryTrack(@PathVariable Long id, HttpSession session, Model model) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null) return "redirect:/login";
+
+        PurchaseHistory history = purchaseHistoryRepository.findById(id).orElse(null);
+        if (history == null || !history.getBuyerName().equals(loginMember.getName())) {
+            return "redirect:/";
+        }
+
+        model.addAttribute("history", history);
+        model.addAttribute("unreadCount", chatService.countUnreadForUser(loginMember.getUsername()));
+        return "delivery-track";
     }
 }
