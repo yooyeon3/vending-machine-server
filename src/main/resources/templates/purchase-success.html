@@ -112,20 +112,15 @@
                 </div>
 
                 <div class="ticket-footer">
-                    <div class="pin-label">기기 입력용 PIN 번호</div>
-                    <div class="pin-code-container" onclick="copyPin()">
-                        <div class="pin-code" id="pinCode" th:text="${history.pinCode}">A4B9-8K2L</div>
-                        <div class="copy-hint">터치하여 번호 복사하기</div>
+                    <div class="pin-label">PIN 번호 안내</div>
+                    <div style="background:#faf8f4; border:2px solid #e8dfd4; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
+                        <div style="font-size:32px; margin-bottom:10px;">🤖</div>
+                        <div style="font-size:15px; font-weight:700; color:#3d2c1e; margin-bottom:6px;">PIN 번호는 로봇 디스플레이에 표시됩니다</div>
+                        <div style="font-size:13px; color:#9e8c7a;">로봇이 도착하면 디스플레이의 PIN을 확인 후<br>배달 현황 페이지에서 입력해주세요.</div>
                     </div>
 
                     <div class="expiry-info">
                         ⏳ 만료 일시: <span class="expiry-time" th:text="${#temporals.format(history.expiryDate, 'MM/dd HH:mm')}">06/18 14:30</span> 까지
-                    </div>
-
-                    <div class="barcode">
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
-                        <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
                     </div>
                 </div>
             </div>
@@ -137,26 +132,9 @@
         </div>
     </div>
 
-    <div id="toast">PIN 번호가 복사되었습니다!</div>
-
     <th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
 
     <script>
-        function copyPin() {
-            const pinText = document.getElementById('pinCode').innerText;
-            navigator.clipboard.writeText(pinText).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('복사 실패:', err);
-            });
-        }
-
-        function showToast() {
-            const toast = document.getElementById("toast");
-            toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 2500);
-        }
-
     </script>
 
     <!-- 채팅 위젯 통합 -->

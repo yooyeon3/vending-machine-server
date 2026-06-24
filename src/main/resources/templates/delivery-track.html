@@ -110,16 +110,13 @@
             text-transform: uppercase; letter-spacing: 0.5px;
             margin-bottom: 16px;
         }
-        .pin-hint {
-            font-family: 'Monaco', 'Consolas', monospace;
-            font-size: 13px; color: #c47d4a; font-weight: 700;
-            background: #fdf6f0; border: 1px dashed #c47d4a;
-            border-radius: 10px; padding: 8px 14px;
+        .pin-guide {
+            font-size: 13px; color: #9e8c7a; font-weight: 600;
+            background: #faf8f4; border: 1px solid #e8dfd4;
+            border-radius: 10px; padding: 10px 14px;
             margin-bottom: 20px;
-            cursor: pointer;
-            transition: background 0.15s;
+            text-align: center;
         }
-        .pin-hint:hover { background: #f5ede3; }
 
         .pin-input-row {
             display: flex; gap: 10px;
@@ -245,8 +242,8 @@
         <div class="arrived-sub">아래에 PIN 번호를 입력하면 음료가 배출됩니다.</div>
 
         <div class="pin-section">
-            <div class="pin-section-label">내 PIN 번호</div>
-            <div class="pin-hint" id="pinHint" onclick="fillPin()" th:text="${history.pinCode}">XXXX-XXXX</div>
+            <div class="pin-section-label">PIN 번호 입력</div>
+            <div class="pin-guide">🤖 로봇 디스플레이에 표시된 PIN을 입력해주세요</div>
 
             <div class="pin-input-row">
                 <input type="text" class="pin-input" id="pinInput"
@@ -270,12 +267,7 @@
 <th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 
 <script th:inline="javascript">
-    var myPin = [[${history.pinCode}]];
     var isDone = false;
-
-    function fillPin() {
-        document.getElementById('pinInput').value = myPin;
-    }
 
     function verifyPin() {
         var pin = document.getElementById('pinInput').value.trim();
