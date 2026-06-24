@@ -1,271 +1,387 @@
-import pygame
-import requests
-import qrcode
+import sys
+import io
 import threading
 import time
-import io
-import sys
+import requests
+import qrcode
+from datetime import datetime
+
+from PyQt5.QtWidgets import (
+    QApplication, QMainWindow, QWidget, QStackedWidget,
+    QLabel, QPushButton, QVBoxLayout, QHBoxLayout, QFrame
+)
+from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QObject
+from PyQt5.QtGui import QFont, QPixmap, QImage, QColor, QPalette
 
 SERVER = "http://192.168.0.171:8080"
 
-# 화면 설정
-W, H = 800, 480
-FPS = 30
-
-# 색상
-BG      = (250, 248, 244)
-BROWN   = (61,  44,  30)
-ACCENT  = (196, 125, 74)
-WHITE   = (255, 255, 255)
-GRAY    = (158, 140, 122)
-LIGHT   = (242, 237, 228)
-GREEN   = (34,  197, 94)
-RED     = (239, 68,  68)
-
-# 상태
-STATE_IDLE     = "IDLE"
-STATE_MOVING   = "MOVING"
-STATE_ARRIVED  = "ARRIVED"
-
-# 상품
 PRODUCTS = [
-    {"name": "펩시 콜라",        "price": 1500, "emoji": "🥤"},
-    {"name": "레쓰비 마일드 커피", "price": 1200, "emoji": "☕"},
+    {"name": "펩시 콜라",         "price": 1500},
+    {"name": "레쓰비 마일드 커피", "price": 1200},
 ]
 
-class Display:
+# ── 스타일 ─────────────────────────────────────────────────
+STYLE = """
+QWidget { background-color: #faf8f4; font-family: 'Nanum Gothic', 'Malgun Gothic', sans-serif; }
+
+#header {
+    background-color: #3d2c1e;
+    padding: 16px;
+}
+#header QLabel {
+    color: white;
+    font-size: 22px;
+    font-weight: bold;
+    background: transparent;
+}
+
+#headerGreen { background-color: #22c55e; padding: 16px; }
+#headerGreen QLabel { color: white; font-size: 22px; font-weight: bold; background: transparent; }
+
+#headerMoving { background-color: #c47d4a; padding: 16px; }
+#headerMoving QLabel { color: white; font-size: 22px; font-weight: bold; background: transparent; }
+
+.drink-btn {
+    background-color: white;
+    border: 2px solid #e8dfd4;
+    border-radius: 20px;
+    padding: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #3d2c1e;
+    min-width: 220px;
+    min-height: 160px;
+}
+.drink-btn:hover { background-color: #f2ede4; border-color: #c47d4a; }
+.drink-btn:pressed { background-color: #e8dfd4; }
+
+#pin-box {
+    background: white;
+    border: 2px solid #e8dfd4;
+    border-radius: 20px;
+    padding: 24px;
+}
+#pin-label { font-size: 14px; color: #9e8c7a; background: transparent; }
+#pin-value { font-size: 42px; font-weight: bold; color: #3d2c1e; background: transparent; letter-spacing: 4px; }
+#pin-hint  { font-size: 13px; color: #9e8c7a; background: transparent; }
+
+#product-label { font-size: 16px; color: #c47d4a; font-weight: bold; background: transparent; }
+#guide-label   { font-size: 13px; color: #9e8c7a; background: transparent; }
+
+#map-placeholder {
+    background: #f2ede4;
+    border: 2px solid #e8dfd4;
+    border-radius: 16px;
+    min-height: 280px;
+}
+#map-placeholder QLabel { color: #9e8c7a; font-size: 18px; background: transparent; }
+
+#toast {
+    background-color: #3d2c1e;
+    color: white;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: bold;
+}
+"""
+
+# ── 폴링 신호 ──────────────────────────────────────────────
+class Poller(QObject):
+    state_changed = pyqtSignal(str, object)   # (state, order)
+
     def __init__(self):
-        pygame.init()
-        self.screen = pygame.display.set_mode((W, H))
-        pygame.display.set_caption("PIMTO")
-        self.clock = pygame.time.Clock()
+        super().__init__()
+        self._running = True
 
-        # 폰트 (한글 지원)
-        font_paths = [
-            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        ]
-        font_path = None
-        for p in font_paths:
+    def start(self):
+        t = threading.Thread(target=self._loop, daemon=True)
+        t.start()
+
+    def _loop(self):
+        while self._running:
             try:
-                open(p)
-                font_path = p
-                break
-            except FileNotFoundError:
-                pass
-
-        if font_path:
-            self.font_lg  = pygame.font.Font(font_path, 48)
-            self.font_md  = pygame.font.Font(font_path, 32)
-            self.font_sm  = pygame.font.Font(font_path, 22)
-            self.font_xs  = pygame.font.Font(font_path, 18)
-        else:
-            self.font_lg  = pygame.font.SysFont(None, 64)
-            self.font_md  = pygame.font.SysFont(None, 42)
-            self.font_sm  = pygame.font.SysFont(None, 28)
-            self.font_xs  = pygame.font.SysFont(None, 22)
-
-        self.state       = STATE_IDLE
-        self.order       = None       # 현재 진행 중인 주문
-        self.qr_surface  = None
-        self.msg         = ""         # 상태 메시지
-        self.poll_thread = threading.Thread(target=self.poll_loop, daemon=True)
-        self.poll_thread.start()
-
-    # ── 폴링 ───────────────────────────────────────────────
-    def poll_loop(self):
-        while True:
-            try:
-                self.poll()
+                self._poll()
             except Exception as e:
                 print("poll error:", e)
             time.sleep(3)
 
-    def poll(self):
+    def _poll(self):
         r = requests.get(f"{SERVER}/api/orders/pending", timeout=5)
         orders = r.json()
 
         if not orders:
-            if self.state != STATE_IDLE:
-                self.state = STATE_IDLE
-                self.order = None
-                self.qr_surface = None
+            self.state_changed.emit("IDLE", None)
             return
 
-        # 가장 최근 PENDING 주문
         order = orders[-1]
-        order_id = order["id"]
-        pin = order["pinCode"]
         purchase_time = order.get("purchaseTime", "")
 
-        # 주문 시각 기준 60초 후 도착
         try:
-            from datetime import datetime, timezone
             pt = datetime.fromisoformat(purchase_time)
-            elapsed = (datetime.now() - pt.replace(tzinfo=None)).total_seconds()
+            elapsed = (datetime.now() - pt).total_seconds()
             arrived = elapsed >= 60
         except Exception:
             arrived = False
 
         if arrived:
-            if self.state != STATE_ARRIVED or (self.order and self.order["id"] != order_id):
-                self.state = STATE_ARRIVED
-                self.order = order
-                self.qr_surface = self.make_qr(pin)
-                # 서버에 DELIVERING 상태 업데이트
-                try:
-                    requests.post(f"{SERVER}/api/orders/{order_id}/status",
-                                  json={"status": "DELIVERING"}, timeout=3)
-                except Exception:
-                    pass
+            self.state_changed.emit("ARRIVED", order)
+            try:
+                requests.post(f"{SERVER}/api/orders/{order['id']}/status",
+                              json={"status": "DELIVERING"}, timeout=3)
+            except Exception:
+                pass
         else:
-            if self.state != STATE_MOVING:
-                self.state = STATE_MOVING
-                self.order = order
+            self.state_changed.emit("MOVING", order)
 
-    # ── QR 생성 ────────────────────────────────────────────
-    def make_qr(self, pin):
-        qr = qrcode.QRCode(box_size=6, border=2)
-        qr.add_data(pin)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-        buf = io.BytesIO()
-        img.save(buf, format="PNG")
-        buf.seek(0)
-        return pygame.image.load(buf, "qr.png")
 
-    # ── 그리기 유틸 ────────────────────────────────────────
-    def text(self, surf, txt, font, color, cx, cy):
-        s = font.render(txt, True, color)
-        r = s.get_rect(center=(cx, cy))
-        surf.blit(s, r)
+# ── IDLE 화면 ──────────────────────────────────────────────
+class IdlePage(QWidget):
+    purchase_requested = pyqtSignal(str)
 
-    def rect_btn(self, surf, x, y, w, h, color, radius=20):
-        pygame.draw.rect(surf, color, (x, y, w, h), border_radius=radius)
-
-    # ── IDLE 화면 ──────────────────────────────────────────
-    def draw_idle(self):
-        s = self.screen
-        s.fill(BG)
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         # 헤더
-        pygame.draw.rect(s, LIGHT, (0, 0, W, 70))
-        self.text(s, "PIMTO 자판기", self.font_md, BROWN, W//2, 35)
+        header = QWidget(); header.setObjectName("header")
+        hl = QHBoxLayout(header)
+        title = QLabel("PIMTO 자판기"); title.setAlignment(Qt.AlignCenter)
+        hl.addWidget(title)
+        layout.addWidget(header)
 
-        # 음료 버튼 2개
-        btn_w, btn_h = 280, 200
-        gap = 60
-        total = btn_w * 2 + gap
-        start_x = (W - total) // 2
-        btn_y = 130
+        # 음료 버튼
+        body = QWidget()
+        bl = QVBoxLayout(body)
+        bl.setContentsMargins(40, 40, 40, 20)
+        bl.setSpacing(20)
 
-        self.buttons = []
-        for i, p in enumerate(PRODUCTS):
-            bx = start_x + i * (btn_w + gap)
-            self.rect_btn(s, bx, btn_y, btn_w, btn_h, WHITE)
-            pygame.draw.rect(s, LIGHT, (bx, btn_y, btn_w, btn_h), 2, border_radius=20)
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(40)
+        for p in PRODUCTS:
+            btn = QPushButton(f"{p['name']}\n\n{p['price']:,}원\n\n터치하여 구매")
+            btn.setProperty("class", "drink-btn")
+            btn.setStyleSheet("""
+                QPushButton {
+                    background-color: white; border: 2px solid #e8dfd4;
+                    border-radius: 20px; padding: 20px;
+                    font-size: 18px; font-weight: bold; color: #3d2c1e;
+                    min-width: 220px; min-height: 160px;
+                }
+                QPushButton:hover { background-color: #f2ede4; border-color: #c47d4a; }
+                QPushButton:pressed { background-color: #e8dfd4; }
+            """)
+            name = p["name"]
+            btn.clicked.connect(lambda _, n=name: self.purchase_requested.emit(n))
+            btn_row.addWidget(btn)
 
-            self.text(s, p["name"],            self.font_sm, BROWN,  bx + btn_w//2, btn_y + 60)
-            self.text(s, f"{p['price']}원",    self.font_md, ACCENT, bx + btn_w//2, btn_y + 110)
-            self.text(s, "눌러서 구매",         self.font_xs, GRAY,   bx + btn_w//2, btn_y + 158)
-            self.buttons.append(pygame.Rect(bx, btn_y, btn_w, btn_h))
+        bl.addStretch()
+        bl.addLayout(btn_row)
+        bl.addStretch()
 
-        # 안내
-        self.text(s, "주문 앱/웹에서도 주문 가능합니다", self.font_xs, GRAY, W//2, H - 30)
+        guide = QLabel("앱/웹에서도 주문 가능합니다")
+        guide.setObjectName("guide-label")
+        guide.setAlignment(Qt.AlignCenter)
+        bl.addWidget(guide)
 
-    # ── MOVING 화면 ────────────────────────────────────────
-    def draw_moving(self):
-        s = self.screen
-        s.fill(BG)
+        layout.addWidget(body)
 
-        # 헤더
-        pygame.draw.rect(s, BROWN, (0, 0, W, 70))
-        self.text(s, "배달 중...", self.font_md, WHITE, W//2, 35)
+        # 토스트
+        self.toast = QLabel("", self)
+        self.toast.setObjectName("toast")
+        self.toast.setAlignment(Qt.AlignCenter)
+        self.toast.hide()
+        self._toast_timer = QTimer()
+        self._toast_timer.timeout.connect(self.toast.hide)
+
+    def show_toast(self, msg):
+        self.toast.setText(msg)
+        self.toast.adjustSize()
+        self.toast.move(
+            (self.width() - self.toast.width()) // 2,
+            self.height() - self.toast.height() - 30
+        )
+        self.toast.show()
+        self._toast_timer.start(2000)
+
+    def resizeEvent(self, e):
+        if self.toast.isVisible():
+            self.toast.move(
+                (self.width() - self.toast.width()) // 2,
+                self.height() - self.toast.height() - 30
+            )
+
+
+# ── MOVING 화면 ────────────────────────────────────────────
+class MovingPage(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+
+        header = QWidget(); header.setObjectName("headerMoving")
+        hl = QHBoxLayout(header)
+        title = QLabel("배달 중..."); title.setAlignment(Qt.AlignCenter)
+        hl.addWidget(title)
+        layout.addWidget(header)
+
+        body = QWidget()
+        bl = QVBoxLayout(body)
+        bl.setContentsMargins(40, 30, 40, 20)
+        bl.setSpacing(16)
 
         # 지도 플레이스홀더
-        map_rect = (60, 90, W - 120, H - 160)
-        pygame.draw.rect(s, LIGHT, map_rect, border_radius=16)
-        pygame.draw.rect(s, GRAY, map_rect, 2, border_radius=16)
-        self.text(s, "로봇 이동 중", self.font_md, BROWN, W//2, H//2 - 20)
-        self.text(s, "(지도 연동 준비 중)", self.font_xs, GRAY, W//2, H//2 + 25)
+        map_ph = QWidget(); map_ph.setObjectName("map-placeholder")
+        ml = QVBoxLayout(map_ph)
+        map_label = QLabel("로봇 이동 중\n\n(지도 연동 준비 중)")
+        map_label.setAlignment(Qt.AlignCenter)
+        ml.addWidget(map_label)
+        bl.addWidget(map_ph, stretch=1)
 
-        # 상품 이름
-        if self.order:
-            name = self.order.get("productName", "")
-            self.text(s, name, self.font_sm, ACCENT, W//2, H - 35)
+        self.product_label = QLabel("")
+        self.product_label.setObjectName("product-label")
+        self.product_label.setAlignment(Qt.AlignCenter)
+        bl.addWidget(self.product_label)
 
-    # ── ARRIVED 화면 ───────────────────────────────────────
-    def draw_arrived(self):
-        s = self.screen
-        s.fill(BG)
+        layout.addWidget(body, stretch=1)
 
-        # 헤더
-        pygame.draw.rect(s, GREEN, (0, 0, W, 70))
-        self.text(s, "로봇이 도착했습니다!", self.font_md, WHITE, W//2, 35)
+    def set_order(self, order):
+        if order:
+            self.product_label.setText(order.get("productName", ""))
 
-        if self.order:
-            pin = self.order.get("pinCode", "----")
 
-            # QR 코드
-            if self.qr_surface:
-                qr_size = 200
-                qr_scaled = pygame.transform.scale(self.qr_surface, (qr_size, qr_size))
-                s.blit(qr_scaled, (80, 110))
+# ── ARRIVED 화면 ───────────────────────────────────────────
+class ArrivedPage(QWidget):
+    def __init__(self):
+        super().__init__()
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
-            # PIN 표시
-            pygame.draw.rect(s, WHITE, (340, 110, 380, 200), border_radius=20)
-            pygame.draw.rect(s, LIGHT, (340, 110, 380, 200), 2, border_radius=20)
-            self.text(s, "PIN 번호",  self.font_sm, GRAY,   530, 155)
-            self.text(s, pin,         self.font_lg, BROWN,  530, 210)
-            self.text(s, "웹/앱에서 입력해주세요", self.font_xs, GRAY, 530, 260)
+        header = QWidget(); header.setObjectName("headerGreen")
+        hl = QHBoxLayout(header)
+        title = QLabel("로봇이 도착했습니다!"); title.setAlignment(Qt.AlignCenter)
+        hl.addWidget(title)
+        layout.addWidget(header)
 
-            # 상품명
-            name = self.order.get("productName", "")
-            self.text(s, name, self.font_sm, ACCENT, W//2, H - 35)
+        body = QWidget()
+        bl = QHBoxLayout(body)
+        bl.setContentsMargins(40, 30, 40, 20)
+        bl.setSpacing(40)
 
-    # ── 직접 구매 (IDLE 버튼 클릭) ─────────────────────────
-    def direct_purchase(self, product_name):
-        self.msg = f"{product_name} 구매 처리 중..."
-        # 여기서 아두이노로 배출 신호 보내면 됨 (추후 연동)
+        # QR
+        self.qr_label = QLabel()
+        self.qr_label.setFixedSize(200, 200)
+        self.qr_label.setAlignment(Qt.AlignCenter)
+        self.qr_label.setStyleSheet("background: white; border: 2px solid #e8dfd4; border-radius: 12px;")
+        bl.addWidget(self.qr_label, alignment=Qt.AlignVCenter)
+
+        # PIN
+        pin_box = QWidget(); pin_box.setObjectName("pin-box")
+        pl = QVBoxLayout(pin_box)
+        pl.setSpacing(12)
+
+        pin_lbl = QLabel("PIN 번호"); pin_lbl.setObjectName("pin-label")
+        self.pin_value = QLabel("----"); self.pin_value.setObjectName("pin-value")
+        pin_hint = QLabel("웹/앱에서 입력해주세요"); pin_hint.setObjectName("pin-hint")
+        self.product_label = QLabel(""); self.product_label.setObjectName("product-label")
+
+        pl.addStretch()
+        pl.addWidget(pin_lbl)
+        pl.addWidget(self.pin_value)
+        pl.addWidget(pin_hint)
+        pl.addSpacing(16)
+        pl.addWidget(self.product_label)
+        pl.addStretch()
+
+        bl.addWidget(pin_box, stretch=1, alignment=Qt.AlignVCenter)
+        layout.addWidget(body, stretch=1)
+
+    def set_order(self, order):
+        if not order:
+            return
+        pin = order.get("pinCode", "----")
+        self.pin_value.setText(pin)
+        self.product_label.setText(order.get("productName", ""))
+        self._update_qr(pin)
+
+    def _update_qr(self, pin):
+        try:
+            qr = qrcode.QRCode(box_size=6, border=2)
+            qr.add_data(pin)
+            qr.make(fit=True)
+            img = qr.make_image(fill_color="black", back_color="white")
+            buf = io.BytesIO()
+            img.save(buf, format="PNG")
+            buf.seek(0)
+            qimg = QImage.fromData(buf.getvalue())
+            pix = QPixmap.fromImage(qimg).scaled(
+                196, 196, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            self.qr_label.setPixmap(pix)
+        except Exception as e:
+            print("QR error:", e)
+
+
+# ── 메인 윈도우 ────────────────────────────────────────────
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("PIMTO")
+        self.showFullScreen()
+
+        self.stack = QStackedWidget()
+        self.setCentralWidget(self.stack)
+
+        self.idle_page    = IdlePage()
+        self.moving_page  = MovingPage()
+        self.arrived_page = ArrivedPage()
+
+        self.stack.addWidget(self.idle_page)    # 0
+        self.stack.addWidget(self.moving_page)  # 1
+        self.stack.addWidget(self.arrived_page) # 2
+
+        self.idle_page.purchase_requested.connect(self.on_direct_purchase)
+
+        self.setStyleSheet(STYLE)
+
+        self._current_state = "IDLE"
+
+        self.poller = Poller()
+        self.poller.state_changed.connect(self.on_state_changed)
+        self.poller.start()
+
+    def on_state_changed(self, state, order):
+        if state == self._current_state and state != "ARRIVED":
+            if state == "MOVING" and order:
+                self.moving_page.set_order(order)
+            return
+
+        self._current_state = state
+
+        if state == "IDLE":
+            self.stack.setCurrentIndex(0)
+        elif state == "MOVING":
+            self.moving_page.set_order(order)
+            self.stack.setCurrentIndex(1)
+        elif state == "ARRIVED":
+            self.arrived_page.set_order(order)
+            self.stack.setCurrentIndex(2)
+
+    def on_direct_purchase(self, product_name):
+        # 추후 아두이노 배출 신호 연동
         print(f"[직접구매] {product_name}")
-        threading.Thread(target=self._show_msg, args=(f"{product_name} 배출 완료!",), daemon=True).start()
+        self.idle_page.show_toast(f"{product_name} 배출 중...")
 
-    def _show_msg(self, msg):
-        self.msg = msg
-        time.sleep(2)
-        self.msg = ""
+    def keyPressEvent(self, e):
+        if e.key() == Qt.Key_Escape:
+            self.close()
 
-    # ── 메인 루프 ─────────────────────────────────────────
-    def run(self):
-        while True:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN and self.state == STATE_IDLE:
-                    for i, btn in enumerate(getattr(self, 'buttons', [])):
-                        if btn.collidepoint(event.pos):
-                            self.direct_purchase(PRODUCTS[i]["name"])
-
-            if self.state == STATE_IDLE:
-                self.draw_idle()
-            elif self.state == STATE_MOVING:
-                self.draw_moving()
-            elif self.state == STATE_ARRIVED:
-                self.draw_arrived()
-
-            # 메시지 오버레이
-            if self.msg:
-                overlay = pygame.Surface((W, 60), pygame.SRCALPHA)
-                overlay.fill((61, 44, 30, 220))
-                self.screen.blit(overlay, (0, H - 60))
-                self.text(self.screen, self.msg, self.font_sm, WHITE, W//2, H - 30)
-
-            pygame.display.flip()
-            self.clock.tick(FPS)
 
 if __name__ == "__main__":
-    Display().run()
+    app = QApplication(sys.argv)
+    app.setFont(QFont("Nanum Gothic", 12))
+    win = MainWindow()
+    sys.exit(app.exec_())
