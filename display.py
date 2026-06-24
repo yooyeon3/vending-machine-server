@@ -217,7 +217,28 @@ class IdlePage(QWidget):
         layout.setSpacing(0)
         self.setStyleSheet("background:#faf8f4;")
 
-        layout.addWidget(header_widget("PIMTO 자판기"))
+        # 로고 포함 헤더
+        header = QWidget()
+        header.setFixedHeight(64)
+        header.setStyleSheet("background:#3d2c1e;")
+        hl = QHBoxLayout(header)
+        hl.setContentsMargins(16, 0, 16, 0)
+
+        logo = QLabel()
+        logo.setStyleSheet("background:transparent;")
+        logo_pix = QPixmap(f"{IMG_DIR}/pimto.png")
+        if not logo_pix.isNull():
+            logo.setPixmap(logo_pix.scaled(40, 40, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+
+        title = QLabel("PIMTO 자판기")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("color:white; font-size:22px; font-weight:bold; background:transparent;")
+
+        hl.addWidget(logo)
+        hl.addWidget(title, stretch=1)
+        hl.addSpacing(40)  # 로고 너비만큼 오른쪽 여백으로 중앙 맞춤
+
+        layout.addWidget(header)
 
         body = QWidget()
         bl = QVBoxLayout(body)
