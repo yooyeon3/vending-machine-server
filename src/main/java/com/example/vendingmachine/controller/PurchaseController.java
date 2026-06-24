@@ -315,6 +315,7 @@ public class PurchaseController {
     @PostMapping("/api/pin/verify")
     @ResponseBody
     public ResponseEntity<Map<String, Object>> verifyPin(@RequestBody Map<String, String> body) {
+        final int CYCLE_SECS = 120;
         String pinCode = body.get("pinCode");
         PurchaseHistory history = purchaseHistoryRepository.findByPinCode(pinCode);
         if (history == null)
@@ -327,7 +328,28 @@ public class PurchaseController {
         history.setUsed(true);
         history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DISPENSING);
         purchaseHistoryRepository.save(history);
-        return ResponseEntity.ok(Map.of("success", true, "productName", history.getProductName()));
+
+        // 같은 배달 배치(CYCLE_SECS 이내) 주문을 모두 DISPENSING 처리
+        LocalDateTime batchWindow = history.getPurchaseTime().minusSeconds(CYCLE_SECS);
+        List<PurchaseHistory> batchOrders = purchaseHistoryRepository
+                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(
+                        history.getBuyerName(), batchWindow);
+        List<String> allProductLabels = new ArrayList<>();
+        allProductLabels.add(history.getProductName());
+        for (PurchaseHistory other : batchOrders) {
+            if (other.getId().equals(history.getId())) continue;
+            if (!other.isUsed()
+                    && other.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.DISPENSING
+                    && other.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.DELIVERED) {
+                other.setUsed(true);
+                other.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DISPENSING);
+                purchaseHistoryRepository.save(other);
+                allProductLabels.add(other.getProductName());
+            }
+        }
+
+        String combinedName = String.join(", ", allProductLabels);
+        return ResponseEntity.ok(Map.of("success", true, "productName", combinedName));
     }
 
     private String generatePin() {
