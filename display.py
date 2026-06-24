@@ -54,10 +54,38 @@ class Poller(QObject):
     def _loop(self):
         while True:
             try:
+                self._check_dispensing()
                 self._poll()
             except Exception as e:
                 print("poll error:", e)
             time.sleep(3)
+
+    def _check_dispensing(self):
+        r = requests.get(f"{SERVER}/api/robot/dispensing", timeout=5)
+        orders = r.json()
+        for order in orders:
+            self._dispense_order(order)
+            try:
+                requests.post(f"{SERVER}/api/robot/dispensing/{order['id']}/done", timeout=3)
+            except Exception as e:
+                print("dispense done error:", e)
+
+    def _dispense_order(self, order):
+        name = order.get("productName", "")
+        # "펩시 콜라 x2, 레쓰비 마일드 커피" 형식 파싱
+        for part in name.split(", "):
+            qty = 1
+            if " x" in part:
+                p, q = part.rsplit(" x", 1)
+                try:
+                    qty = int(q)
+                    part = p
+                except ValueError:
+                    pass
+            for product in PRODUCTS:
+                if product["name"] in part:
+                    dispense(product, qty)
+                    break
 
     def _poll(self):
         r = requests.get(f"{SERVER}/api/robot/delivery/status", timeout=5)

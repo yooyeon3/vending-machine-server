@@ -6,9 +6,8 @@ import com.example.vendingmachine.domain.PurchaseHistory;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -136,7 +135,7 @@ public class ApiController {
         return result;
     }
 
-    // Pi 3 전용 - 세션 없이 최근 주문 기반으로 동일한 시뮬레이션
+    // Pi 3 전용 - 배치 처리 포함 배달 상태
     @GetMapping("/api/robot/delivery/status")
     public Map<String, Object> getRobotDeliveryStatus() {
         final int DELIVERY_SECS = 60;
@@ -153,13 +152,22 @@ public class ApiController {
 
         if (orders.isEmpty()) return Map.of("active", false, "state", "IDLE");
 
-        PurchaseHistory order = orders.get(0);
-        long elapsed = ChronoUnit.SECONDS.between(order.getPurchaseTime(), now);
+        // 가장 오래된 주문 기준으로 시간 계산 (배치 대표)
+        PurchaseHistory first = orders.get(0);
+        long elapsed = ChronoUnit.SECONDS.between(first.getPurchaseTime(), now);
         boolean arrived = elapsed >= DELIVERY_SECS;
         int progress = (int) Math.min(100, elapsed * 100L / DELIVERY_SECS);
         long remaining = Math.max(0, DELIVERY_SECS - elapsed);
         String eta = arrived ? "도착!" : (remaining / 60) + "분 " + (remaining % 60) + "초";
 
+        // 배치 내 상품 요약
+        Map<String, Long> counts = orders.stream()
+                .collect(Collectors.groupingBy(PurchaseHistory::getProductName, Collectors.counting()));
+        String productSummary = counts.entrySet().stream()
+                .map(e -> e.getKey() + (e.getValue() > 1 ? " x" + e.getValue() : ""))
+                .collect(Collectors.joining(", "));
+
+        // 대표 PIN (첫 주문)
         double t = Math.min(1.0, (double) elapsed / DELIVERY_SECS);
         double startX = 8.0, startY = 12.0, endX = 85.0, endY = 80.0;
 
@@ -169,13 +177,36 @@ public class ApiController {
         result.put("arrived",     arrived);
         result.put("progress",    progress);
         result.put("eta",         eta);
-        result.put("orderId",     order.getId());
-        result.put("pinCode",     order.getPinCode());
-        result.put("productName", order.getProductName());
+        result.put("orderId",     first.getId());
+        result.put("pinCode",     first.getPinCode());
+        result.put("productName", productSummary);
         result.put("robotX",      startX + (endX - startX) * t);
         result.put("robotY",      startY + (endY - startY) * t);
         result.put("destX",       endX);
         result.put("destY",       endY);
         return result;
+    }
+
+    // Pi 3가 배출할 주문 조회 (PIN 인증 완료된 것)
+    @GetMapping("/api/robot/dispensing")
+    public List<Map<String, Object>> getDispensingOrders() {
+        return purchaseHistoryRepository
+                .findByDeliveryStatus(PurchaseHistory.DeliveryStatus.DISPENSING)
+                .stream()
+                .map(o -> Map.<String, Object>of(
+                        "id", o.getId(),
+                        "productName", o.getProductName()
+                ))
+                .collect(Collectors.toList());
+    }
+
+    // Pi 3 배출 완료 처리
+    @PostMapping("/api/robot/dispensing/{id}/done")
+    public Map<String, Object> dispensingDone(@PathVariable Long id) {
+        PurchaseHistory h = purchaseHistoryRepository.findById(id).orElse(null);
+        if (h == null) return Map.of("success", false);
+        h.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DELIVERED);
+        purchaseHistoryRepository.save(h);
+        return Map.of("success", true);
     }
 }

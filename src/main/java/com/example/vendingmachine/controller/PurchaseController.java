@@ -325,7 +325,7 @@ public class PurchaseController {
             return ResponseEntity.ok(Map.of("success", false, "message", "만료된 PIN"));
 
         history.setUsed(true);
-        history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DELIVERED);
+        history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DISPENSING);
         purchaseHistoryRepository.save(history);
         return ResponseEntity.ok(Map.of("success", true, "productName", history.getProductName()));
     }

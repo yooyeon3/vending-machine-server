@@ -29,7 +29,7 @@ public class PurchaseHistory {
     private LocalDateTime purchaseTime;
 
     public enum DeliveryStatus {
-        PENDING, DELIVERING, DELIVERED
+        PENDING, DELIVERING, DISPENSING, DELIVERED
     }
 
     // DB에 저장되기 직전에 현재 시간을 자동으로 기록해줍니다.
