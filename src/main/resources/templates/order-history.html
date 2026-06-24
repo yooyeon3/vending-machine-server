@@ -36,7 +36,7 @@
         .menu-link:hover { background: var(--primary-light); color: var(--primary); }
         .menu-link.active { background: var(--primary-light); color: var(--primary); font-weight: 700; }
 
-        .container { flex: 1; max-width: 860px; padding: 30px 32px; animation: fadeIn 0.6s ease-out; padding-bottom: 60px; }
+        .container { flex: 1; max-width: 860px; padding: 30px 32px; animation: fadeIn 0.6s ease-out; padding-bottom: 60px; margin: 0 auto; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .page-title { font-size: 24px; font-weight: 800; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; color: var(--text-main); }
@@ -170,7 +170,6 @@
     <a href="/" class="menu-link">🏠 홈</a>
     <a href="/mypage" class="menu-link">👤 마이페이지</a>
     <a href="/orders/my" class="menu-link active">📋 주문 내역</a>
-    <a href="/inquiry/list" class="menu-link">💬 문의</a>
 </div>
 
 <div class="container">
@@ -261,19 +260,20 @@
                     </div>
                 </div>
 
-                <!-- PIN 번호 연동 -->
+                <!-- 배달 현황 링크 -->
                 <div class="order-pin-box" th:if="${order.pinCode != null}">
                     <div style="display: flex; align-items: center; gap: 8px;">
-                        <span class="pin-text" th:id="'pin-' + ${order.id}" th:text="${order.pinCode}">A4B9-8K2L</span>
                         <th:block th:if="${order.used}">
-                            <span class="pin-status status-used">사용됨</span>
+                            <span class="pin-status status-used">배달 완료</span>
                         </th:block>
                         <th:block th:if="${!order.used}">
-                            <span th:if="${now.isBefore(order.expiryDate)}" class="pin-status status-valid">유효</span>
+                            <span th:if="${now.isBefore(order.expiryDate)}" class="pin-status status-valid">배달 중</span>
                             <span th:if="${now.isAfter(order.expiryDate)}" class="pin-status status-expired">만료</span>
                         </th:block>
                     </div>
-                    <button class="copy-btn" th:onclick="|copyPin('${order.id}')|">복사</button>
+                    <a th:if="${!order.used and now.isBefore(order.expiryDate)}"
+                       th:href="@{/orders/delivery/{id}(id=${order.id})}"
+                       class="copy-btn" style="text-decoration:none;">현황 확인</a>
                 </div>
             </div>
         </div>
@@ -285,8 +285,6 @@
 </div>
 
 </div><!-- /page-wrapper -->
-
-<div id="toast">PIN 번호가 복사되었습니다!</div>
 
 <th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
 <th:block th:replace="~{fragments/chat-panel :: chatPanel}"></th:block>
@@ -303,14 +301,6 @@
         }
     };
 
-    function copyPin(id) {
-        const pinText = document.getElementById('pin-' + id).innerText;
-        navigator.clipboard.writeText(pinText).then(() => {
-            const toast = document.getElementById("toast");
-            toast.className = "show";
-            setTimeout(() => { toast.className = ""; }, 2000);
-        });
-    }
 </script>
 
 <!-- 채팅 위젯 통합 -->

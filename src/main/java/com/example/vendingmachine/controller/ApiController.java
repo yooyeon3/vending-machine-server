@@ -49,8 +49,8 @@ public class ApiController {
         if (orders.isEmpty()) return Map.of("active", false);
 
         // 로봇 일정 시뮬레이션: 5분 배달 + 2분 복귀 = 7분 사이클
-        final int DELIVERY_SECS = 300;
-        final int CYCLE_SECS = 420;
+        final int DELIVERY_SECS = 60;
+        final int CYCLE_SECS = 120;
         LocalDateTime now = LocalDateTime.now();
 
         // 로봇 사이클(7분) 안에 들어온 주문은 같은 배달 묶음으로 처리
