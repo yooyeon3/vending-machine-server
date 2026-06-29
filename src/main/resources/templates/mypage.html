@@ -22,9 +22,15 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Pretendard', sans-serif; background: var(--bg); color: var(--text-main); line-height: 1.6; }
 
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: #f2ede4; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-        .logo img { height: 40px; }
-        .nav a { margin-left: 20px; text-decoration: none; color: var(--text-sub); font-weight: 600; font-size: 15px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 15px 40px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+        .header-left { display: flex; align-items: center; flex: 1; }
+        .header-center { display: flex; justify-content: center; align-items: center; gap: 40px; flex: 2; }
+        .header-right { font-size: 16px; font-weight: 600; color: #3d2c1e; display: flex; align-items: center; justify-content: flex-end; gap: 25px; flex: 1; }
+        
+        .dash-nav-link { position: relative; text-decoration: none; color: #9e8c7a; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; padding: 5px 0; transition: color 0.3s ease; }
+        .dash-nav-link:hover, .dash-nav-link.active { color: #3d2c1e; }
+        .dash-nav-link::after { content: ''; position: absolute; bottom: -2px; left: 50%; width: 0; height: 2px; background: #c47d4a; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); border-radius: 2px; }
+        .dash-nav-link:hover::after, .dash-nav-link.active::after { width: 100%; }
 
         .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; animation: fadeIn 0.6s ease-out; display: grid; grid-template-columns: 280px 1fr; gap: 30px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -111,14 +117,22 @@
 <body>
 
 <div class="header">
-    <div class="logo">
-        <a href="/"><img th:src="@{/images/vending-logo.png}" alt="PIMTO"></a>
+    <div class="header-left">
+        <a href="/" style="display: flex; align-items: center;">
+            <img th:src="@{/images/vending-logo.png}" style="height: 35px;" alt="PIMTO 로고">
+        </a>
     </div>
-    <div class="nav" style="display: flex; align-items: center;">
-        <a href="/">홈으로</a>
+    <div class="header-center">
+        <a href="/" class="dash-nav-link">메뉴판</a>
+        <a href="/mypage" class="dash-nav-link active">마이페이지</a>
+        <a href="/robot" class="dash-nav-link">스마트 로봇</a>
+        <a href="#" class="dash-nav-link">실시간 지도</a>
+        <a href="/orders/my" class="dash-nav-link">주문내역</a>
+    </div>
+    <div class="header-right">
         <!-- 채팅 알림 아이콘 -->
-        <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer; margin-left: 20px;">   
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#3d2c1e" stroke-width="2">
+        <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">   
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3d2c1e" stroke-width="2">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
             </svg>
             <span id="chatBadge"
@@ -126,7 +140,7 @@
                   th:style="${unreadCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
             </span>
         </div>
-        <a href="/logout" style="color: #ef4444; margin-left: 20px;">로그아웃</a>
+        <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; transition: opacity 0.2s;">로그아웃</a>
     </div>
 </div>
 

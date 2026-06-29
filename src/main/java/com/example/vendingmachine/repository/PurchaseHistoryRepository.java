@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 public interface PurchaseHistoryRepository extends JpaRepository<PurchaseHistory, Long> {
     long countByBuyerName(String buyerName);
     List<PurchaseHistory> findByBuyerName(String buyerName);
+    List<PurchaseHistory> findByBuyerNameOrderByPurchaseTimeDesc(String buyerName);
     List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeDesc(String buyerName, LocalDateTime since);
     List<PurchaseHistory> findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(String buyerName, LocalDateTime since);
 

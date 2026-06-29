@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PIMTO - 로봇 쇼케이스</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        :root {
+            --bg-light: #faf8f4;
+            --text-dark: #1d1d1f;
+            --text-gray: #86868b;
+            --accent: #c47d4a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Pretendard', sans-serif; background: var(--bg-light); color: var(--text-dark); overflow-x: hidden; }
+
+        /* 공통 헤더 */
+        .header { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); padding: 15px 40px; border-bottom: 1px solid rgba(0,0,0,0.05); position: fixed; top: 0; width: 100%; z-index: 1000; transition: background 0.3s; }
+        .header.dark { background: rgba(0, 0, 0, 0.8); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .header-left { display: flex; align-items: center; flex: 1; }
+        .header-center { display: flex; justify-content: center; align-items: center; gap: 40px; flex: 2; }
+        .header-right { font-size: 16px; font-weight: 600; display: flex; align-items: center; justify-content: flex-end; gap: 25px; flex: 1; }
+        
+        .dash-nav-link { position: relative; text-decoration: none; color: #86868b; font-weight: 600; font-size: 15px; letter-spacing: -0.3px; transition: color 0.3s ease; }
+        .dash-nav-link:hover, .dash-nav-link.active { color: var(--text-dark); }
+        .header.dark .dash-nav-link:hover, .header.dark .dash-nav-link.active { color: #ffffff; }
+
+        /* 스크롤 애니메이션 유틸리티 */
+        .fade-up { opacity: 0; transform: translateY(40px); transition: opacity 1s cubic-bezier(0.16, 1, 0.3, 1), transform 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        .fade-up.visible { opacity: 1; transform: translateY(0); }
+
+        /* Section 1: Hero Intro */
+        .section-hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 120px 20px 40px; background: linear-gradient(180deg, #ffffff 0%, var(--bg-light) 100%); }
+        .hero-title { font-size: 80px; font-weight: 900; letter-spacing: -3px; line-height: 1.1; margin-bottom: 20px; background: linear-gradient(90deg, #1d1d1f, #434344); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-subtitle { font-size: 28px; font-weight: 500; color: var(--text-gray); letter-spacing: -0.5px; margin-bottom: 60px; max-width: 600px; line-height: 1.4; }
+        .hero-img-wrap { position: relative; width: 100%; max-width: 800px; }
+        .hero-img { width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0 30px 40px rgba(0,0,0,0.1)); transform: scale(0.95); transition: transform 2s cubic-bezier(0.16, 1, 0.3, 1); }
+        .section-hero.visible .hero-img { transform: scale(1); }
+
+        /* Section 2: LiDAR & AI (Dark Mode) */
+        .section-lidar { min-height: 100vh; background: #000000; color: #ffffff; display: flex; align-items: center; padding: 100px 10%; position: relative; overflow: hidden; }
+        .lidar-content { flex: 1; z-index: 2; }
+        .lidar-label { font-size: 14px; font-weight: 700; color: #ff3b30; letter-spacing: 2px; margin-bottom: 15px; text-transform: uppercase; }
+        .lidar-title { font-size: 56px; font-weight: 800; line-height: 1.2; margin-bottom: 25px; letter-spacing: -1.5px; }
+        .lidar-desc { font-size: 21px; color: #a1a1a6; line-height: 1.5; max-width: 500px; }
+        .lidar-visual { flex: 1; position: relative; height: 500px; display: flex; justify-content: center; align-items: center; z-index: 1; }
+        
+        .radar-circle { position: absolute; border-radius: 50%; border: 1px solid rgba(255, 59, 48, 0.3); animation: pulse 3s infinite linear; }
+        .radar-circle:nth-child(1) { width: 200px; height: 200px; animation-delay: 0s; }
+        .radar-circle:nth-child(2) { width: 400px; height: 400px; animation-delay: 1s; }
+        .radar-circle:nth-child(3) { width: 600px; height: 600px; animation-delay: 2s; }
+        @keyframes pulse { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        
+        /* Section 3: Smart Security */
+        .section-security { min-height: 100vh; background: linear-gradient(135deg, #faf8f4 0%, #f2ede4 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 100px 20px; position: relative; }
+        .security-label { font-size: 14px; font-weight: 700; color: var(--accent); letter-spacing: 2px; margin-bottom: 20px; text-transform: uppercase; }
+        .security-title { font-size: 56px; font-weight: 800; color: #1d1d1f; letter-spacing: -2px; margin-bottom: 30px; }
+        .security-desc { font-size: 20px; color: #515154; line-height: 1.5; font-weight: 500; max-width: 700px; margin-bottom: 50px; }
+        
+        .auth-grid { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+        .auth-box { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(196,125,74,0.2); border-radius: 30px; padding: 40px; width: 350px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.05); }
+        .auth-icon { font-size: 40px; margin-bottom: 10px; }
+        .auth-method { font-size: 18px; font-weight: 800; margin-bottom: 25px; color: var(--text-dark); }
+        .pin-display { font-size: 36px; font-weight: 900; color: var(--accent); letter-spacing: 4px; line-height: 1; margin-bottom: 25px; font-family: monospace; }
+        .qr-display { margin-bottom: 25px; display: flex; justify-content: center; }
+        .auth-desc { font-size: 15px; color: #515154; line-height: 1.5; font-weight: 500; }
+
+        /* Section 4: Mobile App */
+        .section-app { min-height: 100vh; background: #ffffff; display: flex; align-items: center; padding: 100px 10%; justify-content: center; flex-wrap: wrap; gap: 80px; }
+        .app-content { flex: 1; min-width: 300px; max-width: 500px; }
+        .app-title { font-size: 56px; font-weight: 800; line-height: 1.2; margin-bottom: 25px; letter-spacing: -1.5px; }
+        .app-desc { font-size: 20px; color: var(--text-gray); line-height: 1.6; margin-bottom: 40px; }
+        .app-download { display: flex; gap: 15px; }
+        .store-btn { padding: 12px 24px; background: #1d1d1f; color: white; border-radius: 12px; font-weight: 700; font-size: 16px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+        .store-btn:hover { transform: scale(1.05); }
+        .app-visual { flex: 1; display: flex; justify-content: center; min-width: 300px; }
+        .phone-mockup { width: 280px; height: 580px; background: #000; border-radius: 40px; border: 12px solid #1d1d1f; box-shadow: 0 30px 60px rgba(0,0,0,0.15); position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .phone-mockup::before { content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 25px; background: #1d1d1f; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; z-index: 10; }
+        .qr-overlay { position: absolute; bottom: 40px; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+
+        /* Section 4: Eco Battery & CTA */
+        .section-eco { padding: 150px 20px; text-align: center; background: #ffffff; }
+        .eco-title { font-size: 48px; font-weight: 800; margin-bottom: 20px; letter-spacing: -1px; }
+        .eco-desc { font-size: 20px; color: var(--text-gray); margin-bottom: 60px; }
+        .cta-btn { display: inline-block; padding: 20px 40px; background: #1d1d1f; color: #ffffff; text-decoration: none; font-size: 20px; font-weight: 700; border-radius: 40px; transition: all 0.3s; }
+        .cta-btn:hover { background: var(--accent); transform: scale(1.05); }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 48px; }
+            .hero-subtitle { font-size: 20px; }
+            .section-lidar { flex-direction: column; padding: 100px 20px; text-align: center; }
+            .lidar-title { font-size: 40px; }
+            .security-title { font-size: 40px; }
+            .auth-grid { flex-direction: column; align-items: center; }
+            .auth-box { width: 100%; max-width: 350px; }
+            .section-app { flex-direction: column; padding: 100px 20px; text-align: center; }
+            .app-title { font-size: 40px; }
+            .app-download { justify-content: center; }
+            .eco-title { font-size: 36px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header" id="nav-header">
+    <div class="header-left">
+        <a href="/" style="display: flex; align-items: center;">
+            <img th:src="@{/images/vending-logo.png}" style="height: 35px;" alt="PIMTO 로고">
+        </a>
+    </div>
+    <div class="header-center">
+        <a href="/" class="dash-nav-link">메뉴판</a>
+        <a href="/mypage" class="dash-nav-link">마이페이지</a>
+        <a href="/robot" class="dash-nav-link active" style="color:var(--text-dark);">스마트 로봇</a>
+        <a href="#" class="dash-nav-link">실시간 지도</a>
+        <a href="/orders/my" class="dash-nav-link">주문내역</a>
+    </div>
+    <div class="header-right">
+        <!-- 채팅 알림 아이콘 -->
+        <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">   
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span id="chatBadge"
+                  th:text="${unreadCount}"
+                  th:style="${unreadCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+            </span>
+        </div>
+        <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px;">로그아웃</a>
+    </div>
+</div>
+
+<!-- Section 1: Hero Intro -->
+<section class="section-hero fade-up">
+    <h1 class="hero-title">움직이는 스마트 자판기.<br>PIMTO를 만나다.</h1>
+    <p class="hero-subtitle">원하는 곳 어디든, 가장 신선한 상태로.<br>이제 자판기를 찾아가지 마세요. 자판기가 당신을 찾아갑니다.</p>
+    <div class="hero-img-wrap">
+        <img th:src="@{/images/IMG_6255.jpg}" class="hero-img" alt="PIMTO Robot" style="border-radius: 30px;">
+    </div>
+</section>
+
+<!-- Section 2: LiDAR & AI -->
+<section class="section-lidar" id="dark-section">
+    <div class="lidar-content fade-up">
+        <div class="lidar-label">LiDAR & AI Vision</div>
+        <h2 class="lidar-title">360도 공간 인식.<br>가장 빠르고 안전한 경로.</h2>
+        <p class="lidar-desc">고성능 라이다(LiDAR) 센서와 AI 비전 카메라가 탑재되어, 복잡한 캠퍼스와 수많은 인파 속에서도 충돌 없이 완벽한 자율주행을 구현합니다.</p>
+    </div>
+    <div class="lidar-visual fade-up">
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <div class="radar-circle"></div>
+        <img th:src="@{/images/pimto.png}" style="width: 150px; z-index: 10; filter: brightness(1.5);">
+    </div>
+</section>
+
+<!-- Section 3: Smart Security -->
+<section class="section-security">
+    <div class="fade-up">
+        <div class="security-label">Smart Authentication</div>
+        <h2 class="security-title">상황에 맞게, 더 빠르고 안전하게.</h2>
+        <p class="security-desc">주문하신 기기에 따라 최적화된 맞춤형 픽업 방식을 제공합니다. 어떤 방식을 선택하든, 다른 사람이 내 음료를 꺼내갈 걱정은 완벽하게 차단됩니다.</p>
+        
+        <div class="auth-grid">
+            <div class="auth-box">
+                <div class="auth-icon">💻</div>
+                <div class="auth-method">PC 웹 브라우저 주문</div>
+                <div class="pin-display">****-****</div>
+                <p class="auth-desc">발급된 8자리 고유 PIN 코드를 로봇 전면 패널에 직접 입력하여 아날로그 감성으로 잠금을 해제합니다.</p>
+            </div>
+            <div class="auth-box">
+                <div class="auth-icon">📱</div>
+                <div class="auth-method">모바일 앱 주문</div>
+                <div class="qr-display">
+                    <svg width="60" height="60" viewBox="0 0 100 100" fill="#1d1d1f"><path d="M0 0h30v30H0zM10 10h10v10H10zM70 0h30v30H70zM80 10h10v10H80zM0 70h30v30H0zM10 80h10v10H10zM40 40h20v20H40zM40 0h10v10H40zM50 20h10v10H50zM80 40h20v20H80zM40 80h10v20H40zM80 80h20v20H80zM60 60h20v10H60zM20 50h10v20H20z"/></svg>
+                </div>
+                <p class="auth-desc">스마트폰에서 생성된 동적 QR 코드를 로봇 카메라에 1초 만에 스캔하여 가장 빠르게 픽업합니다.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 4: Mobile App -->
+<section class="section-app">
+    <div class="app-content fade-up">
+        <h2 class="app-title">언제 어디서나 내 손안에.<br>PIMTO 모바일 앱.</h2>
+        <p class="app-desc">강의실에서도, 도서관에서도 터치 한 번이면 충분합니다. 실시간으로 로봇의 위치를 추적하고 도착 알림을 받아보세요. QR 코드를 이용한 초고속 픽업은 오직 모바일 앱에서만 제공되는 특권입니다.</p>
+        <div class="app-download">
+            <span class="store-btn">App Store</span>
+            <span class="store-btn">Google Play</span>
+        </div>
+    </div>
+    <div class="app-visual fade-up">
+        <div class="phone-mockup">
+            <img th:src="@{/images/IMG_6255.jpg}" style="width:100%; height:100%; object-fit:cover; opacity: 0.8;">
+            <div class="qr-overlay">
+                <svg width="50" height="50" viewBox="0 0 100 100" fill="#fff"><path d="M0 0h30v30H0zM10 10h10v10H10zM70 0h30v30H70zM80 10h10v10H80zM0 70h30v30H0zM10 80h10v10H10zM40 40h20v20H40zM40 0h10v10H40zM50 20h10v10H50zM80 40h20v20H80zM40 80h10v20H40zM80 80h20v20H80zM60 60h20v10H60zM20 50h10v20H20z"/></svg>
+                <div style="font-size:13px; font-weight:700; color:#fff; margin-top:8px;">QR 스캔 준비 완료</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Section 4: Eco Battery & CTA -->
+<section class="section-eco fade-up">
+    <h2 class="eco-title">하루 종일 지치지 않는 친환경 에너지.</h2>
+    <p class="eco-desc">대용량 전기 배터리로 탄소 배출 없이 24시간 캠퍼스를 누빕니다.</p>
+    <a href="/" class="cta-btn">지금 PIMTO 메뉴 구경하기</a>
+</section>
+
+<script>
+    // 스크롤 시 Fade-up 애니메이션 및 다크 모드 헤더 처리
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+    // 다크섹션(라이다)에 진입 시 헤더 스타일 변경
+    const darkSection = document.getElementById('dark-section');
+    const header = document.getElementById('nav-header');
+
+    window.addEventListener('scroll', () => {
+        const rect = darkSection.getBoundingClientRect();
+        // 헤더가 다크섹션 영역 안에 들어왔는지 확인
+        if (rect.top <= 80 && rect.bottom >= 80) {
+            header.classList.add('dark');
+        } else {
+            header.classList.remove('dark');
+        }
+    });
+
+    // 페이지 로드 직후 첫 화면 애니메이션 트리거
+    setTimeout(() => {
+        document.querySelector('.section-hero').classList.add('visible');
+    }, 100);
+</script>
+
+<!-- 채팅 위젯 통합 -->
+<th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
+
+</body>
+</html>
