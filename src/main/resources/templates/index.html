@@ -172,8 +172,14 @@
                 <a href="/" class="dash-nav-link active">메뉴판</a>
                 <a href="/mypage" class="dash-nav-link">마이페이지</a>
                 <a href="/robot" class="dash-nav-link">스마트 로봇</a>
-                <a href="#" class="dash-nav-link">실시간 지도</a>
                 <a href="/orders/my" class="dash-nav-link">주문내역</a>
+                <a href="#" onclick="toggleChatPanel(); return false;" class="dash-nav-link" style="position:relative;">
+                    1:1 문의
+                    <span id="chatBadge"
+                          th:text="${unreadCount}"
+                          th:style="${unreadCount > 0} ? 'position:absolute;top:-5px;right:-15px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+                    </span>
+                </a>
             </div>
             <div class="dash-header-right">
                 <div style="text-align: right; margin-right: 15px;">
@@ -184,16 +190,6 @@
                     <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">
                         보유 포인트: <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P
                     </div>
-                </div>
-                <!-- 채팅 알림 아이콘 -->
-                <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">     
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9e8c7a" stroke-width="2">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span id="chatBadge"
-                          th:text="${unreadCount}"
-                          th:style="${unreadCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:#ef4444;color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
-                    </span>
                 </div>
                 <a href="/logout">로그아웃</a>
             </div>
