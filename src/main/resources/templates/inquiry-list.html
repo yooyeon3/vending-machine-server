@@ -11,23 +11,7 @@
         .header { background: white; padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
         .header-left { display: flex; align-items: center; gap: 12px; }
         .header-left img { height: 34px; object-fit: contain; }
-        .hamburger { display: flex; flex-direction: column; justify-content: center; gap: 5px; width: 32px; height: 32px; cursor: pointer; padding: 4px; border-radius: 6px; transition: background 0.2s; }
-        .hamburger:hover { background: #f1f5f9; }
-        .hamburger span { display: block; width: 100%; height: 2px; background: #64748b; border-radius: 2px; }
         .write-btn { padding: 8px 16px; background: #1e293b; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; }
-
-        /* 사이드바 */
-        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.2); z-index: 150; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
-        .sidebar-overlay.show { opacity: 1; pointer-events: all; }
-        .sidebar { position: fixed; top: 0; left: 0; width: 220px; height: 100vh; background: white; border-right: 2px solid #e2e8f0; z-index: 200; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform 0.25s ease; box-shadow: 4px 0 20px rgba(0,0,0,0.15); }
-        .sidebar.open { transform: translateX(0); }
-        .sidebar-logo { display: flex; align-items: center; gap: 8px; padding: 18px 22px 14px; border-bottom: 1px solid #e2e8f0; }
-        .sidebar-logo img { height: 28px; object-fit: contain; }
-        .sidebar-logo span { font-size: 15px; font-weight: 700; color: #1e293b; }
-        .sidebar-menu { list-style: none; padding: 0; margin: 0; }
-        .sidebar-menu li a { display: flex; align-items: center; gap: 10px; padding: 13px 22px; font-size: 14px; font-weight: 500; color: #64748b; text-decoration: none; border-left: 3px solid transparent; transition: all 0.2s; }
-        .sidebar-menu li a:hover { background: #f8fafc; color: #6e8efb; border-left-color: #6e8efb; }
-        .sidebar-menu li a.active { background: #f0f0ff; color: #6e8efb; border-left-color: #6e8efb; font-weight: 700; }
 
         .container { max-width: 700px; margin: 40px auto; padding: 0 20px; }
         .tab-group { display: flex; gap: 8px; margin-bottom: 20px; }
@@ -48,24 +32,8 @@
 </head>
 <body>
 
-<div class="sidebar-overlay" id="overlay"></div>
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-        <a href="/"><img th:src="@{/images/vending-logo.png}" alt="PIMTO 로고"></a>
-        <span>PIMTO</span>
-    </div>
-    <ul class="sidebar-menu">
-        <li><a href="/">🏠 홈</a></li>
-        <li><a href="#">📋 주문내역</a></li>
-        <li><a href="/inquiry/list" class="active">💬 문의</a></li>
-    </ul>
-</div>
-
 <div class="header">
     <div class="header-left">
-        <div class="hamburger" id="hamburger">
-            <span></span><span></span><span></span>
-        </div>
         <a href="/"><img th:src="@{/images/vending-logo.png}" alt="PIMTO 로고"></a>
     </div>
     <div style="display: flex; align-items: center; gap: 20px;">
@@ -109,13 +77,6 @@
     </div>
 </div>
 
-<script>
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-    hamburger.addEventListener('mouseenter', () => { sidebar.classList.add('open'); overlay.classList.add('show'); });
-    sidebar.addEventListener('mouseleave', () => { sidebar.classList.remove('open'); overlay.classList.remove('show'); });
-</script>
 
 <!-- 배달 위젯 -->
 <th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>

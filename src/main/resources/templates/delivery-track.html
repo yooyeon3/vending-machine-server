@@ -77,6 +77,7 @@
         #state-arrived {
             display: none;
             flex-direction: column; align-items: center; gap: 28px;
+            width: 100%; max-width: 460px;
             animation: popIn 0.5s cubic-bezier(0.165, 0.84, 0.44, 1);
         }
         @keyframes popIn {
@@ -148,6 +149,13 @@
         }
         .btn-verify:hover { background: #c47d4a; transform: translateY(-1px); }
         .btn-verify:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .timeout-warning {
+            font-size: 13px; color: #ef4444; font-weight: 600;
+            background: #fef2f2; border: 1px solid #fecaca;
+            border-radius: 10px; padding: 10px 14px;
+            margin-bottom: 16px; text-align: center;
+        }
 
         .verify-result {
             margin-top: 14px; font-size: 14px; font-weight: 700;
@@ -244,6 +252,7 @@
         <div class="pin-section">
             <div class="pin-section-label">PIN 번호 입력</div>
             <div class="pin-guide">🤖 로봇 디스플레이에 표시된 PIN을 입력해주세요</div>
+            <div class="timeout-warning" id="countdownText">⏱ 30초 안에 수령하지 않으면 자동 취소됩니다</div>
 
             <div class="pin-input-row">
                 <input type="text" class="pin-input" id="pinInput"
@@ -268,6 +277,34 @@
 
 <script th:inline="javascript">
     var isDone = false;
+    var arrivedShown = false;
+    var countdownTimer = null;
+    var countdownSecs = 30;
+
+    function startArrivalCountdown() {
+        if (arrivedShown) return;
+        arrivedShown = true;
+        countdownSecs = 30;
+        updateCountdown();
+        countdownTimer = setInterval(function() {
+            countdownSecs--;
+            updateCountdown();
+            if (countdownSecs <= 0) {
+                clearInterval(countdownTimer);
+                cancelAndRedirect();
+            }
+        }, 1000);
+    }
+
+    function updateCountdown() {
+        var el = document.getElementById('countdownText');
+        if (el) el.textContent = '⏱ ' + countdownSecs + '초 안에 수령하지 않으면 자동 취소됩니다';
+    }
+
+    function cancelAndRedirect() {
+        fetch('/api/delivery/cancel', { method: 'POST' })
+            .finally(function() { window.location.href = '/'; });
+    }
 
     function verifyPin() {
         var pin = document.getElementById('pinInput').value.trim();
@@ -289,6 +326,7 @@
 
             if (data.success) {
                 isDone = true;
+                if (countdownTimer) clearInterval(countdownTimer);
                 document.getElementById('state-arrived').style.display = 'none';
                 document.getElementById('state-done').style.display = 'flex';
             } else {
@@ -318,6 +356,7 @@
         if (data.arrived) {
             document.getElementById('state-delivering').style.display = 'none';
             document.getElementById('state-arrived').style.display    = 'flex';
+            startArrivalCountdown();
         } else {
             document.getElementById('state-delivering').style.display = 'flex';
             document.getElementById('state-arrived').style.display    = 'none';

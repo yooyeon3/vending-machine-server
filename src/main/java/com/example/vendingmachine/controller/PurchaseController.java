@@ -35,20 +35,21 @@ public class PurchaseController {
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
     private final com.example.vendingmachine.service.MemberService memberService;
+    private final com.example.vendingmachine.service.KioskStateService kioskStateService;
 
-    // PIN 생성을 위한 문자열 및 랜덤 객체
     private static final String PIN_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private final SecureRandom random = new SecureRandom();
 
-    // 생성자를 통해 의존성 주입
     public PurchaseController(MemberRepository memberRepository,
                               ProductRepository productRepository,
                               PurchaseHistoryRepository purchaseHistoryRepository,
-                              com.example.vendingmachine.service.MemberService memberService) {
+                              com.example.vendingmachine.service.MemberService memberService,
+                              com.example.vendingmachine.service.KioskStateService kioskStateService) {
         this.memberRepository = memberRepository;
         this.productRepository = productRepository;
         this.purchaseHistoryRepository = purchaseHistoryRepository;
         this.memberService = memberService;
+        this.kioskStateService = kioskStateService;
     }
 
     @PostMapping("/purchase")
@@ -115,8 +116,12 @@ public class PurchaseController {
             history.setPaidPrice(finalPrice);
             history.setEarnedPoints(earnedPoints);
             history.setPinCode(pinCode);
-            history.setExpiryDate(LocalDateTime.now().plusDays(1)); // 유효기간 1일
-            
+            history.setUsedPoints(actualUsedPoints);
+            history.setExpiryDate(LocalDateTime.now().plusDays(1));
+            if (kioskStateService.isBusy()) {
+                history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.RESERVED);
+            }
+
             PurchaseHistory savedHistory = purchaseHistoryRepository.save(history);
             
             System.out.println(">>> 구매 성공: " + product.getName() + 
@@ -257,13 +262,18 @@ public class PurchaseController {
         history.setPaidPrice(finalPrice);
         history.setEarnedPoints(earnedPoints);
         history.setPinCode(pinCode);
+        history.setUsedPoints(actualUsedPoints);
         history.setExpiryDate(LocalDateTime.now().plusDays(1));
+        boolean reserved = kioskStateService.isBusy();
+        if (reserved) {
+            history.setDeliveryStatus(PurchaseHistory.DeliveryStatus.RESERVED);
+        }
 
         PurchaseHistory saved = purchaseHistoryRepository.save(history);
 
-        System.out.println(">>> 묶음 주문 완료: [" + combinedName + "] PIN: " + pinCode + " / " + finalPrice + "원");
+        System.out.println(">>> 묶음 주문 완료: [" + combinedName + "] PIN: " + pinCode + " / " + finalPrice + "원" + (reserved ? " [예약]" : ""));
 
-        return ResponseEntity.ok(Map.of("success", true, "id", saved.getId()));
+        return ResponseEntity.ok(Map.of("success", true, "id", saved.getId(), "reserved", reserved));
     }
 
     // 라파3가 PIN 조회하는 API

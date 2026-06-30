@@ -86,10 +86,10 @@
 
         <div style="margin-bottom: 20px;">
             <div class="ticket">
-                <div class="ticket-header">
-                    <div class="success-icon">✓</div>
-                    <h1>결제가 완료되었습니다!</h1>
-                    <p>상품 수령을 위한 PIN 번호가 발급되었습니다.</p>
+                <div class="ticket-header" th:classappend="${history.deliveryStatus.name() == 'RESERVED'} ? 'reserved-header' : ''">
+                    <div class="success-icon" th:text="${history.deliveryStatus.name() == 'RESERVED'} ? '⏳' : '✓'">✓</div>
+                    <h1 th:text="${history.deliveryStatus.name() == 'RESERVED'} ? '예약 완료!' : '결제가 완료되었습니다!'">결제가 완료되었습니다!</h1>
+                    <p th:text="${history.deliveryStatus.name() == 'RESERVED'} ? '현재 키오스크 사용 중 — 완료 후 자동 배달 시작' : '상품 수령을 위한 PIN 번호가 발급되었습니다.'">상품 수령을 위한 PIN 번호가 발급되었습니다.</p>
                 </div>
 
                 <div class="ticket-body">
@@ -113,7 +113,12 @@
 
                 <div class="ticket-footer">
                     <div class="pin-label">PIN 번호 안내</div>
-                    <div style="background:#faf8f4; border:2px solid #e8dfd4; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
+                    <div th:if="${history.deliveryStatus.name() == 'RESERVED'}" style="background:#fff7ed; border:2px solid #fed7aa; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
+                        <div style="font-size:32px; margin-bottom:10px;">⏳</div>
+                        <div style="font-size:15px; font-weight:700; color:#92400e; margin-bottom:6px;">키오스크 사용 완료 후 자동으로 배달 시작됩니다</div>
+                        <div style="font-size:13px; color:#b45309;">별도 조작 없이 순서대로 배달되니 잠시만 기다려주세요.</div>
+                    </div>
+                    <div th:unless="${history.deliveryStatus.name() == 'RESERVED'}" style="background:#faf8f4; border:2px solid #e8dfd4; border-radius:16px; padding:20px; margin-bottom:20px; text-align:center;">
                         <div style="font-size:32px; margin-bottom:10px;">🤖</div>
                         <div style="font-size:15px; font-weight:700; color:#3d2c1e; margin-bottom:6px;">PIN 번호는 로봇 디스플레이에 표시됩니다</div>
                         <div style="font-size:13px; color:#9e8c7a;">로봇이 도착하면 디스플레이의 PIN을 확인 후<br>배달 현황 페이지에서 입력해주세요.</div>

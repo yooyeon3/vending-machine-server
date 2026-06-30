@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QObject, QSize
 from PyQt5.QtGui import QFont, QPixmap, QImage, QPainter, QColor
 
-SERVER  = "http://192.168.0.171:8080"
+SERVER  = "http://192.168.0.122:8080"
 IMG_DIR = "/home/pi"
 
 PRODUCTS = [
@@ -31,15 +31,29 @@ except Exception as e:
     arduino = None
     print(f"아두이노 연결 실패: {e}")
 
+KIOSK_TIMEOUT = 30  # 키오스크 점유 최대 시간 (초)
+_slot_counter = {}  # 제품별 1개 배출 횟수 (top/bottom 교대용)
+
+def _notify_kiosk(state: str):
+    try:
+        requests.post(f"{SERVER}/api/kiosk/{state}", timeout=3)
+    except Exception as e:
+        print(f"kiosk notify error: {e}")
+
 def dispense(product, qty):
     if arduino is None:
         print(f"[시뮬] {product['name']} {qty}개 배출")
         return
     try:
-        arduino.write((product["cmd_top"] + "\n").encode())
         if qty == 2:
+            arduino.write((product["cmd_top"] + "\n").encode())
             time.sleep(1)
             arduino.write((product["cmd_bot"] + "\n").encode())
+        else:
+            n = _slot_counter.get(product["name"], 0)
+            cmd = product["cmd_top"] if n % 2 == 0 else product["cmd_bot"]
+            arduino.write((cmd + "\n").encode())
+            _slot_counter[product["name"]] = n + 1
         print(f"[배출] {product['name']} {qty}개")
     except Exception as e:
         print(f"배출 오류: {e}")
@@ -137,83 +151,66 @@ def rounded_pixmap(path, size):
     return result
 
 
-# ── 상품 카드 ──────────────────────────────────────────────
-class ProductCard(QWidget):
-    buy_requested = pyqtSignal(int, int)   # (product_idx, qty)
+# ── 왼쪽 메뉴 카드 (이미지 + 이름 + 가격 + -/+ 수량) ──────
+class MenuCard(QWidget):
+    qty_changed = pyqtSignal(int, int)   # (idx, qty)
 
     def __init__(self, idx, product):
         super().__init__()
         self.idx = idx
-        self.qty = 1
-        self.setStyleSheet("background:white; border-radius:20px;")
-        self.setFixedWidth(300)
+        self.qty = 0
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.setStyleSheet("background:white; border-radius:16px;")
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(20, 24, 20, 24)
-        layout.setSpacing(12)
+        layout.setContentsMargins(16, 20, 16, 16)
+        layout.setSpacing(8)
         layout.setAlignment(Qt.AlignCenter)
 
-        # 이미지
         img_lbl = QLabel()
         img_lbl.setAlignment(Qt.AlignCenter)
-        img_lbl.setStyleSheet("background:transparent;")
-        pix = rounded_pixmap(product["img"], 140)
+        img_lbl.setStyleSheet("background:transparent; border:none;")
+        pix = rounded_pixmap(product["img"], 160)
         img_lbl.setPixmap(pix)
         layout.addWidget(img_lbl)
 
-        # 상품명
         name_lbl = QLabel(product["name"])
         name_lbl.setAlignment(Qt.AlignCenter)
-        name_lbl.setStyleSheet("font-size:17px; font-weight:bold; color:#3d2c1e; background:transparent;")
+        name_lbl.setWordWrap(True)
+        name_lbl.setStyleSheet("font-size:15px; font-weight:bold; color:#3d2c1e; background:transparent; border:none;")
         layout.addWidget(name_lbl)
 
-        # 가격
         price_lbl = QLabel(f"{product['price']:,}원")
         price_lbl.setAlignment(Qt.AlignCenter)
-        price_lbl.setStyleSheet("font-size:20px; font-weight:bold; color:#c47d4a; background:transparent;")
+        price_lbl.setStyleSheet("font-size:14px; color:#c47d4a; font-weight:bold; background:transparent; border:none;")
         layout.addWidget(price_lbl)
 
-        # 수량 선택
         qty_row = QHBoxLayout()
-        qty_row.setSpacing(12)
+        qty_row.setSpacing(8)
 
         btn_minus = QPushButton("－")
         btn_minus.setFixedSize(40, 40)
-        btn_minus.setStyleSheet(self._qty_btn_style())
+        btn_minus.setStyleSheet(self._btn_style())
         btn_minus.clicked.connect(self.decrease)
 
-        self.qty_label = QLabel("1")
-        self.qty_label.setFixedWidth(36)
-        self.qty_label.setAlignment(Qt.AlignCenter)
-        self.qty_label.setStyleSheet("font-size:20px; font-weight:bold; color:#3d2c1e; background:transparent;")
+        self.qty_lbl = QLabel("0")
+        self.qty_lbl.setFixedWidth(32)
+        self.qty_lbl.setAlignment(Qt.AlignCenter)
+        self.qty_lbl.setStyleSheet("font-size:18px; font-weight:bold; color:#3d2c1e; background:transparent; border:none;")
 
         btn_plus = QPushButton("＋")
         btn_plus.setFixedSize(40, 40)
-        btn_plus.setStyleSheet(self._qty_btn_style())
+        btn_plus.setStyleSheet(self._btn_style())
         btn_plus.clicked.connect(self.increase)
 
         qty_row.addStretch()
         qty_row.addWidget(btn_minus)
-        qty_row.addWidget(self.qty_label)
+        qty_row.addWidget(self.qty_lbl)
         qty_row.addWidget(btn_plus)
         qty_row.addStretch()
         layout.addLayout(qty_row)
 
-        # 구매 버튼
-        buy_btn = QPushButton("구매")
-        buy_btn.setFixedHeight(48)
-        buy_btn.setStyleSheet("""
-            QPushButton {
-                background:#3d2c1e; color:white; border-radius:14px;
-                font-size:16px; font-weight:bold;
-            }
-            QPushButton:hover   { background:#c47d4a; }
-            QPushButton:pressed { background:#2a1e14; }
-        """)
-        buy_btn.clicked.connect(lambda: self.buy_requested.emit(self.idx, self.qty))
-        layout.addWidget(buy_btn)
-
-    def _qty_btn_style(self):
+    def _btn_style(self):
         return """
             QPushButton {
                 background:#f2ede4; color:#3d2c1e; border-radius:10px;
@@ -223,15 +220,94 @@ class ProductCard(QWidget):
             QPushButton:pressed { background:#d4c9ba; }
         """
 
+    def set_qty(self, qty):
+        self.qty = qty
+        self.qty_lbl.setText(str(qty))
+
     def decrease(self):
-        if self.qty > 1:
+        if self.qty > 0:
             self.qty -= 1
-            self.qty_label.setText(str(self.qty))
+            self.qty_lbl.setText(str(self.qty))
+            self.qty_changed.emit(self.idx, self.qty)
 
     def increase(self):
         if self.qty < 2:
             self.qty += 1
-            self.qty_label.setText(str(self.qty))
+            self.qty_lbl.setText(str(self.qty))
+            self.qty_changed.emit(self.idx, self.qty)
+
+
+# ── 오른쪽 주문 행 (qty > 0 일 때만 표시, 양쪽 동기화) ────
+class OrderRow(QWidget):
+    qty_changed = pyqtSignal(int, int)   # (idx, qty)
+
+    def __init__(self, idx, product):
+        super().__init__()
+        self.idx = idx
+        self.qty = 0
+        self.setFixedHeight(52)
+        self.setStyleSheet("background:transparent;")
+        self.hide()
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 4, 0, 4)
+        layout.setSpacing(8)
+
+        name_lbl = QLabel(product["name"])
+        name_lbl.setStyleSheet("font-size:14px; color:#3d2c1e; background:transparent; border:none;")
+        layout.addWidget(name_lbl, stretch=1)
+
+        btn_minus = QPushButton("－")
+        btn_minus.setFixedSize(26, 26)
+        btn_minus.setStyleSheet(self._btn_style())
+        btn_minus.clicked.connect(self.decrease)
+
+        self.qty_lbl = QLabel("0")
+        self.qty_lbl.setFixedWidth(20)
+        self.qty_lbl.setAlignment(Qt.AlignCenter)
+        self.qty_lbl.setStyleSheet("font-size:13px; font-weight:bold; color:#3d2c1e; background:transparent; border:none;")
+
+        btn_plus = QPushButton("＋")
+        btn_plus.setFixedSize(26, 26)
+        btn_plus.setStyleSheet(self._btn_style())
+        btn_plus.clicked.connect(self.increase)
+
+        layout.addWidget(btn_minus)
+        layout.addWidget(self.qty_lbl)
+        layout.addWidget(btn_plus)
+
+    def _btn_style(self):
+        return """
+            QPushButton {
+                background:#f2ede4; color:#3d2c1e; border-radius:6px;
+                font-size:12px; font-weight:bold; border:none;
+            }
+            QPushButton:hover   { background:#e8dfd4; }
+            QPushButton:pressed { background:#d4c9ba; }
+        """
+
+    def set_qty(self, qty):
+        self.qty = qty
+        self.qty_lbl.setText(str(qty))
+        self.setVisible(qty > 0)
+
+    def decrease(self):
+        if self.qty > 0:
+            self.qty -= 1
+            self.qty_lbl.setText(str(self.qty))
+            self.setVisible(self.qty > 0)
+            self.qty_changed.emit(self.idx, self.qty)
+
+    def increase(self):
+        if self.qty < 2:
+            self.qty += 1
+            self.qty_lbl.setText(str(self.qty))
+            self.qty_changed.emit(self.idx, self.qty)
+
+    def reset(self):
+        self.qty = 0
+        self.qty_lbl.setText("0")
+        self.hide()
 
 
 # ── IDLE 화면 ──────────────────────────────────────────────
@@ -245,7 +321,7 @@ class IdlePage(QWidget):
         layout.setSpacing(0)
         self.setStyleSheet("background:#faf8f4;")
 
-        # 로고 포함 헤더
+        # 헤더
         header = QWidget()
         header.setFixedHeight(64)
         header.setStyleSheet("background:#3d2c1e;")
@@ -264,34 +340,116 @@ class IdlePage(QWidget):
 
         hl.addWidget(logo)
         hl.addWidget(title, stretch=1)
-        hl.addSpacing(40)  # 로고 너비만큼 오른쪽 여백으로 중앙 맞춤
-
+        hl.addSpacing(40)
         layout.addWidget(header)
 
+        # 본문: 왼쪽(메뉴) + 오른쪽(주문 패널)
         body = QWidget()
-        bl = QVBoxLayout(body)
-        bl.setContentsMargins(40, 30, 40, 20)
+        body.setStyleSheet("background:transparent;")
+        bl = QHBoxLayout(body)
+        bl.setContentsMargins(0, 0, 0, 0)
         bl.setSpacing(0)
 
+        # ── 왼쪽: 메뉴 카드 2개 가로 배치
+        left = QWidget()
+        left.setStyleSheet("background:#faf8f4;")
+        ll = QVBoxLayout(left)
+        ll.setContentsMargins(16, 16, 16, 12)
+        ll.setSpacing(8)
+
+        self.menu_cards = []
+        self.order_rows = []
+
         cards_row = QHBoxLayout()
-        cards_row.setSpacing(40)
-        cards_row.setAlignment(Qt.AlignCenter)
+        cards_row.setSpacing(4)
+        for i, p in enumerate(PRODUCTS):
+            card = MenuCard(i, p)
+            card.qty_changed.connect(self.on_menu_qty_changed)
+            cards_row.addWidget(card)
+            self.menu_cards.append(card)
+
+        ll.addLayout(cards_row, stretch=1)
+
+        guide = QLabel("수량을 선택하세요")
+        guide.setAlignment(Qt.AlignCenter)
+        guide.setStyleSheet("font-size:13px; color:#9e8c7a; background:transparent; border:none;")
+        ll.addWidget(guide)
+
+        # ── 오른쪽: 주문 패널 (수량 0이면 숨김)
+        right = QWidget()
+        right.setObjectName("rightPanel")
+        self.right_panel = right
+        right.hide()
+        right.setStyleSheet("#rightPanel { background:white; border-left:2px solid #e8dfd4; }")
+        rl = QVBoxLayout(right)
+        rl.setContentsMargins(24, 28, 24, 24)
+        rl.setSpacing(0)
+
+        order_title = QLabel("주문 내역")
+        order_title.setStyleSheet("font-size:18px; font-weight:bold; color:#3d2c1e; background:transparent; border:none;")
+        rl.addWidget(order_title)
+        rl.addSpacing(12)
+
+        sep_top = QFrame()
+        sep_top.setFrameShape(QFrame.HLine)
+        sep_top.setFrameShadow(QFrame.Plain)
+        sep_top.setStyleSheet("background:#e8dfd4; border:none; max-height:1px;")
+        rl.addWidget(sep_top)
+        rl.addSpacing(4)
 
         for i, p in enumerate(PRODUCTS):
-            card = ProductCard(i, p)
-            card.buy_requested.connect(self.on_buy)
-            cards_row.addWidget(card)
+            row = OrderRow(i, p)
+            row.qty_changed.connect(self.on_order_qty_changed)
+            self.order_rows.append(row)
+            rl.addWidget(row)
 
-        bl.addStretch()
-        bl.addLayout(cards_row)
-        bl.addStretch()
+        rl.addStretch()
 
-        guide = QLabel("앱/웹에서도 주문 가능합니다")
-        guide.setAlignment(Qt.AlignCenter)
-        guide.setStyleSheet("font-size:13px; color:#9e8c7a; background:transparent;")
-        bl.addWidget(guide)
+        sep_bot = QFrame()
+        sep_bot.setFrameShape(QFrame.HLine)
+        sep_bot.setFrameShadow(QFrame.Plain)
+        sep_bot.setStyleSheet("background:#e8dfd4; border:none; max-height:1px;")
+        rl.addWidget(sep_bot)
+        rl.addSpacing(14)
 
+        self.total_lbl = QLabel("총 0원")
+        self.total_lbl.setAlignment(Qt.AlignRight)
+        self.total_lbl.setStyleSheet("font-size:20px; font-weight:bold; color:#3d2c1e; background:transparent; border:none;")
+        rl.addWidget(self.total_lbl)
+        rl.addSpacing(12)
+
+        self.buy_btn = QPushButton("구매하기")
+        self.buy_btn.setFixedHeight(56)
+        self.buy_btn.setEnabled(False)
+        self.buy_btn.setStyleSheet("""
+            QPushButton {
+                background:#3d2c1e; color:white; border-radius:14px;
+                font-size:18px; font-weight:bold; border:none;
+            }
+            QPushButton:hover   { background:#c47d4a; }
+            QPushButton:pressed { background:#2a1e14; }
+            QPushButton:disabled { background:#c8c0b8; color:#9a9090; }
+        """)
+        self.buy_btn.clicked.connect(self.on_buy_all)
+        rl.addWidget(self.buy_btn)
+
+        bl.addWidget(left, stretch=4)
+        bl.addWidget(right, stretch=1)
         layout.addWidget(body, stretch=1)
+
+        # 카운트다운 라벨 (우측 패널 상단)
+        self.countdown_lbl = QLabel("")
+        self.countdown_lbl.setAlignment(Qt.AlignRight)
+        self.countdown_lbl.setStyleSheet("font-size:13px; color:#c47d4a; background:transparent; border:none;")
+        self.countdown_lbl.hide()
+        rl.insertWidget(1, self.countdown_lbl)  # 주문 내역 타이틀 바로 아래
+
+        # 30초 키오스크 점유 타이머
+        self._remaining = 0
+        self._kiosk_busy = False
+        self._countdown_timer = QTimer()
+        self._countdown_timer.setInterval(1000)
+        self._countdown_timer.timeout.connect(self._tick_countdown)
 
         # 토스트
         self.toast = QLabel("", self)
@@ -302,11 +460,64 @@ class IdlePage(QWidget):
         self._timer.setSingleShot(True)
         self._timer.timeout.connect(self.toast.hide)
 
-    def on_buy(self, idx, qty):
-        product = PRODUCTS[idx]
-        threading.Thread(target=dispense, args=(product, qty), daemon=True).start()
-        self.show_toast(f"{product['name']} {qty}개 배출 중...")
-        self.purchase_done.emit(product["name"])
+    def on_menu_qty_changed(self, idx, qty):
+        self.order_rows[idx].set_qty(qty)
+        self.update_total()
+
+    def on_order_qty_changed(self, idx, qty):
+        self.menu_cards[idx].set_qty(qty)
+        self.update_total()
+
+    def update_total(self):
+        total = sum(PRODUCTS[r.idx]["price"] * r.qty for r in self.order_rows)
+        self.total_lbl.setText(f"총 {total:,}원")
+        self.buy_btn.setEnabled(total > 0)
+        self.right_panel.setVisible(total > 0)
+
+        if total > 0 and not self._kiosk_busy:
+            self._kiosk_busy = True
+            threading.Thread(target=_notify_kiosk, args=("busy",), daemon=True).start()
+            self._remaining = KIOSK_TIMEOUT
+            self._countdown_timer.start()
+            self.countdown_lbl.show()
+        elif total == 0 and self._kiosk_busy:
+            self._release_kiosk()
+
+    def _tick_countdown(self):
+        self._remaining -= 1
+        self.countdown_lbl.setText(f"⏱ {self._remaining}초 안에 주문해주세요")
+        if self._remaining <= 0:
+            for card in self.menu_cards:
+                card.set_qty(0)
+            for row in self.order_rows:
+                row.reset()
+            self._release_kiosk()
+            self.update_total()
+
+    def _release_kiosk(self):
+        self._kiosk_busy = False
+        self._countdown_timer.stop()
+        self.countdown_lbl.hide()
+        threading.Thread(target=_notify_kiosk, args=("free",), daemon=True).start()
+
+    def on_buy_all(self):
+        items = [(r.idx, r.qty) for r in self.order_rows if r.qty > 0]
+        if not items:
+            return
+        names = []
+        for idx, qty in items:
+            product = PRODUCTS[idx]
+            threading.Thread(target=dispense, args=(product, qty), daemon=True).start()
+            names.append(f"{product['name']} {qty}개")
+        summary = ", ".join(names)
+        self.show_toast(f"{summary} 배출 중...")
+        self.purchase_done.emit(summary)
+        for card in self.menu_cards:
+            card.set_qty(0)
+        for row in self.order_rows:
+            row.reset()
+        self._release_kiosk()
+        self.update_total()
 
     def show_toast(self, msg):
         self.toast.setText(msg)
@@ -465,6 +676,9 @@ class MainWindow(QMainWindow):
         self.poller.start()
 
     def on_state(self, state, order):
+        # 키오스크에서 주문 중이면 IDLE 이외 화면 전환 차단
+        if state != "IDLE" and any(c.qty > 0 for c in self.idle_page.menu_cards):
+            return
         if state == self._state and state == "MOVING":
             self.moving_page.set_order(order)
             return

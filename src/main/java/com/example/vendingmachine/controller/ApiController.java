@@ -3,9 +3,12 @@ package com.example.vendingmachine.controller;
 import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.domain.Product;
 import com.example.vendingmachine.domain.PurchaseHistory;
+import com.example.vendingmachine.repository.MemberRepository;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
+import com.example.vendingmachine.service.KioskStateService;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 
@@ -23,11 +26,29 @@ public class ApiController {
 
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
+    private final MemberRepository memberRepository;
+    private final KioskStateService kioskStateService;
 
     public ApiController(ProductRepository productRepository,
-                         PurchaseHistoryRepository purchaseHistoryRepository) {
+                         PurchaseHistoryRepository purchaseHistoryRepository,
+                         MemberRepository memberRepository,
+                         KioskStateService kioskStateService) {
         this.productRepository = productRepository;
         this.purchaseHistoryRepository = purchaseHistoryRepository;
+        this.memberRepository = memberRepository;
+        this.kioskStateService = kioskStateService;
+    }
+
+    @PostMapping("/api/kiosk/busy")
+    public Map<String, Object> setKioskBusy() {
+        kioskStateService.setBusy();
+        return Map.of("success", true);
+    }
+
+    @PostMapping("/api/kiosk/free")
+    public Map<String, Object> setKioskFree() {
+        kioskStateService.setFree();
+        return Map.of("success", true);
     }
 
     @GetMapping("/api/products")
@@ -185,6 +206,66 @@ public class ApiController {
         result.put("destX",       endX);
         result.put("destY",       endY);
         return result;
+    }
+
+    // 도착 후 미수령 시 자동 취소 및 환불
+    @PostMapping("/api/delivery/cancel")
+    public ResponseEntity<Map<String, Object>> cancelDelivery(HttpSession session) {
+        Member loginMember = (Member) session.getAttribute("loginMember");
+        if (loginMember == null)
+            return ResponseEntity.status(401).body(Map.of("success", false));
+
+        LocalDateTime since = LocalDateTime.now().minusMinutes(30);
+        List<PurchaseHistory> orders = purchaseHistoryRepository
+                .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(loginMember.getName(), since)
+                .stream()
+                .filter(o -> !o.isUsed() && o.getDeliveryStatus() == PurchaseHistory.DeliveryStatus.PENDING)
+                .collect(Collectors.toList());
+
+        if (orders.isEmpty())
+            return ResponseEntity.ok(Map.of("success", false, "message", "취소할 주문이 없습니다."));
+
+        Member member = memberRepository.findById(loginMember.getId()).orElse(null);
+
+        for (PurchaseHistory order : orders) {
+            // 재고 복구 (예: "펩시 콜라 x2, 레쓰비 마일드 커피" 파싱)
+            for (String part : order.getProductName().split(", ")) {
+                int qty = 1;
+                String name = part.trim();
+                if (name.contains(" x")) {
+                    int idx = name.lastIndexOf(" x");
+                    try {
+                        qty = Integer.parseInt(name.substring(idx + 2));
+                        name = name.substring(0, idx);
+                    } catch (NumberFormatException ignored) {}
+                }
+                final String productName = name;
+                final int productQty = qty;
+                productRepository.findAll().stream()
+                        .filter(p -> p.getName().equals(productName))
+                        .findFirst()
+                        .ifPresent(p -> {
+                            p.setStock(p.getStock() + productQty);
+                            productRepository.save(p);
+                        });
+            }
+
+            // 포인트 환불: 사용 포인트 복구 + 적립 포인트 회수
+            if (member != null) {
+                int current = member.getPoints() != null ? member.getPoints() : 0;
+                int used    = order.getUsedPoints()   != null ? order.getUsedPoints()   : 0;
+                int earned  = order.getEarnedPoints() != null ? order.getEarnedPoints() : 0;
+                member.setPoints(current + used - earned);
+                memberRepository.save(member);
+                session.setAttribute("loginMember", member);
+            }
+
+            order.setUsed(true);
+            order.setDeliveryStatus(PurchaseHistory.DeliveryStatus.CANCELLED);
+            purchaseHistoryRepository.save(order);
+        }
+
+        return ResponseEntity.ok(Map.of("success", true));
     }
 
     // Pi 3가 배출할 주문 조회 (PIN 인증 완료된 것)

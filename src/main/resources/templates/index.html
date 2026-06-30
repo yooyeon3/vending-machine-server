@@ -342,13 +342,17 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items, usedPoints })
                 });
+                if (response.redirected || response.url.includes('/login')) {
+                    location.href = '/login';
+                    return;
+                }
                 const result = await response.json();
                 if (result.success) {
-                    location.href = '/purchase/success?id=' + result.id;
+                    location.href = '/purchase/success?id=' + result.id + (result.reserved ? '&reserved=true' : '');
                 } else {
                     alert(result.message || '구매 처리 중 오류가 발생했습니다.');
                 }
-            } catch (error) { alert('구매 처리 중 오류가 발생했습니다.'); }
+            } catch (error) { location.href = '/login'; }
         }
     </script>
 </th:block>
