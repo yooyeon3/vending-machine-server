@@ -164,6 +164,21 @@
         .card-title-icon { width: 36px; height: 36px; background: white; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); font-size: 18px; }
 
         /* 테이블 프리미엄 스타일 */
+        .date-select {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 14px;
+            font-family: 'Pretendard', sans-serif;
+            background: rgba(255,255,255,0.7);
+            color: var(--primary-text);
+            font-weight: 700;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .date-select:hover { border-color: var(--accent); background: white; }
+
         .table-container { overflow-x: auto; border-radius: 16px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0 10px; }
         th { text-align: left; padding: 14px 20px; color: var(--sub-text); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid rgba(0,0,0,0.03); }
@@ -253,11 +268,18 @@
     <div class="content-grid">
         <!-- 매출 차트 -->
         <div class="content-card">
-            <div class="card-title">
-                <div class="card-title-icon">📈</div>
-                시간대별 판매 추이
+            <div class="card-title" style="justify-content: space-between;">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="card-title-icon">📈</div>
+                    시간대별 판매 추이
+                </div>
+                <select id="dateSelect" class="date-select" onchange="updateHourlyChart()">
+                    <!-- JS 렌더링 -->
+                </select>
             </div>
-            <canvas id="salesChart" height="130"></canvas>
+            <div style="position:relative; height: 320px;">
+                <canvas id="salesChart"></canvas>
+            </div>
         </div>
 
         <!-- 상품별 비중 -->
@@ -266,7 +288,7 @@
                 <div class="card-title-icon">🥧</div>
                 상품별 판매 비중
             </div>
-            <div style="position:relative; height: 280px; display:flex; justify-content:center; align-items:center;">
+            <div style="position:relative; height: 380px; display:flex; justify-content:center; align-items:center;">
                 <canvas id="productChart"></canvas>
             </div>
         </div>
@@ -329,6 +351,7 @@
         const grouped = {};
         let totalRevenue = 0;
         const productCounts = {};
+        const dailyCounts = {}; // 💡 날짜별 집계 추가
 
         rawHistories.forEach(item => {
             if (!item.purchaseTime) return;
@@ -344,6 +367,7 @@
             }
 
             const timeKey = item.purchaseTime.replace('T', ' ').substring(0, 19);
+            const dateKey = item.purchaseTime.substring(0, 10); // "YYYY-MM-DD"
             const key = `${item.buyerName}_${productName}_${timeKey}`;
 
             if (!grouped[key]) {
@@ -360,6 +384,9 @@
             const price = item.paidPrice !== null ? item.paidPrice : ((productPrices[productName] || 0) * quantity);
             totalRevenue += price;
             productCounts[productName] = (productCounts[productName] || 0) + quantity;
+            
+            // 날짜별 구매 건수 집계
+            dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + quantity;
         });
 
         const sortedData = Object.values(grouped).sort((a, b) => b.purchaseTime.localeCompare(a.purchaseTime));
@@ -388,70 +415,123 @@
                 </tr>
             `).join('');
         }
-        return { productCounts };
+        return { productCounts, dailyCounts };
     }
 
-    const { productCounts } = processAndRender();
+    const { productCounts, dailyCounts } = processAndRender();
 
     Chart.register(ChartDataLabels);
 
-    // 💡 라인 차트 그라데이션 적용
-    const ctxLine = document.getElementById('salesChart').getContext('2d');
-    const gradientLine = ctxLine.createLinearGradient(0, 0, 0, 300);
-    gradientLine.addColorStop(0, 'rgba(211, 115, 48, 0.4)');
-    gradientLine.addColorStop(1, 'rgba(211, 115, 48, 0.0)');
+    // 💡 날짜 선택 및 시간대별 차트 로직
+    const availableDates = Object.keys(dailyCounts).sort((a,b) => b.localeCompare(a)); // 최신순 정렬
+    const dateSelect = document.getElementById('dateSelect');
+    
+    if (availableDates.length === 0) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${yyyy}-${mm}-${dd}`;
+        dateSelect.innerHTML = `<option value="${todayStr}">${todayStr}</option>`;
+        availableDates.push(todayStr);
+    } else {
+        dateSelect.innerHTML = availableDates.map(d => `<option value="${d}">${d}</option>`).join('');
+    }
 
-    new Chart(ctxLine, {
-        type: 'line',
-        data: {
-            labels: Array.from({length: 24}, (_, i) => i + '시'),
-            datasets: [{
-                label: '구매 건수',
-                data: hourlySales,
-                borderColor: '#d37330',
-                backgroundColor: gradientLine,
-                borderWidth: 4,
-                fill: true,
-                tension: 0.4,
-                pointRadius: 5,
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#d37330',
-                pointBorderWidth: 3,
-                pointHoverRadius: 8,
-                pointHoverBackgroundColor: '#d37330'
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: { 
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                    titleColor: '#2d241b',
-                    bodyColor: '#d37330',
-                    bodyFont: { weight: 'bold', size: 14 },
-                    borderColor: 'rgba(0,0,0,0.1)',
-                    borderWidth: 1,
-                    padding: 12,
-                    boxPadding: 6,
-                    usePointStyle: true
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    ticks: { stepSize: 1, color: '#8b7d6b', font: { weight: '600' } }, 
-                    grid: { color: 'rgba(0,0,0,0.04)', borderDash: [5, 5] },
-                    border: { display: false }
-                },
-                x: { 
-                    grid: { display: false }, 
-                    ticks: { color: '#8b7d6b', font: { weight: '600' } },
-                    border: { display: false }
-                }
+    let lineChartInstance = null;
+
+    function getHourlyDataForDate(targetDate) {
+        const hourly = Array(24).fill(0);
+        rawHistories.forEach(item => {
+            if (!item.purchaseTime) return;
+            let productName = item.productName;
+            let quantity = 1;
+            const match = productName.match(/^(.*?)\s*[xX]\s*(\d+)$/);
+            if (match) quantity = parseInt(match[2], 10);
+            
+            const dateStr = item.purchaseTime.substring(0, 10);
+            if (dateStr === targetDate) {
+                const hour = parseInt(item.purchaseTime.substring(11, 13), 10);
+                hourly[hour] += quantity;
             }
+        });
+        return hourly;
+    }
+
+    function initOrUpdateHourlyChart() {
+        const selectedDate = dateSelect.value;
+        const hourlyData = getHourlyDataForDate(selectedDate);
+        
+        if (lineChartInstance) {
+            lineChartInstance.data.datasets[0].data = hourlyData;
+            lineChartInstance.update();
+        } else {
+            const ctxLine = document.getElementById('salesChart').getContext('2d');
+            const gradientLine = ctxLine.createLinearGradient(0, 0, 0, 300);
+            gradientLine.addColorStop(0, 'rgba(211, 115, 48, 0.4)');
+            gradientLine.addColorStop(1, 'rgba(211, 115, 48, 0.0)');
+
+            lineChartInstance = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 24}, (_, i) => i + '시'),
+                    datasets: [{
+                        label: '시간대별 판매량(개)',
+                        data: hourlyData,
+                        borderColor: '#d37330',
+                        backgroundColor: gradientLine,
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#d37330',
+                        pointBorderWidth: 3,
+                        pointHoverRadius: 8,
+                        pointHoverBackgroundColor: '#d37330'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            titleColor: '#2d241b',
+                            bodyColor: '#d37330',
+                            bodyFont: { weight: 'bold', size: 14 },
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true
+                        }
+                    },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            ticks: { stepSize: 1, color: '#8b7d6b', font: { weight: '600' } }, 
+                            grid: { color: 'rgba(0,0,0,0.04)', borderDash: [5, 5] },
+                            border: { display: false }
+                        },
+                        x: { 
+                            grid: { display: false }, 
+                            ticks: { color: '#8b7d6b', font: { weight: '600' } },
+                            border: { display: false }
+                        }
+                    }
+                }
+            });
         }
-    });
+    }
+
+    function updateHourlyChart() {
+        initOrUpdateHourlyChart();
+    }
+
+    // 초기 렌더링
+    initOrUpdateHourlyChart();
 
     // 💡 도넛 차트 프리미엄 디자인
     const ctxPie = document.getElementById('productChart').getContext('2d');
@@ -481,10 +561,10 @@
             maintainAspectRatio: false,
             cutout: '65%',
             rotation: -90,
-            layout: { padding: 10 },
+            layout: { padding: { top: 10, bottom: 10, left: 0, right: 0 } },
             plugins: {
                 legend: {
-                    position: 'right',
+                    position: 'bottom',
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
