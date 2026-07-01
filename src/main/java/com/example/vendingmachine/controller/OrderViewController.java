@@ -45,10 +45,23 @@ public class OrderViewController {
         // 등급 정보 조회
         MemberService.GradeProgress progress = memberService.getGradeProgress(loginMember);
 
-        // 최애 음료 TOP 3 조회
-        List<Object[]> topProductsRaw = purchaseHistoryRepository.findTopProductsByBuyerName(loginMember.getName(), PageRequest.of(0, 3));
-        List<Map<String, Object>> topProducts = topProductsRaw.stream()
-                .map(obj -> Map.of("name", obj[0], "count", obj[1]))
+        // 최애 음료 TOP 3 조회 (묶음 구매 'x2' 등 통합 로직 적용)
+        java.util.Map<String, Integer> productCountMap = new java.util.HashMap<>();
+        for (PurchaseHistory order : orders) {
+            String name = order.getProductName();
+            int qty = 1;
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(.*?)\\s*[xX]\\s*(\\d+)$").matcher(name);
+            if (matcher.matches()) {
+                name = matcher.group(1).trim();
+                qty = Integer.parseInt(matcher.group(2));
+            }
+            productCountMap.put(name, productCountMap.getOrDefault(name, 0) + qty);
+        }
+
+        List<Map<String, Object>> topProducts = productCountMap.entrySet().stream()
+                .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+                .limit(3)
+                .map(e -> Map.<String, Object>of("name", e.getKey(), "count", (long) e.getValue()))
                 .collect(Collectors.toList());
 
         model.addAttribute("orders", orders);

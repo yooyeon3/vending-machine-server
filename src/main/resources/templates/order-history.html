@@ -290,7 +290,7 @@
 <th:block th:replace="~{fragments/chat-panel :: chatPanel}"></th:block>
 
 <script th:inline="javascript">
-    // 프로그레스 바 애니메이션
+    // 프로그레스 바 애니메이션 및 상품명 통합
     window.onload = () => {
         const bar = document.getElementById('progressBar');
         if (bar) {
@@ -299,8 +299,41 @@
                 bar.style.width = width + '%';
             }, 100);
         }
-    };
 
+        // 주문 내역 파싱 및 통합 (예: 펩시콜라x2 -> 펩시콜라 2개)
+        const orderItems = document.querySelectorAll('.order-item');
+        orderItems.forEach(item => {
+            const nameEl = item.querySelector('.order-name');
+            if (nameEl) {
+                const text = nameEl.textContent;
+                const match = text.match(/^(.*?)\s*[xX]\s*(\d+)$/);
+                if (match) {
+                    const baseName = match[1].trim();
+                    const qty = parseInt(match[2], 10);
+                    
+                    nameEl.textContent = baseName;
+                    
+                    const badge = document.createElement('span');
+                    badge.style.cssText = 'background: var(--primary-light); color: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; margin-left: 8px; vertical-align: middle; display: inline-block;';
+                    badge.textContent = qty + '개';
+                    nameEl.appendChild(badge);
+                }
+            }
+        });
+
+        // 최애 음료 파싱
+        const favItems = document.querySelectorAll('.favorite-item');
+        favItems.forEach(item => {
+            const nameEl = item.querySelector('.fav-name');
+            if (nameEl) {
+                const text = nameEl.textContent;
+                const match = text.match(/^(.*?)\s*[xX]\s*(\d+)$/);
+                if (match) {
+                    nameEl.textContent = match[1].trim();
+                }
+            }
+        });
+    };
 </script>
 
 <!-- 채팅 위젯 통합 -->
