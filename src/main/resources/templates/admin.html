@@ -42,89 +42,15 @@
             color: var(--sub-text);
         }
 
-        .hamburger {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            gap: 5px;
-            width: 32px;
-            height: 32px;
-            cursor: pointer;
-            padding: 4px;
-            border-radius: 6px;
-            transition: background 0.2s;
-        }
-        .hamburger:hover { background: var(--bg); }
-        .hamburger span {
-            display: block;
-            width: 100%;
-            height: 2px;
-            background: var(--sub-text);
-            border-radius: 2px;
-        }
+        /* 대시보드 네비게이션 프리미엄 스타일 */
+        .dash-nav-link { position: relative; text-decoration: none; color: var(--sub-text); font-weight: 700; font-size: 16px; letter-spacing: -0.3px; padding: 5px 0; transition: color 0.3s ease; }
+        .dash-nav-link:hover, .dash-nav-link.active { color: var(--primary-text); }
+        .dash-nav-link::after { content: ''; position: absolute; bottom: -2px; left: 50%; width: 0; height: 2px; background: var(--accent); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); border-radius: 2px; }
+        .dash-nav-link:hover::after, .dash-nav-link.active::after { width: 100%; }
+        
+        .header-center { display: flex; justify-content: center; align-items: center; gap: 40px; flex: 2; }
+        .header-right { display: flex; align-items: center; justify-content: flex-end; gap: 20px; flex: 1; }
 
-        .sidebar-overlay {
-            position: fixed;
-            top: 0; left: 0;
-            width: 100vw; height: 100vh;
-            background: rgba(61, 44, 30, 0.2);
-            z-index: 150;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.25s;
-        }
-        .sidebar-overlay.show { opacity: 1; pointer-events: all; }
-
-        .sidebar {
-            position: fixed;
-            top: 0; left: 0;
-            width: 220px;
-            height: 100vh;
-            background: var(--card-bg);
-            border-right: 2px solid var(--border);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(-100%);
-            transition: transform 0.25s ease;
-            box-shadow: none;
-        }
-        .sidebar.open { transform: translateX(0); }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 18px 22px 14px;
-            border-bottom: 1px solid var(--border);
-            margin-bottom: 8px;
-        }
-        .sidebar-logo img { height: 28px; object-fit: contain; }
-        .sidebar-logo span { font-size: 15px; font-weight: 700; color: var(--primary-text); }
-
-        .sidebar-menu { list-style: none; }
-        .sidebar-menu li a {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 13px 22px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--sub-text);
-            text-decoration: none;
-            border-left: 3px solid transparent;
-            transition: all 0.2s;
-        }
-        .sidebar-menu li a:hover { background: var(--bg); color: var(--accent); border-left-color: var(--accent); }
-        .sidebar-menu li a.active { background: var(--header-bg); color: var(--accent); border-left-color: var(--accent); font-weight: 700; }
-        .menu-badge {
-            margin-left: auto;
-            background: var(--danger); color: white;
-            border-radius: 50%; min-width: 18px; height: 18px;
-            font-size: 11px; font-weight: 700;
-            display: flex; align-items: center; justify-content: center;
-            padding: 0 4px;
-        }
         .inquiry-panel-item-link {
             display: block;
             text-decoration: none;
@@ -361,32 +287,20 @@
 </head>
 <body>
 
-<div class="sidebar-overlay" id="overlay"></div>
-
-<div class="sidebar" id="sidebar">
-    <div class="sidebar-logo">
-        <img src="/images/vending-logo.png" alt="PIMTO 로고">
-        <span>관리자</span>
-    </div>
-    <ul class="sidebar-menu">
-        <li><a href="/admin" class="active">📦 재고관리</a></li>
-        <li><a href="/admin/statistics">📊 매출통계</a></li>
-        <li><a href="/admin/member">👥 회원관리</a></li>
-        <li><a href="/admin/robot-control">🤖 로봇관리</a></li>
-    </ul>
-</div>
-
 <div class="header">
     <div class="header-left">
-        <div class="hamburger" id="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-        <a href="/admin"><img src="/images/vending-logo.png" alt="PIMTO 로고"></a>
-        <span class="admin-label">관리자</span>
+        <a href="/admin" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+            <img src="/images/vending-logo.png" alt="PIMTO 로고">
+            <span class="admin-label">관리자</span>
+        </a>
     </div>
-    <div style="display:flex; align-items:center; gap:16px;">
+    <div class="header-center">
+        <a href="/admin" class="dash-nav-link active">재고관리</a>
+        <a href="/admin/statistics" class="dash-nav-link">매출통계</a>
+        <a href="/admin/member" class="dash-nav-link">회원관리</a>
+        <a href="/admin/robot-control" class="dash-nav-link">로봇관리</a>
+    </div>
+    <div class="header-right">
         <!-- 채팅 알림 아이콘 -->
         <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--sub-text)" stroke-width="2">
@@ -397,7 +311,7 @@
                   th:style="${chatCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:var(--danger);color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
             </span>
         </div>
-        <form th:action="@{/logout}" method="post">
+        <form th:action="@{/logout}" method="post" style="margin:0;">
             <button class="logout-btn" type="submit">로그아웃</button>
         </form>
     </div>
@@ -725,20 +639,6 @@
 </script>
 
 <script>
-    // 사이드바 hover 제어
-    const hamburger = document.getElementById('hamburger');
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('overlay');
-
-    hamburger.addEventListener('mouseenter', () => {
-        sidebar.classList.add('open');
-        overlay.classList.add('show');
-    });
-    sidebar.addEventListener('mouseleave', () => {
-        sidebar.classList.remove('open');
-        overlay.classList.remove('show');
-    });
-
     // 음료 제거 (UI 테스트용 - 실제 삭제는 DB API 필요)
 
     function removeDrink() {

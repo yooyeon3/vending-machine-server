@@ -26,7 +26,7 @@ public class ViewController {
     private final PurchaseHistoryRepository purchaseHistoryRepository;
 
     @GetMapping("/")
-    public String home(Authentication authentication, HttpSession session, Model model) {
+    public String home(Authentication authentication, HttpSession session,Model model) {
         if (authentication != null && authentication.isAuthenticated()
                 && !authentication.getName().equals("anonymousUser")) {
 

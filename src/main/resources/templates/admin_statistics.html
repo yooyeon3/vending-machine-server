@@ -25,55 +25,22 @@
             color: var(--primary-text);
             line-height: 1.6;
             display: flex;
+            flex-direction: column;
             min-height: 100vh;
         }
 
-        /* 고정 사이드바 */
-        .admin-sidebar {
-            width: 220px;
-            flex-shrink: 0;
-            background: white;
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: sticky;
-            top: 0;
-            height: 100vh;
-            overflow-y: auto;
-        }
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 20px 18px 16px;
-            border-bottom: 1px solid var(--border);
-        }
-        .sidebar-logo img { height: 28px; object-fit: contain; }
-        .sidebar-logo span { font-size: 15px; font-weight: 700; color: var(--primary-text); }
-        .sidebar-section-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--sub-text);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 16px 18px 6px;
-        }
-        .sidebar-menu { list-style: none; padding: 0 10px; }
-        .sidebar-menu li a {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 11px 14px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--sub-text);
-            transition: all 0.2s;
-            margin-bottom: 2px;
-        }
-        .sidebar-menu li a:hover { background: var(--header-bg); color: var(--accent); }
-        .sidebar-menu li a.active { background: var(--header-bg); color: var(--accent); font-weight: 700; }
+        /* 대시보드 네비게이션 프리미엄 스타일 */
+        .dash-nav-link { position: relative; text-decoration: none; color: var(--sub-text); font-weight: 700; font-size: 16px; letter-spacing: -0.3px; padding: 5px 0; transition: color 0.3s ease; }
+        .dash-nav-link:hover, .dash-nav-link.active { color: var(--primary-text); }
+        .dash-nav-link::after { content: ''; position: absolute; bottom: -2px; left: 50%; width: 0; height: 2px; background: var(--accent); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-50%); border-radius: 2px; }
+        .dash-nav-link:hover::after, .dash-nav-link.active::after { width: 100%; }
+        
+        .global-header { background: white; padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); z-index: 100; box-shadow: 0 1px 3px rgba(61,44,30,0.02); }
+        .header-center { display: flex; justify-content: center; align-items: center; gap: 40px; flex: 2; }
+        .header-right { display: flex; align-items: center; justify-content: flex-end; gap: 20px; flex: 1; }
+        .admin-label { font-size: 18px; font-weight: 800; color: var(--primary-text); letter-spacing: -0.5px; }
+
+
 
         .dashboard {
             flex: 1;
@@ -82,18 +49,18 @@
         }
 
         /* 헤더 섹션 */
-        .header {
+        .page-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
-        .header-left {
+        .page-header-left {
             display: flex;
             align-items: center;
             gap: 12px;
         }
-        .header h1 {
+        .page-header h1 {
             font-size: 28px;
             font-weight: 800;
             color: var(--primary-text);
@@ -215,8 +182,9 @@
         }
 
         @media (max-width: 600px) {
-            body { padding: 15px; }
-            .header { flex-direction: column; gap: 15px; align-items: flex-start; }
+            body { padding: 0; }
+            .dashboard { padding: 15px; }
+            .page-header { flex-direction: column; gap: 15px; align-items: flex-start; }
             .summary-card, .content-card { padding: 20px; }
             .card-title { font-size: 16px; }
             .summary-card .value { font-size: 26px; }
@@ -225,24 +193,30 @@
 </head>
 <body>
 
-<!-- 고정 사이드바 -->
-<div class="admin-sidebar">
-    <div class="sidebar-logo">
-        <img th:src="@{/images/vending-logo.png}" alt="PIMTO">
-        <span>관리자</span>
+<div class="global-header">
+    <div class="header-left" style="flex: 1;">
+        <a href="/admin" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+            <img src="/images/vending-logo.png" alt="PIMTO" style="height:38px;">
+            <span class="admin-label">관리자</span>
+        </a>
     </div>
-    <div class="sidebar-section-title">관리 메뉴</div>
-    <ul class="sidebar-menu">
-        <li><a href="/admin">🏠 관리자 메인</a></li>
-        <li><a href="/admin/member">👥 회원 관리</a></li>
-        <li><a href="/admin/statistics" class="active">📊 매출 통계</a></li>
-        <li><a href="/admin/robot-control">🤖 로봇 관제</a></li>
-    </ul>
+    <div class="header-center">
+        <a href="/admin" class="dash-nav-link">재고관리</a>
+        <a href="/admin/statistics" class="dash-nav-link active">매출통계</a>
+        <a href="/admin/member" class="dash-nav-link">회원관리</a>
+        <a href="/admin/robot-control" class="dash-nav-link">로봇관리</a>
+    </div>
+    <div class="header-right" style="flex: 1; justify-content: flex-end;">
+        <span style="font-size: 13px; font-weight: 600; color: var(--sub-text);">관리자 모드 활성됨</span>
+        <form th:action="@{/logout}" method="post" style="margin: 0;">
+            <button class="btn-secondary" style="padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; background: var(--border); color: var(--sub-text);">로그아웃</button>
+        </form>
+    </div>
 </div>
 
 <div class="dashboard">
-    <div class="header">
-        <div class="header-left">
+    <div class="page-header">
+        <div class="page-header-left">
             <h1>📊 Analytics</h1>
         </div>
         <a href="/admin" class="back-btn">← 관리자 메인으로</a>
@@ -321,10 +295,7 @@
         rawHistories.forEach(item => {
             if (!item.purchaseTime) return;
 
-            // 💡 [추가] 데이터 보정: 옛날 이름(콜라, 사이다 등)이 들어와도 새 이름으로 매핑
             let productName = item.productName;
-            if (productName === '콜라') productName = '펩시 콜라';
-            if (productName === '사이다') productName = '레쓰비 마일드 커피';
 
             // 1. 그룹화 키 생성 (초 단위까지 정밀도 향상)
             // T를 공백으로 바꾸고 나노초를 제외한 초 단위(19자)까지만 자릅니다.
