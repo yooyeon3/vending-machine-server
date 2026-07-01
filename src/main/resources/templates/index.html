@@ -37,6 +37,30 @@
         .footer-links a { margin-left: 20px; text-decoration: none; color: #9e8c7a; transition: color 0.3s; }
         .footer-links a:hover { color: #c47d4a; }
 
+        .box-container { display: flex; gap: 40px; max-width: 900px; width: 100%; justify-content: center; flex-wrap: wrap; margin-bottom: 20px; }
+        
+        .box-left { width: 340px; height: 400px; background-color: #ffffff; border-radius: 28px; padding: 45px 40px; box-shadow: 0 12px 40px rgba(61, 44, 30, 0.06); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); display: flex; flex-direction: column; border: 1px solid #e8dfd4; position: relative; overflow: hidden; }
+        .box-left::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(90deg, #c47d4a, #e8dfd4); }
+        .box-left:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(196, 125, 74, 0.15); border-color: #c47d4a; }
+        
+        .usage-title { font-size: 26px; font-weight: 800; color: #3d2c1e; margin-bottom: 35px; text-align: left; letter-spacing: -0.5px; }
+        
+        .usage-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 24px; }
+        .usage-list li { position: relative; padding-left: 36px; font-size: 16px; font-weight: 600; color: #5a4a3d; line-height: 1.5; letter-spacing: -0.3px; }
+        .usage-list li::before { content: ''; position: absolute; left: 0; top: 2px; width: 22px; height: 22px; background-color: #f2ede4; border-radius: 50%; display: flex; align-items: center; justify-content: center; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23c47d4a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+        
+        .box-right { width: 340px; height: 400px; border-radius: 28px; position: relative; overflow: hidden; box-shadow: 0 12px 40px rgba(61, 44, 30, 0.08); transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1); background-color: #3d2c1e; cursor: pointer; border: 1px solid #e8dfd4; }
+        .vending-image { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1); filter: contrast(1.05) saturate(1.1) brightness(0.9); }
+        .box-right::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(61, 44, 30, 0.9) 0%, rgba(61, 44, 30, 0) 50%); pointer-events: none; }
+        
+        .image-caption { position: absolute; bottom: 35px; left: 35px; right: 35px; color: #ffffff; z-index: 2; transition: transform 0.4s ease; }
+        .image-caption h3 { margin: 0 0 8px 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+        .image-caption p { margin: 0; font-size: 15px; font-weight: 500; color: rgba(255, 255, 255, 0.85); }
+        
+        .box-right:hover { transform: translateY(-8px); box-shadow: 0 20px 40px rgba(196, 125, 74, 0.25); }
+        .box-right:hover .vending-image { transform: scale(1.08); filter: brightness(1.0); }
+        .box-right:hover .image-caption { transform: translateY(-5px); }
+
         /* 등급 뱃지 스타일 */
         .grade-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #fff; }
         .grade-badge.diamond { background: #3498db; }
@@ -95,15 +119,17 @@
             .footer-links a { margin: 0; }
         }
 
+        @media (max-width: 800px) {
+            .box-container { gap: 25px; }
+            .box-left, .box-right { width: 100%; height: auto; min-height: 340px; padding: 35px; }
+        }
+
         @media (max-width: 600px) {
             .header { padding: 15px 20px; flex-direction: column; gap: 15px; }
             .header .nav a { margin: 0 10px; font-size: 14px; }
             .main { padding: 40px 20px; }
             .title { font-size: 40px; letter-spacing: 2px; }
             .recommend-message { font-size: 15px; margin-bottom: 30px; }
-            .box-container { gap: 20px; }
-            .box-left, .box-right { width: 100%; height: auto; min-height: 300px; }
-            
             .dash-header { padding: 15px 20px; flex-direction: column; align-items: flex-start; gap: 15px; }
             .dash-header-right { width: 100%; justify-content: space-between; }
         }
@@ -128,6 +154,7 @@
         <div class="recommend-message">
             내 손안의 스마트 자판기, <span style="color: #c47d4a; font-weight: 700;">PIMTO</span>와 함께 언제 어디서나 더 편리한 일상을 경험해 보세요.
         </div>
+        
         <div class="box-container">
             <div class="box-left">
                 <div class="usage-title">이용법 안내</div>
@@ -138,6 +165,7 @@
                     <li>마이페이지에서 내역을 확인!</li>
                 </ul>
             </div>
+            
             <div class="box-right">
                 <img th:src="@{/images/IMG_6255.jpg}" class="vending-image" alt="PIMTO 자판기">
                 <div class="image-caption">
