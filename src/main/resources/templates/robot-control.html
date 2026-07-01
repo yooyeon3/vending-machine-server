@@ -448,6 +448,13 @@ window.onload = function() {
           <a href="/admin/statistics" class="dash-nav-link">매출통계</a>
           <a href="/admin/member" class="dash-nav-link">회원관리</a>
           <a href="/admin/robot-control" class="dash-nav-link active">로봇관리</a>
+          <a href="#" class="dash-nav-link" onclick="toggleChatPanel(); return false;" style="position:relative;">
+              1:1 문의
+              <span id="chatBadge"
+                    th:text="${chatCount}"
+                    th:style="${chatCount != null && chatCount > 0} ? 'position:absolute;top:-5px;right:-15px;background:var(--danger);color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+              </span>
+          </a>
       </div>
       <div class="header-right" style="flex: 1; justify-content: flex-end;">
           <span style="font-size: 13px; font-weight: 600; color: var(--sub-text);">관리자 모드 활성됨</span>

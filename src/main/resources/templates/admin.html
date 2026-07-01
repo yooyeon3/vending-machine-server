@@ -299,18 +299,15 @@
         <a href="/admin/statistics" class="dash-nav-link">매출통계</a>
         <a href="/admin/member" class="dash-nav-link">회원관리</a>
         <a href="/admin/robot-control" class="dash-nav-link">로봇관리</a>
-    </div>
-    <div class="header-right">
-        <!-- 채팅 알림 아이콘 -->
-        <div onclick="toggleChatPanel()" style="position:relative; display:flex; align-items:center; cursor:pointer;">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--sub-text)" stroke-width="2">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
+        <a href="#" class="dash-nav-link" onclick="toggleChatPanel(); return false;" style="position:relative;">
+            1:1 문의
             <span id="chatBadge"
                   th:text="${chatCount}"
-                  th:style="${chatCount > 0} ? 'position:absolute;top:-6px;right:-6px;background:var(--danger);color:white;border-radius:50%;width:18px;height:18px;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
+                  th:style="${chatCount != null && chatCount > 0} ? 'position:absolute;top:-5px;right:-15px;background:var(--danger);color:white;border-radius:50%;width:16px;height:16px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;' : 'display:none'">
             </span>
-        </div>
+        </a>
+    </div>
+    <div class="header-right">
         <form th:action="@{/logout}" method="post" style="margin:0;">
             <button class="logout-btn" type="submit">로그아웃</button>
         </form>
