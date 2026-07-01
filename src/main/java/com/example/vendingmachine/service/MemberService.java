@@ -14,7 +14,6 @@ public class MemberService {
     private final MemberRepository memberRepository;
     // :white_check_mark: PasswordEncoder 제거
     private final com.example.vendingmachine.repository.PurchaseHistoryRepository purchaseHistoryRepository;
-    private final com.example.vendingmachine.repository.InquiryRepository inquiryRepository;
 
     @Transactional(readOnly = true)
     public GradeProgress getGradeProgress(Member member) {
@@ -63,8 +62,7 @@ public class MemberService {
         if (member == null) return 0;
         String buyerName = member.getName() != null ? member.getName() : "";
         long purchaseCount = purchaseHistoryRepository.countByBuyerName(buyerName);
-        long inquiryCount = inquiryRepository.countByUsername(member.getUsername());
-        return (int) (purchaseCount * 10 + inquiryCount * 5);
+        return (int) (purchaseCount * 10);
     }
 
     public String getGrade(Member member) {

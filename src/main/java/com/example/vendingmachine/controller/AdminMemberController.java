@@ -4,7 +4,6 @@ import com.example.vendingmachine.domain.Member;
 import com.example.vendingmachine.repository.MemberRepository;
 import com.example.vendingmachine.repository.ProductRepository;
 import com.example.vendingmachine.repository.PurchaseHistoryRepository;
-import com.example.vendingmachine.repository.InquiryRepository;
 import com.example.vendingmachine.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -25,7 +24,7 @@ public class AdminMemberController {
     private final MemberRepository memberRepository;
     private final ProductRepository productRepository;
     private final PurchaseHistoryRepository purchaseHistoryRepository;
-    private final InquiryRepository inquiryRepository;
+
 
     @GetMapping
     public String memberListPage(Model model) {
@@ -59,7 +58,6 @@ public class AdminMemberController {
             
             stat.put("purchaseCount", histories.size());
             stat.put("totalSpent", totalSpent);
-            stat.put("inquiryCount", (int) inquiryRepository.countByUsername(member.getUsername()));
             stat.put("activityScore", memberService.getActivityScore(member));
             stat.put("grade", memberService.getGrade(member));
 
