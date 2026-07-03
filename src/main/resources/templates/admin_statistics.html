@@ -34,6 +34,24 @@
         }
 
         /* 프리미엄 글로벌 헤더 (Glassmorphism) */
+        .header-left img { height: 34px; object-fit: contain; }
+        
+        .toss-admin-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #F2F4F6;
+            padding: 5px 12px 5px 6px;
+            border-radius: 12px;
+            margin-left: 4px;
+        }
+        .toss-admin-badge .txt {
+            font-size: 14px;
+            font-weight: 700;
+            color: #191F28;
+            letter-spacing: -0.3px;
+        }
+
         .global-header { 
             background: rgba(255, 255, 255, 0.85); 
             backdrop-filter: blur(16px); 
@@ -49,7 +67,6 @@
         }
         .header-center { display: flex; justify-content: center; align-items: center; gap: 40px; flex: 2; }
         .header-right { display: flex; align-items: center; justify-content: flex-end; gap: 20px; flex: 1; }
-        .admin-label { font-size: 19px; font-weight: 800; color: var(--primary-text); letter-spacing: -0.5px; }
 
         .dash-nav-link { 
             position: relative; text-decoration: none; color: var(--sub-text); 
@@ -209,9 +226,16 @@
 
 <div class="global-header">
     <div class="header-left" style="flex: 1;">
-        <a href="/admin" style="display:flex; align-items:center; gap:10px; text-decoration:none;">
-            <img src="/images/vending-logo.png" alt="PIMTO" style="height:42px;">
-            <span class="admin-label">관리자</span>
+        <a href="/admin" style="display:flex; align-items:center; gap:8px; text-decoration:none;">
+            <img src="/images/vending-logo.png" alt="PIMTO" style="height:34px;">
+            <div class="toss-admin-badge">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="24" height="24" rx="8" fill="#E8F3FF"/>
+                    <path d="M12 5.5L6.5 7.94V11.61C6.5 15.42 8.86 18.99 12 20C15.14 18.99 17.5 15.42 17.5 11.61V7.94L12 5.5Z" fill="#3182F6"/>
+                    <path d="M10.82 14.5L8.02 11.7L9.15 10.57L10.82 12.24L14.84 8.22L15.97 9.35L10.82 14.5Z" fill="white"/>
+                </svg>
+                <span class="txt">관리자</span>
+            </div>
         </a>
     </div>
     <div class="header-center">
