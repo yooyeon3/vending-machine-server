@@ -162,6 +162,64 @@
             .hero-title { font-size: 36px; }
             .hero-cta { width: 100%; justify-content: center; }
         }
+
+        /* 프리미엄 토스트 알림 CSS */
+        .toast-container {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            pointer-events: none;
+        }
+        .custom-toast {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(61, 44, 30, 0.12);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 320px;
+            border: 1px solid rgba(255,255,255,0.5);
+            transform: translateY(-20px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .custom-toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-icon {
+            font-size: 24px;
+            background: #fff5eb;
+            width: 44px; height: 44px;
+            border-radius: 22px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .toast-content {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .toast-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #3d2c1e;
+        }
+        .toast-msg {
+            font-size: 13px;
+            font-weight: 500;
+            color: #9e8c7a;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body>
@@ -340,9 +398,35 @@
 
         function changeQty(elementId, change, pricePerItem, maxStock) {
             const qtyElement = document.getElementById(elementId);
-            let newQty = parseInt(qtyElement.innerText) + change;
+            let currentQty = parseInt(qtyElement.innerText);
+            let newQty = currentQty + change;
+            
             if (newQty < 0) newQty = 0;
-            if (newQty > maxStock) { alert('해당 상품의 재고가 부족합니다. (최대 ' + maxStock + '개 선택 가능)'); return; }
+            
+            // 증가하는 경우에만 제한 검사
+            if (change > 0) {
+                // 1. 종류별 최대 수량 제한 (2개)
+                if (newQty > 2) {
+                    showToast('🤖 적재 공간 초과', '안전한 배달을 위해 동일한 음료는 최대 2개까지만 로봇에 실을 수 있어요.');
+                    return;
+                }
+                
+                // 2. 전체 주문 수량 제한 (4개)
+                let totalCurrentCount = 0;
+                document.querySelectorAll('.counter-val').forEach(el => {
+                    totalCurrentCount += parseInt(el.innerText);
+                });
+                
+                if (totalCurrentCount >= 4) {
+                    showToast('🚀 적재 용량 초과', 'PIMTO 로봇은 한 번에 최대 4개의 음료까지만 안전하게 배달할 수 있어요.');
+                    return;
+                }
+            }
+
+            if (newQty > maxStock) { 
+                showToast('😥 재고 부족', '앗, 선택하신 상품의 재고가 부족해요.'); 
+                return; 
+            }
             qtyElement.innerText = newQty;
             calculateTotal();
         }
@@ -423,10 +507,55 @@
     <!-- 채팅 위젯 통합 -->
     <th:block th:replace="~{fragments/chat-widget :: chatWidget}"></th:block>
 
-
-
 <!-- 배달 위젯 -->
 <th:block th:replace="~{fragments/delivery-widget :: deliveryWidget}"></th:block>
+</th:block>
+
+<!-- 프리미엄 토스트 알림 컨테이너 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    function showToast(title, msg) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = 'custom-toast';
+        
+        let iconHtml = '';
+        
+        // 아이콘을 예쁜 SVG 디자인으로 교체
+        if (title.includes('🤖')) {
+            // 종류 초과 (패키지 박스 아이콘)
+            iconHtml = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c47d4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>`;
+        } else if (title.includes('🚀')) {
+            // 용량 초과 (여러 층으로 쌓인 레이어 아이콘)
+            iconHtml = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c47d4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+        } else {
+            // 재고 부족 (세련된 경고 느낌표)
+            iconHtml = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c47d4a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+        }
+
+        const displayTitle = title.replace(/[🤖🚀😥]/g, '').trim();
+
+        toast.innerHTML = `
+            <div class="toast-icon">${iconHtml}</div>
+            <div class="toast-content">
+                <div class="toast-title">${displayTitle}</div>
+                <div class="toast-msg">${msg}</div>
+            </div>
+        `;
+        
+        container.appendChild(toast);
+        
+        // 애니메이션 트리거를 위해 약간의 지연
+        setTimeout(() => toast.classList.add('show'), 10);
+        
+        // 3초 후 사라짐
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400); // CSS transition 시간
+        }, 3000);
+    }
+</script>
 
 </body>
 </html>
