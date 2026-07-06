@@ -6,6 +6,10 @@
     <title>PIMTO - 관리자</title>
     <link rel="stylesheet" as="style" crossorigin
         href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/easeljs@1.0.2/lib/easeljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ros2d@0.10.0/build/ros2d.min.js"></script>
     <style>
         :root {
             --bg: #faf8f4;
@@ -558,6 +562,32 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* ROS2D Map Container & Radar Animation styling */
+        #map canvas {
+            width: 100% !important;
+            height: 100% !important;
+            display: block;
+            image-rendering: pixelated;
+        }
+        
+        .radar-bg::after {
+            content: '';
+            position: absolute;
+            width: 200%; height: 200%;
+            background: conic-gradient(from 0deg, transparent 70%, rgba(196, 125, 74, 0.4) 100%);
+            animation: scan 4s linear infinite;
+            border-radius: 50%;
+        }
+
+        .radar-rings::before { content:''; position:absolute; width:66%; height:66%; border:1px dashed rgba(196,125,74,0.15); border-radius:50%; }
+        .radar-rings::after { content:''; position:absolute; width:33%; height:33%; border:1px dashed rgba(196,125,74,0.15); border-radius:50%; }
+
+        @keyframes scan { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .status-disconnected { background: rgba(239, 68, 68, 0.9) !important; }
+        .status-connecting { background: rgba(245, 158, 11, 0.9) !important; }
+        .status-connected { background: rgba(16, 185, 129, 0.9) !important; }
     </style>
 </head>
 
@@ -664,12 +694,17 @@
             </div>
 
             <div class="right-panel">
-                <div class="map-panel">
+                <div class="map-panel" style="display: flex; flex-direction: column;">
                     <div class="panel-title">
                         <img src="/images/pimto.png" style="width:20px;height:20px;object-fit:contain;">
-                        PIMTO 현재 위치
+                        PIMTO 현재 위치 (실시간 관제)
                     </div>
-                    <canvas id="mapCanvas"></canvas>
+                    <div id="map" style="width: 100%; height: calc(100% - 36px); border-radius: 16px; overflow: hidden; background: #1e1814; position: relative; border: 6px solid #ffffff; box-shadow: 0 10px 30px rgba(61, 44, 30, 0.05), inset 0 0 20px rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center;">
+                        <div id="status" class="status-disconnected" style="position: absolute; top: 15px; left: 15px; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; z-index: 10; color: white; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">📡 연결 대기 중...</div>
+                        <div class="radar-bg" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: radial-gradient(circle at center, rgba(196, 125, 74, 0.1) 0%, #1e1814 70%); z-index: 1; display: flex; justify-content: center; align-items: center;">
+                            <div class="radar-rings" style="position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 1px dashed rgba(196, 125, 74, 0.2); display: flex; justify-content: center; align-items: center;"></div>
+                        </div>
+                    </div>
                 </div>
                 <button class="emergency-btn" id="emergencyBtn" onclick="emergencyCall()">🚨 긴급 호출</button>
             </div>
@@ -688,99 +723,158 @@
             alert('이 버튼은 현재 UI 테스트용입니다. 실제 삭제는 DB 연결이 필요합니다.');
         }
 
-        // 지도 캔버스 및 긴급 호출 로직
-        const canvas = document.getElementById('mapCanvas');
-        const ctx = canvas.getContext('2d');
-        const HOME = { x: 0.15, y: 0.5 };
-        let robot = { x: 0.5, y: 0.5 };
-        let isReturning = false;
-        const robotImg = new Image();
-        robotImg.src = '/images/pimto.png';
+        // ROS 로봇 지도 연동 및 긴급 호출 로직
+        var ros = null;
+        var viewer = null;
+        var stage = null;
+        var gridClient = null;
+        var tfClient = null;
+        var robotMarker = null;
 
-        function resizeCanvas() {
-            canvas.width = canvas.width; // dummy write
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            drawMap();
-        }
-
-        function drawMap() {
-            const W = canvas.width, H = canvas.height;
-            ctx.clearRect(0, 0, W, H);
-            ctx.fillStyle = '#111827';
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < W; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
-            for (let y = 0; y < H; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(20, 20, W - 40, H - 40);
-            ctx.beginPath();
-            ctx.moveTo(W * 0.4, 20); ctx.lineTo(W * 0.4, H * 0.6);
-            ctx.moveTo(W * 0.4, H * 0.6); ctx.lineTo(W * 0.7, H * 0.6);
-            ctx.stroke();
-
-            const hx = HOME.x * W, hy = HOME.y * H;
-            ctx.fillStyle = 'rgba(196,125,74,0.2)';
-            ctx.beginPath(); ctx.arc(hx, hy, 20, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = '#c47d4a'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(hx, hy, 20, 0, Math.PI * 2); ctx.stroke();
-            ctx.fillStyle = '#c47d4a';
-            ctx.font = 'bold 11px Pretendard';
-            ctx.textAlign = 'center';
-            ctx.fillText('원위치', hx, hy + 35);
-
-            const rx = robot.x * W, ry = robot.y * H;
-            if (isReturning) {
-                ctx.strokeStyle = 'rgba(196,125,74,0.4)';
-                ctx.lineWidth = 1.5;
-                ctx.setLineDash([6, 4]);
-                ctx.beginPath(); ctx.moveTo(rx, ry); ctx.lineTo(hx, hy); ctx.stroke();
-                ctx.setLineDash([]);
+        function connectROS() {
+            var ip = "192.168.0.186"; // 기본 로봇 IP
+            var url = 'ws://' + ip + ':9090';
+            
+            var statusEl = document.getElementById('status');
+            if (statusEl) {
+                statusEl.className = 'status-connecting';
+                statusEl.textContent = '연결 시도 중...';
             }
 
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(rx, ry, 20, 0, Math.PI * 2);
-            ctx.clip();
-            ctx.drawImage(robotImg, rx - 20, ry - 20, 40, 40);
-            ctx.restore();
+            ros = new ROSLIB.Ros({ url: url });
 
-            ctx.fillStyle = isReturning ? '#f59e0b' : '#10b981';
-            ctx.font = 'bold 11px Pretendard';
-            ctx.textAlign = 'center';
-            ctx.fillText(isReturning ? '복귀 중...' : '대기 중', rx, ry + 36);
+            ros.on('connection', function() {
+                if (statusEl) {
+                    statusEl.className = 'status-connected';
+                    statusEl.textContent = '정상 연결됨';
+                }
+                initMap();
+            });
+
+            ros.on('error', function(error) {
+                if (statusEl) {
+                    statusEl.className = 'status-disconnected';
+                    statusEl.textContent = '📡 연결 대기 중...';
+                }
+                var radar = document.querySelector('.radar-bg');
+                if (radar) radar.style.display = 'flex';
+                console.error('ROS Connection error: ', error);
+            });
+
+            ros.on('close', function() {
+                if (statusEl) {
+                    statusEl.className = 'status-disconnected';
+                    statusEl.textContent = '📡 연결 대기 중...';
+                }
+                var radar = document.querySelector('.radar-bg');
+                if (radar) radar.style.display = 'flex';
+            });
+        }
+
+        function initMap() {
+            var mapDiv = document.getElementById('map');
+            if (!mapDiv) return;
+            
+            // 기존 내용 백업 및 삭제
+            var status = document.getElementById('status');
+            var radar = document.querySelector('.radar-bg');
+            
+            mapDiv.innerHTML = '';
+            mapDiv.appendChild(status);
+            mapDiv.appendChild(radar);
+            
+            if (radar) radar.style.display = 'none';
+
+            var w = mapDiv.clientWidth;
+            var h = mapDiv.clientHeight;
+            if (w <= 0 || h <= 0) {
+                w = 350;
+                h = 350;
+            }
+
+            // Create canvas matching the EXACT client size of the container
+            viewer = new ROS2D.Viewer({ divID: 'map', width: w, height: h });
+            stage = viewer.scene;
+
+            gridClient = new ROS2D.OccupancyGridClient({
+                ros: ros,
+                rootObject: stage,
+                continuous: true
+            });
+
+            gridClient.on('change', function() {
+                if (gridClient.currentGrid && gridClient.currentGrid.width > 0) {
+                    viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+                    viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+                    
+                    var gridW = gridClient.currentGrid.width;
+                    var gridH = gridClient.currentGrid.height;
+                    
+                    // To prevent stretching and make the map larger (zooming past margins):
+                    var scale = Math.min(w / gridW, h / gridH) * 2.2;
+                    
+                    stage.scaleX = scale;
+                    stage.scaleY = scale;
+                    stage.x = w / 2;
+                    stage.y = h / 2;
+                    stage.update();
+                }
+            });
+
+            // 로봇 마커 (따뜻한 테라코타 색상 적용)
+            robotMarker = new createjs.Shape();
+            robotMarker.graphics.beginFill('#c47d4a').drawCircle(0, 0, 0.18);
+            robotMarker.visible = false;
+            stage.addChild(robotMarker);
+
+            tfClient = new ROSLIB.TFClient({
+                ros: ros, fixedFrame: 'map', angularThres: 0.01, transThres: 0.01, rate: 10.0
+            });
+
+            tfClient.subscribe('base_link', function(tf) {
+                robotMarker.x = tf.translation.x;
+                robotMarker.y = -tf.translation.y;
+                robotMarker.visible = true;
+                stage.update();
+            });
         }
 
         function emergencyCall() {
-            const btn = document.getElementById('emergencyBtn');
-            if (isReturning) return;
-            isReturning = true;
-            btn.classList.add('active');
-            btn.textContent = '🔄 원위치 복귀 중...';
-            function animate() {
-                const dx = HOME.x - robot.x, dy = HOME.y - robot.y;
-                if (Math.sqrt(dx * dx + dy * dy) < 0.01) {
-                    robot.x = HOME.x; robot.y = HOME.y;
-                    isReturning = false;
-                    btn.classList.remove('active');
-                    btn.textContent = '🚨 긴급 호출';
-                    drawMap(); return;
-                }
-                robot.x += dx * 0.02;
-                robot.y += dy * 0.02;
-                drawMap();
-                requestAnimationFrame(animate);
+            if (ros && ros.isConnected) {
+                var goalTopic = new ROSLIB.Topic({
+                    ros: ros,
+                    name: '/move_base_simple/goal',
+                    messageType: 'geometry_msgs/PoseStamped'
+                });
+                
+                var goalMsg = new ROSLIB.Message({
+                    header: { frame_id: 'map', stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 } },
+                    pose: {
+                        position: { x: 0.0, y: 0.0, z: 0.0 }, // 처음 출발 위치(Home) 좌표인 (0.0, 0.0)으로 복귀
+                        orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+                    }
+                });
+                goalTopic.publish(goalMsg);
+                alert('🚨 긴급 호출: 로봇이 처음 위치(Home)로 복귀합니다.');
+            } else {
+                alert('⚠️ 로봇과 네트워크 연결이 되지 않았습니다. 연결 상태를 확인해 주세요.');
             }
-            animate();
         }
 
-        robotImg.onload = () => drawMap();
-        window.addEventListener('resize', resizeCanvas);
-        setTimeout(resizeCanvas, 100);
+        var resizeTimeout = null;
+        window.addEventListener('resize', function() {
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(function() {
+                if (ros && ros.isConnected) {
+                    initMap();
+                }
+            }, 300);
+        });
+
+        // 페이지 로드 시 ROS 연결
+        window.addEventListener('load', function() {
+            connectROS();
+        });
     </script>
 
     <div th:replace="~{fragments/admin-chat-panel :: adminChatPanel}"></div>
