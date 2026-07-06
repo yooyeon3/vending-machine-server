@@ -224,6 +224,147 @@
     aspect-ratio: 1;
   }
 
+  /* Flex Layout for side-by-side view */
+  .main-layout {
+    display: flex;
+    gap: 25px;
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .map-card {
+    flex: 1;
+    min-width: 500px;
+    margin-bottom: 25px;
+  }
+
+  .teleop-card {
+    width: 420px;
+    min-width: 320px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 20px;
+  }
+
+  /* Switch Toggle Styling */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .switch-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #e8dfd4;
+    transition: .3s;
+    border-radius: 24px;
+  }
+  .switch-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+  }
+  input:checked + .switch-slider {
+    background-color: var(--accent);
+  }
+  input:checked + .switch-slider:before {
+    transform: translateX(22px);
+  }
+
+  /* D-Pad Styling */
+  .dpad-container {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 15px auto;
+  }
+  .dpad-btn {
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.15s ease;
+    box-shadow: 0 4px 10px rgba(61,44,30,0.05);
+    color: var(--primary-text);
+  }
+  .dpad-btn:active, .dpad-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: scale(0.92);
+    box-shadow: 0 2px 6px rgba(196, 125, 74, 0.3);
+  }
+  .dpad-up    { top: 5px; left: 65px; }
+  .dpad-left  { top: 65px; left: 5px; }
+  .dpad-stop  { top: 65px; left: 65px; width: 50px; height: 50px; background: #ff3b30; color: white; border: none; font-weight: bold; border-radius: 50%; box-shadow: 0 4px 10px rgba(255, 59, 48, 0.2); }
+  .dpad-stop:active { background: #d32f2f; transform: scale(0.92); }
+  .dpad-right { top: 65px; right: 5px; }
+  .dpad-down  { bottom: 5px; left: 65px; }
+
+  /* Keyboard Indicator Visualizer */
+  .keyboard-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 15px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+  }
+  .key-cap {
+    width: 44px;
+    height: 44px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--primary-text);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    transition: all 0.12s ease;
+    user-select: none;
+  }
+  .key-cap.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: scale(0.92);
+    box-shadow: 0 2px 8px rgba(196, 125, 74, 0.4);
+  }
+
+  @media (max-width: 1024px) {
+    .main-layout { flex-direction: column; }
+    .teleop-card { width: 100%; }
+    .map-card { min-width: 100%; }
+  }
+
   @media (max-width: 800px) {
     body { padding: 0; }
     .content-wrapper { padding: 15px; }
@@ -251,6 +392,13 @@ var viewRotation = 0;
 
 var robotMarker = null;
 var guideArrow = null;
+
+// 수동 조종 관련 전역 변수
+var cmdVelTopic = null;
+var activeKeys = {};
+var publishTimer = null;
+var targetLinearX = 0;
+var targetAngularZ = 0;
 
 function connectROS() {
   var ip = document.getElementById('rosIpInput').value;
@@ -343,16 +491,27 @@ function initMap() {
     messageType: 'geometry_msgs/PoseWithCovarianceStamped'
   });
 
-  // 글로벌 함수로 등록하여 이벤트 리스너 내부에서 접근 가능하게 함
+  var goalTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: '/move_base_simple/goal',
+    messageType: 'geometry_msgs/PoseStamped'
+  });
+
+  cmdVelTopic = new ROSLIB.Topic({
+    ros: ros,
+    name: '/cmd_vel',
+    messageType: 'geometry_msgs/Twist'
+  });
+
   window.sendInitialPose = function(rosX, rosY, yaw) {
+    if (document.getElementById('manualModeToggle').checked) {
+      showStatusAlert('⚠️ 수동 조종 모드 중에는 위치 초기화를 할 수 없습니다.', true);
+      return;
+    }
     var qz = Math.sin(yaw / 2);
     var qw = Math.cos(yaw / 2);
-
     var poseMsg = new ROSLIB.Message({
-      header: {
-        frame_id: 'map',
-        stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 }
-      },
+      header: { frame_id: 'map', stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 } },
       pose: {
         pose: {
           position: { x: parseFloat(rosX), y: parseFloat(rosY), z: 0.0 },
@@ -363,6 +522,34 @@ function initMap() {
     });
     initialPoseTopic.publish(poseMsg);
     console.log(`[SEND] /initialpose ROS X=${rosX.toFixed(3)}, Y=${rosY.toFixed(3)}, Yaw=${(yaw*180/Math.PI).toFixed(1)}°`);
+  };
+
+  window.sendGoalPose = function(rosX, rosY, yaw) {
+    if (document.getElementById('manualModeToggle').checked) {
+      showStatusAlert('⚠️ 수동 조종 모드 중에는 2D Nav Goal을 전송할 수 없습니다.', true);
+      return;
+    }
+    var qz = Math.sin(yaw / 2);
+    var qw = Math.cos(yaw / 2);
+    var goalMsg = new ROSLIB.Message({
+      header: { frame_id: 'map', stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 } },
+      pose: {
+        position: { x: parseFloat(rosX), y: parseFloat(rosY), z: 0.0 },
+        orientation: { x: 0.0, y: 0.0, z: qz, w: qw }
+      }
+    });
+    goalTopic.publish(goalMsg);
+    console.log(`[SEND] /move_base_simple/goal ROS X=${rosX.toFixed(3)}, Y=${rosY.toFixed(3)}, Yaw=${(yaw*180/Math.PI).toFixed(1)}°`);
+    
+    // UI 피드백: 로봇에게 목적지를 성공적으로 전달했다고 표시
+    const statusEl = document.getElementById('status');
+    const oldText = statusEl.textContent;
+    statusEl.textContent = '🚀 목적지 전송 완료! 로봇 이동 중...';
+    statusEl.style.background = 'rgba(59, 130, 246, 0.9)'; // 파란색 알림
+    setTimeout(() => {
+        statusEl.textContent = oldText;
+        statusEl.style.background = 'rgba(16, 185, 129, 0.9)'; // 원래 초록색 복구
+    }, 3000);
   };
 
   setTimeout(setupInteractions, 500);
@@ -410,6 +597,10 @@ function initMap() {
       var mouseY = e.clientY - rect.top;
 
       if (e.button === 0) {
+        if (document.getElementById('manualModeToggle').checked) {
+          showStatusAlert('⚠️ 수동 조종 모드 중에는 2D Nav Goal을 전송할 수 없습니다.', true);
+          return;
+        }
         try {
           var rosPoint = stage.globalToRos(mouseX, mouseY);
           rosTargetX = rosPoint.x;
@@ -439,6 +630,12 @@ function initMap() {
 
     window.addEventListener('mouseup', function(e) {
       if (e.button === 0 && poseStartMouse) {
+        if (document.getElementById('manualModeToggle').checked) {
+          guideArrow.visible = false;
+          poseStartMouse = null;
+          stage.update();
+          return;
+        }
         var rect = canvas.getBoundingClientRect();
         var mouseX = e.clientX - rect.left;
         var mouseY = e.clientY - rect.top;
@@ -451,7 +648,8 @@ function initMap() {
           finalYaw = Math.atan2(-deltaY, deltaX);
         }
 
-        window.sendInitialPose(rosTargetX, rosTargetY, finalYaw);
+        // 로봇을 해당 좌표로 주행시키기 위해 목적지(Goal) 전송!
+        window.sendGoalPose(rosTargetX, rosTargetY, finalYaw);
 
         guideArrow.visible = false;
         poseStartMouse = null;
@@ -466,6 +664,220 @@ function initMap() {
   }
 }
 
+function showStatusAlert(text, isWarning = false) {
+  var statusEl = document.getElementById('status');
+  if (!statusEl) return;
+  var oldText = statusEl.textContent;
+  var oldClass = statusEl.className;
+  var oldStyle = statusEl.style.cssText;
+  
+  statusEl.textContent = text;
+  statusEl.className = 'status-connected';
+  statusEl.style.background = isWarning ? 'rgba(239, 68, 68, 0.95)' : 'rgba(59, 130, 246, 0.95)';
+  statusEl.style.color = '#ffffff';
+  
+  setTimeout(function() {
+    statusEl.textContent = oldText;
+    statusEl.className = oldClass;
+    statusEl.style.cssText = oldStyle;
+  }, 3000);
+}
+
+function updateKeyVisuals() {
+  var wActive = activeKeys['KeyW'] || activeKeys['ArrowUp'];
+  var aActive = activeKeys['KeyA'] || activeKeys['ArrowLeft'];
+  var sActive = activeKeys['KeyS'] || activeKeys['ArrowDown'];
+  var dActive = activeKeys['KeyD'] || activeKeys['ArrowRight'];
+  
+  toggleKeyClass('key-W', wActive);
+  toggleKeyClass('key-A', aActive);
+  toggleKeyClass('key-S', sActive);
+  toggleKeyClass('key-D', dActive);
+  
+  toggleKeyClass('dpad-up', wActive);
+  toggleKeyClass('dpad-left', aActive);
+  toggleKeyClass('dpad-down', sActive);
+  toggleKeyClass('dpad-right', dActive);
+}
+
+function toggleKeyClass(id, active) {
+  var el = document.getElementById(id);
+  if (el) {
+    if (active) {
+      el.classList.add('active');
+    } else {
+      el.classList.remove('active');
+    }
+  }
+}
+
+function updateVelocityFromKeys() {
+  if (!ros || !ros.isConnected) return;
+  
+  var wActive = activeKeys['KeyW'] || activeKeys['ArrowUp'];
+  var sActive = activeKeys['KeyS'] || activeKeys['ArrowDown'];
+  var aActive = activeKeys['KeyA'] || activeKeys['ArrowLeft'];
+  var dActive = activeKeys['KeyD'] || activeKeys['ArrowRight'];
+  
+  var linearSpeed = parseFloat(document.getElementById('linearSpeedSlider').value);
+  var angularSpeed = parseFloat(document.getElementById('angularSpeedSlider').value);
+  
+  targetLinearX = 0;
+  targetAngularZ = 0;
+  
+  if (wActive) targetLinearX += linearSpeed;
+  if (sActive) targetLinearX -= linearSpeed;
+  if (aActive) targetAngularZ += angularSpeed;
+  if (dActive) targetAngularZ -= angularSpeed;
+  
+  var isMoving = wActive || sActive || aActive || dActive;
+  
+  if (isMoving) {
+    if (!publishTimer) {
+      publishTimer = setInterval(publishVelocity, 100);
+    }
+  } else {
+    stopRobot();
+  }
+}
+
+function publishVelocity() {
+  if (cmdVelTopic && ros && ros.isConnected) {
+    var twist = new ROSLIB.Message({
+      linear: { x: targetLinearX, y: 0.0, z: 0.0 },
+      angular: { x: 0.0, y: 0.0, z: targetAngularZ }
+    });
+    cmdVelTopic.publish(twist);
+  }
+}
+
+function stopRobot() {
+  targetLinearX = 0;
+  targetAngularZ = 0;
+  publishVelocity();
+  if (publishTimer) {
+    clearInterval(publishTimer);
+    publishTimer = null;
+  }
+}
+
+function emergencyStop() {
+  activeKeys = {};
+  updateKeyVisuals();
+  stopRobot();
+  showStatusAlert('🚨 긴급 정지 명령 전송 완료!', true);
+}
+
+function bindDpadButton(id, directionKey) {
+  var btn = document.getElementById(id);
+  if (!btn) return;
+  
+  var startPress = function(e) {
+    e.preventDefault();
+    if (!document.getElementById('manualModeToggle').checked) {
+      showStatusAlert('⚠️ 수동 조종 모드를 먼저 활성화해주세요.', true);
+      return;
+    }
+    activeKeys[directionKey] = true;
+    updateKeyVisuals();
+    updateVelocityFromKeys();
+  };
+  
+  var endPress = function(e) {
+    e.preventDefault();
+    activeKeys[directionKey] = false;
+    updateKeyVisuals();
+    updateVelocityFromKeys();
+  };
+  
+  btn.addEventListener('mousedown', startPress);
+  btn.addEventListener('mouseup', endPress);
+  btn.addEventListener('mouseleave', endPress);
+  
+  btn.addEventListener('touchstart', startPress, { passive: false });
+  btn.addEventListener('touchend', endPress, { passive: false });
+}
+
+function setupTeleop() {
+  // 1. 슬라이더 이벤트 연결
+  var linSlider = document.getElementById('linearSpeedSlider');
+  var linVal = document.getElementById('linearSpeedVal');
+  linSlider.addEventListener('input', function() {
+    linVal.textContent = parseFloat(linSlider.value).toFixed(2) + ' m/s';
+  });
+
+  var angSlider = document.getElementById('angularSpeedSlider');
+  var angVal = document.getElementById('angularSpeedVal');
+  angSlider.addEventListener('input', function() {
+    angVal.textContent = parseFloat(angSlider.value).toFixed(2) + ' rad/s';
+  });
+
+  // 2. 키보드 입력 핸들러 등록
+  window.addEventListener('keydown', function(e) {
+    if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+      return;
+    }
+    
+    if (!document.getElementById('manualModeToggle').checked) {
+      return;
+    }
+    
+    var key = e.code;
+    
+    if (key === 'Space' || e.key === ' ') {
+      e.preventDefault();
+      emergencyStop();
+      return;
+    }
+    
+    if (['KeyW', 'ArrowUp', 'KeyS', 'ArrowDown', 'KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight'].includes(key)) {
+      e.preventDefault();
+      activeKeys[key] = true;
+      updateKeyVisuals();
+      updateVelocityFromKeys();
+    }
+  });
+
+  window.addEventListener('keyup', function(e) {
+    var key = e.code;
+    if (['KeyW', 'ArrowUp', 'KeyS', 'ArrowDown', 'KeyA', 'ArrowLeft', 'KeyD', 'ArrowRight'].includes(key)) {
+      activeKeys[key] = false;
+      updateKeyVisuals();
+      updateVelocityFromKeys();
+    }
+  });
+
+  window.addEventListener('blur', function() {
+    activeKeys = {};
+    updateKeyVisuals();
+    updateVelocityFromKeys();
+  });
+
+  // 3. D-Pad 마우스/터치 입력 바인딩
+  bindDpadButton('dpad-up', 'KeyW');
+  bindDpadButton('dpad-down', 'KeyS');
+  bindDpadButton('dpad-left', 'KeyA');
+  bindDpadButton('dpad-right', 'KeyD');
+
+  var stopBtn = document.getElementById('dpad-stop');
+  if (stopBtn) {
+    stopBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      emergencyStop();
+    });
+  }
+
+  // 4. 토글 모드 변경 감지 시 정리
+  document.getElementById('manualModeToggle').addEventListener('change', function() {
+    emergencyStop();
+    if (this.checked) {
+      showStatusAlert('🎮 수동 조종 모드 활성화됨. 키보드(W,A,S,D) 조종 가능.');
+    } else {
+      showStatusAlert('🔒 수동 조종 모드 비활성화됨.');
+    }
+  });
+}
+
 window.onload = function() {
   document.getElementById('rotateBtn').addEventListener('click', function() {
     viewRotation = (viewRotation + 90) % 360;
@@ -474,6 +886,9 @@ window.onload = function() {
         stage.update();
     }
   });
+  
+  // 수동 조종 기능 설정
+  setupTeleop();
   
   // 페이지 로드 시 기본 IP로 자동 연결 시도
   connectROS();
@@ -544,13 +959,76 @@ window.onload = function() {
       </div>
     </div>
   
-  <div class="content-card map-container">
-      <div class="map-wrapper">
-          <div id="status" class="status-disconnected">📡 연결 대기 중...</div>
-          <div class="radar-bg">
-              <div class="radar-rings"></div>
+  <div class="main-layout">
+      <!-- 지도 카드 -->
+      <div class="content-card map-card">
+          <div class="map-wrapper">
+              <div id="status" class="status-disconnected">📡 연결 대기 중...</div>
+              <div class="radar-bg">
+                  <div class="radar-rings"></div>
+              </div>
+              <div id="map"></div>
           </div>
-          <div id="map"></div>
+      </div>
+
+      <!-- 수동 조종 제어판 카드 -->
+      <div class="content-card teleop-card">
+          <div class="header-title" style="font-size: 20px; font-weight: 800; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 10px;">
+              <div class="title-icon" style="width: 32px; height: 32px; border-radius: 8px;">
+                  🎮
+              </div>
+              로봇 수동 조종 패널
+          </div>
+
+          <!-- 수동 조종 활성화 토글 -->
+          <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(196, 125, 74, 0.05); padding: 12px 18px; border-radius: 14px; border: 1px dashed rgba(196, 125, 74, 0.3);">
+              <span style="font-size: 14px; font-weight: 800; color: var(--primary-text);">수동 조종 모드 활성화</span>
+              <label class="switch">
+                  <input type="checkbox" id="manualModeToggle" />
+                  <span class="switch-slider"></span>
+              </label>
+          </div>
+
+          <!-- 속도 제어기 -->
+          <div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 5px;">
+                  <span>선속도 (Linear Speed)</span>
+                  <span id="linearSpeedVal" style="color: var(--accent); font-weight: 800;">0.20 m/s</span>
+              </div>
+              <input type="range" id="linearSpeedSlider" min="0.05" max="0.80" step="0.05" value="0.20" style="width: 100%; accent-color: var(--accent);" />
+          </div>
+          <div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; margin-bottom: 5px;">
+                  <span>각속도 (Angular Speed)</span>
+                  <span id="angularSpeedVal" style="color: var(--accent); font-weight: 800;">0.50 rad/s</span>
+              </div>
+              <input type="range" id="angularSpeedSlider" min="0.10" max="1.50" step="0.05" value="0.50" style="width: 100%; accent-color: var(--accent);" />
+          </div>
+
+          <!-- D-Pad 방향키 -->
+          <div style="text-align: center; margin-top: 10px;">
+              <div style="font-size: 12px; font-weight: 700; color: var(--sub-text); margin-bottom: 8px;">D-Pad 클릭/터치 조종</div>
+              <div class="dpad-container">
+                  <div class="dpad-btn dpad-up" id="dpad-up" title="직진 (W / ↑)">▲</div>
+                  <div class="dpad-btn dpad-left" id="dpad-left" title="좌회전 (A / ←)">◀</div>
+                  <button class="dpad-btn dpad-stop" id="dpad-stop" title="긴급 정지 (Space)">■</button>
+                  <div class="dpad-btn dpad-right" id="dpad-right" title="우회전 (D / →)">▶</div>
+                  <div class="dpad-btn dpad-down" id="dpad-down" title="후진 (S / ↓)">▼</div>
+              </div>
+          </div>
+
+          <!-- 키보드 비주얼라이저 -->
+          <div class="keyboard-visual">
+              <div style="font-size: 12px; font-weight: 700; color: var(--sub-text); margin-bottom: 12px;">키보드 입력 감지 (W, A, S, D / 방향키)</div>
+              <div style="display: flex; justify-content: center; margin-bottom: 6px;">
+                  <div id="key-W" class="key-cap">W</div>
+              </div>
+              <div style="display: flex; justify-content: center; gap: 6px;">
+                  <div id="key-A" class="key-cap">A</div>
+                  <div id="key-S" class="key-cap">S</div>
+                  <div id="key-D" class="key-cap">D</div>
+              </div>
+          </div>
       </div>
   </div>
 
