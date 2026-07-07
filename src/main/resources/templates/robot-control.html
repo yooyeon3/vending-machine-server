@@ -468,9 +468,23 @@ function initMap() {
     }
   });
 
-  // 로봇 마커 (따뜻한 테라코타 색상 적용)
-  robotMarker = new createjs.Shape();
-  robotMarker.graphics.beginFill('#c47d4a').drawCircle(0, 0, 0.15);
+  // 로봇 마커 (PIMTO 로고 이미지 적용)
+  robotMarker = new createjs.Container();
+  var robotImage = new Image();
+  robotImage.src = '/images/pimto.png';
+  var bitmap = new createjs.Bitmap(robotImage);
+  
+  robotImage.onload = function() {
+    // 로봇 실제 크기(약 0.4m)에 맞춰 이미지 스케일 조정
+    var targetSize = 0.6; // 맵 상에서의 로봇 크기 조절
+    var scale = targetSize / robotImage.width;
+    bitmap.scaleX = scale;
+    bitmap.scaleY = scale;
+    bitmap.regX = robotImage.width / 2;
+    bitmap.regY = robotImage.height / 2;
+  };
+  
+  robotMarker.addChild(bitmap);
   robotMarker.visible = false;
   stage.addChild(robotMarker);
 
@@ -479,13 +493,20 @@ function initMap() {
   });
 
   tfClient.subscribe('base_link', function(tf) {
-    // ros2d 표준 변환: y만 반전
+    // 위치 적용 (ros2d 표준 변환: y만 반전)
     robotMarker.x = tf.translation.x;
     robotMarker.y = -tf.translation.y;
+
+    // 회전 적용 (Quaternion -> Yaw 각도 변환)
+    var q = tf.rotation;
+    var yaw = Math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+    // CreateJS는 시계방향 도(Degree) 단위이므로 변환 (ROS의 반시계 방향을 화면에 맞게 반전)
+    robotMarker.rotation = -yaw * 180.0 / Math.PI;
+
     robotMarker.visible = true;
     stage.update();
 
-    console.log(`[TF] base_link ROS(x=${tf.translation.x.toFixed(3)}, y=${tf.translation.y.toFixed(3)}) -> Screen(x=${robotMarker.x.toFixed(3)}, y=${robotMarker.y.toFixed(3)})`);
+    console.log(`[TF] base_link ROS(x=${tf.translation.x.toFixed(3)}, y=${tf.translation.y.toFixed(3)}, yaw=${(yaw * 180 / Math.PI).toFixed(1)}°) -> Screen(x=${robotMarker.x.toFixed(3)}, y=${robotMarker.y.toFixed(3)})`);
   });
 
   var initialPoseTopic = new ROSLIB.Topic({

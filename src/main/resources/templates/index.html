@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/easeljs@1.0.2/lib/easeljs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/ros2d@0.10.0/build/ros2d.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #faf8f4; display: flex; flex-direction: column; min-height: 100vh; color: #3d2c1e; }
@@ -97,32 +101,45 @@
         .dash-header-right { font-size: 16px; font-weight: 600; color: #3d2c1e; display: flex; align-items: center; justify-content: flex-end; gap: 25px; flex: 1; }
         .dash-header-right a { color: #ef4444; text-decoration: none; font-size: 14px; transition: opacity 0.2s; }
         .dash-header-right a:hover { opacity: 0.7; }
-        .dash-body { display: flex; flex: 1; padding: 30px; gap: 30px; max-width: 1400px; margin: 0 auto; width: 100%; }
-        .dash-left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 400px; }
-        .product-grid { display: flex; gap: 15px; }
-        .product-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(61, 44, 30, 0.03); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 1px solid #ffffff; }
+        .dash-body { display: flex; padding: 30px; gap: 30px; width: 1300px; min-width: 1300px; margin: auto; align-items: stretch; }
+        .dash-left-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; flex: 1; min-height: 0; overflow-y: auto; align-content: flex-start; padding-right: 10px; }
+        .product-grid::-webkit-scrollbar { width: 8px; }
+        .product-grid::-webkit-scrollbar-track { background: transparent; }
+        .product-grid::-webkit-scrollbar-thumb { background: #e8dfd4; border-radius: 10px; }
+        .product-card { background: #ffffff; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(61, 44, 30, 0.03); display: flex; flex-direction: column; align-items: center; gap: 15px; border: 1px solid #ffffff; }
         .product-img { width: 100%; height: 160px; border-radius: 12px; object-fit: contain; background-color: #ffffff !important; padding: 10px; }
         .letsbe-img { padding: 15px; }
         .product-info { text-align: center; }
         .product-name { font-size: 18px; font-weight: 700; color: #3d2c1e; margin-bottom: 5px; }
+        .product-desc { font-size: 14px; color: #7f8c8d; }
         .product-price { font-size: 16px; font-weight: 600; color: #c47d4a; }
         .counter-group { display: flex; align-items: center; gap: 10px; background: #faf8f4; padding: 8px 12px; border-radius: 12px; width: 100%; justify-content: center; }
         .counter-btn { width: 36px; height: 36px; border: none; background: #ffffff; border-radius: 8px; font-size: 20px; font-weight: bold; color: #3d2c1e; cursor: pointer; box-shadow: 0 2px 5px rgba(61,44,30,0.05); transition: 0.1s; }
         .counter-btn:active { background: #f2ede4; transform: scale(0.95); }
         .counter-val { font-size: 18px; font-weight: 700; width: 30px; text-align: center; }
-        .summary-box { background: #ffffff; padding: 25px 30px; border-radius: 20px; border: 2px dashed #e8dfd4; display: flex; flex-direction: column; gap: 15px; margin-top: auto; }
+        .summary-box { background: #ffffff; padding: 25px 30px; border-radius: 20px; border: 2px dashed #e8dfd4; display: flex; flex-direction: column; gap: 15px; }
         .summary-row { display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 600; color: #3d2c1e; }
         .summary-val { font-weight: 800; color: #3d2c1e; font-size: 20px; }
         .total-price-text { font-size: 24px; color: #c47d4a; font-weight: 800; }
-        .pay-btn { padding: 20px; background: #3d2c1e; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(61, 44, 30, 0.1); }
+        .pay-btn { height: 75px; flex-shrink: 0; background: #3d2c1e; color: #ffffff; border: none; border-radius: 16px; font-size: 20px; font-weight: 700; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(61, 44, 30, 0.1); display: flex; justify-content: center; align-items: center; padding: 0; }
         .pay-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(61, 44, 30, 0.15); }
-        .dash-right-panel { flex: 1.5; display: flex; flex-direction: column; gap: 20px; }
-        .dash-view { flex: 1; background-color: #f2ede4; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 4px 20px rgba(0,0,0,0.05); overflow: hidden; min-height: 400px; }
-        .view-crosshair { position: absolute; font-size: 40px; color: rgba(196, 125, 74, 0.3); font-weight: 300; pointer-events: none; }
-        .view-play { position: absolute; bottom: 30px; left: 30px; width: 50px; height: 50px; background: rgba(255,255,255,0.8); border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: #3d2c1e; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .view-label { position: absolute; top: 20px; left: 20px; background: #c47d4a; color: #fff; padding: 6px 12px; border-radius: 8px; font-size: 14px; font-weight: 600; letter-spacing: 1px; }
-        .call-btn { padding: 25px; background: #c47d4a; color: #ffffff; border: none; border-radius: 20px; font-size: 24px; font-weight: 800; letter-spacing: 2px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 10px 25px rgba(196, 125, 74, 0.2); display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .dash-right-panel { flex: 1.2; display: flex; flex-direction: column; gap: 20px; }
+        .dash-view { aspect-ratio: 1; background-color: #1e1814; border-radius: 20px; position: relative; display: flex; justify-content: center; align-items: center; box-shadow: inset 0 4px 20px rgba(0,0,0,0.2); overflow: hidden; padding: 0; }
+        
+        /* 사용자 맵 스타일 */
+        #user-map-wrapper { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #1e1814; overflow: hidden; border-radius: 20px; }
+        #user-map { width: 100%; height: 100%; z-index: 2; display: flex; justify-content: center; align-items: center; }
+        #user-map canvas { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+        #map-status { position: absolute; top: 20px; left: 20px; padding: 8px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; color: white; z-index: 10; pointer-events: none; }
+        .m-disconnected { background: rgba(239, 68, 68, 0.9); }
+        .m-connecting { background: rgba(245, 158, 11, 0.9); }
+        .m-connected { background: rgba(16, 185, 129, 0.9); }
+        #map-guide { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); color: white; padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 600; z-index: 10; pointer-events: none; white-space: nowrap; }
+
+        .call-btn { height: 75px; flex-shrink: 0; background: #c47d4a; color: #ffffff; border: none; border-radius: 20px; font-size: 22px; font-weight: 800; letter-spacing: 1px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s; box-shadow: 0 10px 25px rgba(196, 125, 74, 0.2); display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0; }
         .call-btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(196, 125, 74, 0.3); }
+        .call-btn:disabled { background: #bdc3c7; cursor: not-allowed; transform: none; box-shadow: none; color: #ffffff; }
 
         /* 대시보드 네비게이션 프리미엄 스타일 */
         .dash-nav-link { position: relative; text-decoration: none; color: #9e8c7a; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; padding: 5px 0; transition: color 0.3s ease; }
@@ -306,7 +323,7 @@
             <div class="dash-header-center">
                 <a href="/" class="dash-nav-link active">메뉴판</a>
                 <a href="/mypage" class="dash-nav-link">마이페이지</a>
-                <a href="/robot" class="dash-nav-link">스마트 로봇</a>
+                <a href="/robot" class="dash-nav-link">PIMTO 소개</a>
                 <a href="/orders/my" class="dash-nav-link">주문내역</a>
                 <a href="#" onclick="toggleChatPanel(); return false;" class="dash-nav-link" style="position:relative;">
                     1:1 문의
@@ -380,12 +397,14 @@
 
             <div class="dash-right-panel">
                 <div class="dash-view">
-                    <div class="view-label">ROBOT CAMERA</div>
-                    <div class="view-crosshair">✛</div>
-                    <div class="view-play">▷</div>
+                    <div id="user-map-wrapper">
+                        <div id="map-status" class="m-disconnected">📡 연결 대기 중...</div>
+                        <div id="map-guide">목적지를 지도에서 터치하세요</div>
+                        <div id="user-map"></div>
+                    </div>
                 </div>
-                <button class="call-btn" onclick="alert('PIMTO 로봇이 고객님의 위치로 이동을 시작합니다!')">
-                    🚀 호출하기
+                <button class="call-btn" id="call-robot-btn" onclick="callRobot()" disabled>
+                    📍 도착 위치를 먼저 선택해주세요
                 </button>
             </div>
         </div>
@@ -549,13 +568,235 @@
         // 애니메이션 트리거를 위해 약간의 지연
         setTimeout(() => toast.classList.add('show'), 10);
         
-        // 3초 후 사라짐
         setTimeout(() => {
             toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 400); // CSS transition 시간
+            setTimeout(() => toast.remove(), 400); 
         }, 3000);
-    }
-</script>
+        
+        var ros = null;
+        var viewer = null;
+        var stage = null;
+        var gridClient = null;
+        var tfClient = null;
+        var goalTopic = null;
+        var robotMarker = null;
+        var userGoalMarker = null;
+        
+        var userScale = 40.0;
+        var userX = 0;
+        var userY = 0;
+        
+        var selectedGoalX = null;
+        var selectedGoalY = null;
 
+        function connectROS() {
+            var ip = '192.168.0.186';
+            var url = 'ws://' + ip + ':9090';
+            
+            var statusEl = document.getElementById('map-status');
+            statusEl.className = 'm-connecting';
+            statusEl.textContent = '연결 시도 중...';
+
+            ros = new ROSLIB.Ros({ url: url });
+
+            ros.on('connection', function() {
+                statusEl.className = 'm-connected';
+                statusEl.textContent = '정상 연결됨';
+                initMap();
+            });
+
+            ros.on('error', function(error) {
+                statusEl.className = 'm-disconnected';
+                statusEl.textContent = '❌ 오프라인 상태입니다';
+            });
+
+            ros.on('close', function() {
+                statusEl.className = 'm-disconnected';
+                statusEl.textContent = '⚠️ 연결 끊김';
+            });
+        }
+
+        function applyStageTransform() {
+            if(!stage) return;
+            stage.scaleX = userScale;
+            stage.scaleY = userScale;
+            stage.x = userX;
+            stage.y = userY;
+            stage.update();
+        }
+
+        function initMap() {
+            var mapDiv = document.getElementById('user-map');
+            mapDiv.innerHTML = '';
+            
+            var mapWrapper = document.getElementById('user-map-wrapper');
+            var w = mapWrapper.clientWidth || 600;
+            var h = mapWrapper.clientHeight || 600;
+
+            viewer = new ROS2D.Viewer({ divID: 'user-map', width: w, height: h });
+            stage = viewer.scene;
+            
+            userX = viewer.width / 2;
+            userY = viewer.height / 2;
+
+            gridClient = new ROS2D.OccupancyGridClient({ ros: ros, rootObject: stage, continuous: true });
+
+            gridClient.on('change', function() {
+                if (gridClient.currentGrid && gridClient.currentGrid.width > 0) {
+                    viewer.scaleToDimensions(gridClient.currentGrid.width, gridClient.currentGrid.height);
+                    viewer.shift(gridClient.currentGrid.pose.position.x, gridClient.currentGrid.pose.position.y);
+                    applyStageTransform();
+                }
+            });
+
+            robotMarker = new createjs.Container();
+            var robotImage = new Image();
+            robotImage.src = '/images/pimto.png';
+            var bitmap = new createjs.Bitmap(robotImage);
+            robotImage.onload = function() {
+                var scale = 0.6 / robotImage.width;
+                bitmap.scaleX = scale; bitmap.scaleY = scale;
+                bitmap.regX = robotImage.width / 2; bitmap.regY = robotImage.height / 2;
+            };
+            robotMarker.addChild(bitmap);
+            robotMarker.visible = false;
+            stage.addChild(robotMarker);
+
+            userGoalMarker = new createjs.Shape();
+            userGoalMarker.graphics.beginFill('rgba(16, 185, 129, 0.8)').drawPolyStar(0, 0, 0.3, 5, 0.5, -90);
+            userGoalMarker.visible = false;
+            stage.addChild(userGoalMarker);
+
+            tfClient = new ROSLIB.TFClient({ ros: ros, fixedFrame: 'map', angularThres: 0.01, transThres: 0.01, rate: 10.0 });
+            tfClient.subscribe('base_link', function(tf) {
+                robotMarker.x = tf.translation.x;
+                robotMarker.y = -tf.translation.y;
+                var q = tf.rotation;
+                var yaw = Math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+                robotMarker.rotation = -yaw * 180.0 / Math.PI;
+                robotMarker.visible = true;
+                stage.update();
+            });
+
+            goalTopic = new ROSLIB.Topic({
+                ros: ros,
+                name: '/move_base_simple/goal',
+                messageType: 'geometry_msgs/PoseStamped'
+            });
+
+            setTimeout(setupMapInteraction, 500);
+        }
+
+        function setupMapInteraction() {
+            var canvas = document.getElementById('user-map').getElementsByTagName('canvas')[0];
+            if (!canvas) return;
+
+            canvas.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                var factor = e.deltaY < 0 ? 1.1 : 0.9;
+                var newScale = userScale * factor;
+                if (newScale < 5 || newScale > 500) return;
+
+                var rect = canvas.getBoundingClientRect();
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+                
+                var scaleRatio = canvas.width / rect.width;
+                mouseX *= scaleRatio;
+                mouseY *= scaleRatio;
+
+                userX = mouseX - (mouseX - userX) * (newScale / userScale);
+                userY = mouseY - (mouseY - userY) * (newScale / userScale);
+                userScale = newScale;
+
+                applyStageTransform();
+            }, { passive: false });
+
+            canvas.addEventListener('click', function(e) {
+                var rect = canvas.getBoundingClientRect();
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+                
+                var scaleRatio = canvas.width / rect.width;
+                mouseX *= scaleRatio;
+                mouseY *= scaleRatio;
+
+                var rosX = (mouseX - userX) / userScale;
+                var rosY = (mouseY - userY) / userScale;
+                
+                selectedGoalX = rosX;
+                selectedGoalY = -rosY;
+
+                userGoalMarker.x = rosX;
+                userGoalMarker.y = rosY;
+                userGoalMarker.visible = true;
+                stage.update();
+
+                var btn = document.getElementById('call-robot-btn');
+                btn.disabled = false;
+                btn.innerHTML = '🚀 이곳으로 로봇 호출하기';
+                btn.style.background = '#10b981';
+            });
+        }
+
+        function callRobot() {
+            if (selectedGoalX === null || selectedGoalY === null) {
+                showToast('목적지 미지정', '먼저 지도에서 목적지를 터치해주세요.');
+                return;
+            }
+            if (!ros || !ros.isConnected) {
+                showToast('연결 오류', '로봇과 연결되어 있지 않습니다.');
+                return;
+            }
+
+            var goalMsg = new ROSLIB.Message({
+                header: { frame_id: 'map', stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 } },
+                pose: {
+                    position: { x: parseFloat(selectedGoalX), y: parseFloat(selectedGoalY), z: 0.0 },
+                    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
+                }
+            });
+
+            goalTopic.publish(goalMsg);
+            
+            showToast('호출 완료!', '로봇이 고객님의 위치로 이동을 시작합니다.');
+            
+            var btn = document.getElementById('call-robot-btn');
+            btn.innerHTML = '🤖 로봇 이동 중...';
+            btn.style.background = '#c47d4a';
+            setTimeout(() => {
+                btn.disabled = true;
+                btn.innerHTML = '📍 도착 위치를 먼저 선택해주세요';
+                userGoalMarker.visible = false;
+                selectedGoalX = null;
+                selectedGoalY = null;
+                if(stage) stage.update();
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if (document.getElementById('user-map-wrapper')) {
+                connectROS();
+                
+                window.addEventListener('resize', function() {
+                    if (viewer) {
+                        var mapWrapper = document.getElementById('user-map-wrapper');
+                        var w = mapWrapper.clientWidth;
+                        var h = mapWrapper.clientHeight;
+                        
+                        // 업데이트
+                        var canvas = document.getElementById('user-map').getElementsByTagName('canvas')[0];
+                        if(canvas) {
+                            canvas.width = w;
+                            canvas.height = h;
+                        }
+                        viewer.width = w;
+                        viewer.height = h;
+                        applyStageTransform();
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>
