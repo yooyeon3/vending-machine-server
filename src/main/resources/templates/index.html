@@ -674,56 +674,17 @@
                     var h = mapWrapper.clientHeight || 600;
                     
                     var gridW = gridClient.currentGrid.width;
+                    var gridW = gridClient.currentGrid.width;
                     var gridH = gridClient.currentGrid.height;
-                    var pose = gridClient.currentGrid.pose;
                     
-                    // ROS2D의 자동 중앙정렬을 무시하고, 실제 데이터 기반으로 정렬합니다.
+                    // 불필요한 미탐색 영역(회색)을 잘라내고, 자판기가 있는 실제 '흰색 방'만 화면에 꽉 차도록 3.8배 확대합니다!
+                    userScale = Math.min(w / gridW, h / gridH) * 3.8;
                     
-                    var mapListener = new ROSLIB.Topic({
-                        ros: ros,
-                        name: '/map',
-                        messageType: 'nav_msgs/OccupancyGrid'
-                    });
+                    // 로봇과 자판기의 핵심 위치인 (0, 0) 좌표를 화면의 정중앙에 고정시킵니다.
+                    userX = w / 2;
+                    userY = h / 2;
                     
-                    mapListener.subscribe(function(message) {
-                        mapListener.unsubscribe(); // 한 번만 계산하면 됨
-                        
-                        var data = message.data;
-                        var gw = message.info.width;
-                        var gh = message.info.height;
-                        var res = message.info.resolution;
-                        var originX = message.info.origin.position.x;
-                        var originY = message.info.origin.position.y;
-                        
-                        var minCol = gw, maxCol = 0, minRow = gh, maxRow = 0;
-                        var found = false;
-                        for (var r = 0; r < gh; r++) {
-                            for (var c = 0; c < gw; c++) {
-                                if (data[r * gw + c] !== -1) {
-                                    if (c < minCol) minCol = c;
-                                    if (c > maxCol) maxCol = c;
-                                    if (r < minRow) minRow = r;
-                                    if (r > maxRow) maxRow = r;
-                                    found = true;
-                                }
-                            }
-                        }
-                        
-                        if (found) {
-                            var actualW = (maxCol - minCol + 1) * res;
-                            var actualH = (maxRow - minRow + 1) * res;
-                            var cx = originX + (minCol + (maxCol - minCol) / 2) * res;
-                            var cy = originY + (minRow + (maxRow - minRow) / 2) * res;
-                            
-                            // 방이 캔버스에 꽉 차도록 하되, 너무 꽉 차지 않게 15% 여백(0.85)
-                            userScale = Math.min(w / actualW, h / actualH) * 0.85;
-                            
-                            userX = (w / 2) - (cx * userScale);
-                            userY = (h / 2) + (cy * userScale);
-                            
-                            applyStageTransform();
-                        }
-                    });
+                    applyStageTransform();
                 }
             });
 

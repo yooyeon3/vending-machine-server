@@ -285,6 +285,9 @@
             dwConnectROS();
         }
 
+        window.dwDestX = data.destX;
+        window.dwDestY = data.destY;
+
         // 헤더 레이블: 축소 시에도 품목+갯수+ETA 보임
         var label = data.productName;
         if (!data.arrived) label += ' · ' + data.eta;
@@ -317,10 +320,35 @@
       .catch(function () {});
   }
 
-  // 민호님의 Node.js 서버 웹소켓(Socket.IO)을 연결하여 실제 물리적 로봇 도착을 감지합니다.
+  // 민호님의 Node.js 서버 웹소켓(Socket.IO)을 연결하여 실제 물리적 로봇 도착 및 실시간 위치를 감지합니다.
   if (typeof io !== 'undefined') {
       var nodeSocket = io('http://192.168.0.70:4000');
       nodeSocket.on('robot_position', function(pos) {
+          
+          // 실시간 예상 도착 시간(ETA) 계산 및 표시
+          if (pos.status === 'MOVING' && String(pos.currentProductId) === String(dwOrderId)) {
+              if (window.dwDestX !== undefined && window.dwDestY !== undefined) {
+                  // 민호님 서버의 픽셀 좌표를 ROS 미터 좌표로 변환
+                  var rosX = -10.0 + (pos.x * 0.05);
+                  var rosY = -10.0 + ((384 - pos.y) * 0.05);
+                  
+                  // 직선 거리 계산 (미터)
+                  var dx = window.dwDestX - rosX;
+                  var dy = window.dwDestY - rosY;
+                  var distance = Math.sqrt(dx * dx + dy * dy);
+                  
+                  // 남은 시간 계산 (로봇 평균 속도를 초당 0.15m로 가정)
+                  var speed = 0.15;
+                  var remainingSeconds = Math.max(0, Math.floor(distance / speed));
+                  
+                  var minutes = Math.floor(remainingSeconds / 60);
+                  var seconds = remainingSeconds % 60;
+                  var etaStr = (minutes > 0 ? minutes + "분 " : "") + seconds + "초";
+                  
+                  document.getElementById('dw-eta-text').textContent = '예상 도착: ' + etaStr;
+              }
+          }
+
           // 로봇이 물리적으로 도착했고, 그 배달 목적지가 현재 사용자의 주문(dwOrderId)인 경우에만 PIN 모달을 띄웁니다!
           if (pos.status === 'ARRIVED' && String(pos.currentProductId) === String(dwOrderId)) {
               if (!modalShown) {

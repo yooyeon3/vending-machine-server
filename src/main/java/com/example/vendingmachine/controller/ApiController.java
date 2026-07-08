@@ -139,8 +139,10 @@ public class ApiController {
         long remaining = Math.max(0, DELIVERY_SECS - elapsed);
         String eta = arrived ? "도착!" : (remaining / 60) + "분 " + (remaining % 60) + "초";
 
-        // 출발지(8,12) → 목적지(85,80): 로봇 연동 시 실제 좌표로 교체
-        double startX = 8.0, startY = 12.0, endX = 85.0, endY = 80.0;
+        PurchaseHistory first = activeBatch.get(0);
+        double endX = first.getDestX() != null ? first.getDestX() : 0.0;
+        double endY = first.getDestY() != null ? first.getDestY() : 0.0;
+        double startX = 0.0, startY = 0.0; // 로봇 시작 위치 (가정)
         double t = Math.min(1.0, (double) elapsed / DELIVERY_SECS);
 
         Map<String, Object> result = new HashMap<>();
