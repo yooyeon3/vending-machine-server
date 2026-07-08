@@ -23,6 +23,11 @@ public class PurchaseHistory {
     private LocalDateTime expiryDate;
     private boolean isUsed = false;
 
+    // 로봇 배달 큐 시스템을 위한 필드 추가
+    private Double destX;
+    private Double destY;
+    private LocalDateTime lastPingTime;
+
     @Enumerated(EnumType.STRING)
     private DeliveryStatus deliveryStatus = DeliveryStatus.PENDING;
 
@@ -31,7 +36,7 @@ public class PurchaseHistory {
     private Integer usedPoints = 0;
 
     public enum DeliveryStatus {
-        PENDING, DELIVERING, DISPENSING, DELIVERED, CANCELLED, RESERVED
+        PENDING, PENDING_DELIVERY, DELIVERING, DISPENSING, DELIVERED, CANCELLED, RESERVED
     }
 
     // DB에 저장되기 직전에 현재 시간을 자동으로 기록해줍니다.

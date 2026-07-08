@@ -10,8 +10,10 @@ import com.example.vendingmachine.service.KioskStateService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-
+import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.MediaType;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -289,5 +291,41 @@ public class ApiController {
         h.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DELIVERED);
         purchaseHistoryRepository.save(h);
         return Map.of("success", true);
+    }
+
+    // --- 로봇 배달 연동 API (Node.js 백엔드로 위임) ---
+
+    @PostMapping("/api/delivery/queue")
+    public Map<String, Object> joinQueue(@RequestParam Long orderId, @RequestParam Double destX, @RequestParam Double destY) {
+        PurchaseHistory order = purchaseHistoryRepository.findById(orderId).orElse(null);
+        if (order != null) {
+            order.setDestX(destX);
+            order.setDestY(destY);
+            order.setDeliveryStatus(PurchaseHistory.DeliveryStatus.DELIVERING); // 상태를 바로 배달중으로 둡니다(Node가 실제 제어).
+            purchaseHistoryRepository.save(order);
+            
+            try {
+                RestTemplate restTemplate = new RestTemplate();
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                
+                // Web은 ROS 좌표(미터)를 사용하지만, Node.js 서버(App 기준)는 픽셀 좌표를 기대합니다.
+                // 픽셀 좌표로 변환하여 민호님의 서버와 규격을 맞춥니다.
+                double pixelX = (destX - (-10.0)) / 0.05;
+                double pixelY = 384.0 - ((destY - (-10.0)) / 0.05);
+                
+                Map<String, Object> targetPos = Map.of("x", pixelX, "y", pixelY);
+                Map<String, Object> body = Map.of("targetPos", targetPos, "productId", orderId.toString());
+                
+                HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+                ResponseEntity<Map> response = restTemplate.postForEntity("http://192.168.0.70:4000/api/web/call-robot", entity, Map.class);
+                
+                return Map.of("success", true, "nodeResponse", response.getBody() != null ? response.getBody() : "");
+            } catch (Exception e) {
+                e.printStackTrace();
+                return Map.of("success", false, "message", "Node.js 서버 연동 실패");
+            }
+        }
+        return Map.of("success", false, "message", "주문을 찾을 수 없습니다.");
     }
 }

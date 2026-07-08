@@ -162,6 +162,10 @@
   var modalShown = false;
   var dwOrderId = null;
   window.dwRosConnected = false;
+  
+  // URL에서 전달된 정보 ( 더 이상 클라이언트에서 직접 큐를 관리하지 않음 )
+  var urlParams = new URLSearchParams(window.location.search);
+  var currentOrderId = urlParams.get('id');
 
   function dwToggle() {
     minimized = !minimized;
@@ -267,10 +271,11 @@
   }
 
   function poll() {
+    var widget = document.getElementById('dw-widget');
+    
     fetch('/api/delivery/status')
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var widget = document.getElementById('dw-widget');
         if (!data.active) { widget.style.display = 'none'; return; }
 
         widget.style.display = 'block';
@@ -309,7 +314,7 @@
           document.getElementById('dw-arrived').style.display = 'none';
         }
 
-        // 대기 큐 표시
+        // 대기 큐 표시 (노드에서 처리하므로 현재 API에서는 일단 생략하거나 동일하게 사용)
         var queueEl = document.getElementById('dw-queue-info');
         if (data.queueCount > 0) {
           queueEl.textContent = '⏳ 다음 대기: ' + data.nextProductName

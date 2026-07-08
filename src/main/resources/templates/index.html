@@ -676,8 +676,8 @@
                     var gridW = gridClient.currentGrid.width;
                     var gridH = gridClient.currentGrid.height;
                     
-                    // 처음 맵이 로드될 때 전체가 보이도록 비율 자동 조정
-                    userScale = Math.min(w / gridW, h / gridH) * 0.9;
+                    // 처음 맵이 로드될 때 빈 여백이 너무 크지 않도록 2.5배 확대
+                    userScale = Math.min(w / gridW, h / gridH) * 2.5;
                     userX = w / 2;
                     userY = h / 2;
                     
@@ -768,6 +768,19 @@
                 selectedGoalX = rosX;
                 selectedGoalY = -rosY;
 
+                // 지도(OccupancyGrid) 영역을 벗어났는지 확인
+                if (gridClient && gridClient.currentGrid) {
+                    var minX = gridClient.currentGrid.pose.position.x;
+                    var maxX = minX + gridClient.currentGrid.width;
+                    var minY = gridClient.currentGrid.pose.position.y;
+                    var maxY = minY + gridClient.currentGrid.height;
+                    
+                    if (selectedGoalX < minX || selectedGoalX > maxX || selectedGoalY < minY || selectedGoalY > maxY) {
+                        showToast('❌ 지정 불가', '로봇이 갈 수 없는 구역입니다. 지도 안쪽을 터치해주세요.');
+                        return;
+                    }
+                }
+
                 userGoalMarker.x = rosX;
                 userGoalMarker.y = rosY;
                 userGoalMarker.visible = true;
@@ -790,25 +803,28 @@
                 return;
             }
 
-            var goalMsg = new ROSLIB.Message({
-                header: { frame_id: 'map', stamp: { secs: Math.floor(Date.now()/1000), nsecs: 0 } },
-                pose: {
-                    position: { x: parseFloat(selectedGoalX), y: parseFloat(selectedGoalY), z: 0.0 },
-                    orientation: { x: 0.0, y: 0.0, z: 0.0, w: 1.0 }
-                }
+            // [수정됨] 직접 ROS로 전송하지 않고 백엔드 대기열(Queue)에 등록합니다.
+            fetch('/api/delivery/queue', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    orderId: window.currentOrderId,
+                    destX: selectedGoalX,
+                    destY: selectedGoalY
+                })
+            }).then(() => {
+                showToast('대기열 등록 완료!', '로봇 대기열에 등록되었습니다. 영수증으로 이동합니다...');
+                
+                var btn = document.getElementById('call-robot-btn');
+                btn.innerHTML = '🤖 대기열 확인 중...';
+                btn.style.background = '#c47d4a';
+                
+                setTimeout(() => {
+                    location.href = '/purchase/success?id=' + window.currentOrderId 
+                        + (window.currentOrderReserved ? '&reserved=true' : '')
+                        + '&destX=' + selectedGoalX + '&destY=' + selectedGoalY;
+                }, 1500);
             });
-
-            goalTopic.publish(goalMsg);
-            
-            showToast('호출 완료!', '로봇이 지정하신 위치로 배달을 시작합니다.');
-            
-            var btn = document.getElementById('call-robot-btn');
-            btn.innerHTML = '🤖 배달 시작... 영수증으로 이동합니다';
-            btn.style.background = '#c47d4a';
-            
-            setTimeout(() => {
-                location.href = '/purchase/success?id=' + window.currentOrderId + (window.currentOrderReserved ? '&reserved=true' : '');
-            }, 1500);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
