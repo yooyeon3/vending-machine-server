@@ -405,6 +405,7 @@ var targetAngularZ = 0;
 
 function connectROS() {
   var ip = document.getElementById('rosIpInput').value;
+  localStorage.setItem('ros_ip', ip);
   var url = 'ws://' + ip + ':9090';
   
   var statusEl = document.getElementById('status');

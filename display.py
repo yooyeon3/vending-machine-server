@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal, QObject, QSize
 from PyQt5.QtGui import QFont, QPixmap, QImage, QPainter, QColor
 
-SERVER  = "http://192.168.0.122:8080"
+SERVER  = "http://192.168.0.67:8080"
 IMG_DIR = "/home/pi"
 
 PRODUCTS = [
