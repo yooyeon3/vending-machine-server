@@ -277,6 +277,7 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data.active) { widget.style.display = 'none'; return; }
+        if (data.orderId) dwOrderId = data.orderId;
 
         widget.style.display = 'block';
         if (!window.dwRosConnected) {
@@ -297,24 +298,13 @@
           document.getElementById('dw-map').style.display     = 'none';
           document.getElementById('dw-arrived').style.display = 'block';
           document.getElementById('dw-progress-fill').style.width = '100%';
-
-          // 모달 자동 표시
-          if (!modalShown) {
-            modalShown = true;
-            if (data.orderId) dwOrderId = data.orderId;
-            var modalProduct = document.getElementById('dw-modal-product');
-            if (modalProduct) modalProduct.textContent = data.productName || '';
-            var modal = document.getElementById('dw-arrived-modal');
-            modal.style.display = 'flex';
-            dwStartCountdown();
-          }
         } else {
           document.getElementById('dw-eta-text').textContent  = '예상 도착: ' + data.eta;
           document.getElementById('dw-map').style.display     = 'flex';
           document.getElementById('dw-arrived').style.display = 'none';
         }
 
-        // 대기 큐 표시 (노드에서 처리하므로 현재 API에서는 일단 생략하거나 동일하게 사용)
+        // 대기 큐 표시
         var queueEl = document.getElementById('dw-queue-info');
         if (data.queueCount > 0) {
           queueEl.textContent = '⏳ 다음 대기: ' + data.nextProductName
@@ -325,6 +315,28 @@
         }
       })
       .catch(function () {});
+  }
+
+  // 민호님의 Node.js 서버 웹소켓(Socket.IO)을 연결하여 실제 물리적 로봇 도착을 감지합니다.
+  if (typeof io !== 'undefined') {
+      var nodeSocket = io('http://192.168.0.70:4000');
+      nodeSocket.on('robot_position', function(pos) {
+          // 로봇이 물리적으로 도착했고, 그 배달 목적지가 현재 사용자의 주문(dwOrderId)인 경우에만 PIN 모달을 띄웁니다!
+          if (pos.status === 'ARRIVED' && String(pos.currentProductId) === String(dwOrderId)) {
+              if (!modalShown) {
+                  modalShown = true;
+                  var modalProduct = document.getElementById('dw-modal-product');
+                  if (modalProduct) modalProduct.textContent = document.getElementById('dw-product-label').textContent;
+                  var modal = document.getElementById('dw-arrived-modal');
+                  modal.style.display = 'flex';
+                  document.getElementById('dw-eta-text').textContent = '도착 완료!';
+                  document.getElementById('dw-map').style.display = 'none';
+                  document.getElementById('dw-arrived').style.display = 'block';
+                  document.getElementById('dw-progress-fill').style.width = '100%';
+                  dwStartCountdown();
+              }
+          }
+      });
   }
 
   setTimeout(function () {
