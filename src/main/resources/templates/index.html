@@ -521,7 +521,19 @@
                 }
                 const result = await response.json();
                 if (result.success) {
-                    location.href = '/purchase/success?id=' + result.id + (result.reserved ? '&reserved=true' : '');
+                    window.currentOrderId = result.id;
+                    window.currentOrderReserved = result.reserved;
+                    showToast('🎉 결제 완료!', '오른쪽 지도에서 로봇이 도착할 위치를 선택하고 호출해주세요.');
+                    
+                    var payBtn = document.querySelector('.pay-btn');
+                    if (payBtn) {
+                        payBtn.disabled = true;
+                        payBtn.style.background = '#bdc3c7';
+                        payBtn.style.boxShadow = 'none';
+                        payBtn.style.transform = 'none';
+                        payBtn.style.cursor = 'not-allowed';
+                        payBtn.innerHTML = '✅ 결제 완료 (위치 지정 대기 중)';
+                    }
                 } else {
                     alert(result.message || '구매 처리 중 오류가 발생했습니다.');
                 }
@@ -597,6 +609,8 @@
         
         var selectedGoalX = null;
         var selectedGoalY = null;
+        window.currentOrderId = null;
+        window.currentOrderReserved = false;
 
         function connectROS() {
             var ip = localStorage.getItem('ros_ip') || '192.168.0.186';
@@ -735,6 +749,11 @@
             }, { passive: false });
 
             canvas.addEventListener('click', function(e) {
+                if (!window.currentOrderId) {
+                    showToast('💳 결제 필요', '먼저 장바구니에서 상품을 결제하셔야 로봇을 호출할 수 있습니다.');
+                    return;
+                }
+                
                 var rect = canvas.getBoundingClientRect();
                 var mouseX = e.clientX - rect.left;
                 var mouseY = e.clientY - rect.top;
@@ -781,19 +800,15 @@
 
             goalTopic.publish(goalMsg);
             
-            showToast('호출 완료!', '로봇이 고객님의 위치로 이동을 시작합니다.');
+            showToast('호출 완료!', '로봇이 지정하신 위치로 배달을 시작합니다.');
             
             var btn = document.getElementById('call-robot-btn');
-            btn.innerHTML = '🤖 로봇 이동 중...';
+            btn.innerHTML = '🤖 배달 시작... 영수증으로 이동합니다';
             btn.style.background = '#c47d4a';
+            
             setTimeout(() => {
-                btn.disabled = true;
-                btn.innerHTML = '📍 도착 위치를 먼저 선택해주세요';
-                userGoalMarker.visible = false;
-                selectedGoalX = null;
-                selectedGoalY = null;
-                if(stage) stage.update();
-            }, 3000);
+                location.href = '/purchase/success?id=' + window.currentOrderId + (window.currentOrderReserved ? '&reserved=true' : '');
+            }, 1500);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
