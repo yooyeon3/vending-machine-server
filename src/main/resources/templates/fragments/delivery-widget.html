@@ -315,7 +315,15 @@
       .then(function (r) { return r.json(); })
       .then(function (data) {
         if (!data.active) { widget.style.display = 'none'; return; }
-        if (data.orderId) dwOrderId = data.orderId;
+        if (data.orderId) {
+            if (dwOrderId !== data.orderId) {
+                window.dwMaxDistance = null;
+                window.dwLastEtaCalcTime = null;
+                window.dwHasPhysicalETA = false;
+                window.dwPhysicalArrived = false;
+            }
+            dwOrderId = data.orderId;
+        }
 
         widget.style.display = 'block';
         if (!window.dwRosConnected) {
@@ -326,9 +334,12 @@
         window.dwDestX = data.destX;
         window.dwDestY = data.destY;
 
+        var isArrived = window.dwHasPhysicalETA ? window.dwPhysicalArrived : (window.dwPhysicalArrived || data.arrived);
+        var progressPct = window.dwHasPhysicalETA ? (window.dwPhysicalProgress || 0) : data.progress;
+
         // 상단 타이틀 레이블: 축소 시에도 품목+갯수+ETA 보임
         var label = data.productName;
-        if (window.dwPhysicalArrived || data.arrived) {
+        if (isArrived) {
             label += ' · 도착 완료!';
         } else {
             if (window.dwHasPhysicalETA && window.dwPhysicalEtaStr) {
@@ -339,14 +350,15 @@
         }
         document.getElementById('dw-product-label').textContent = label;
 
-        document.getElementById('dw-progress-fill').style.width = data.progress + '%';
-        document.getElementById('dw-pct-text').textContent = data.progress + '%';
+        document.getElementById('dw-progress-fill').style.width = progressPct + '%';
+        document.getElementById('dw-pct-text').textContent = progressPct + '%';
 
-        if (window.dwPhysicalArrived || data.arrived) {
+        if (isArrived) {
           document.getElementById('dw-eta-text').textContent = '도착 완료!';
           document.getElementById('dw-map').style.display     = 'none';
           document.getElementById('dw-arrived').style.display = 'block';
           document.getElementById('dw-progress-fill').style.width = '100%';
+          document.getElementById('dw-pct-text').textContent = '100%';
         } else {
           // 서버 ETA보다 신뢰할 수 있는 물리적(실제) ETA가 있으면 표시
           if (window.dwHasPhysicalETA && window.dwPhysicalEtaStr) {
@@ -408,17 +420,46 @@
                   var dy = window.dwDestY - rosY;
                   var distance = Math.sqrt(dx * dx + dy * dy);
                   
-                  // 남은 시간 계산 (로봇 평균 속도를 초당 0.15m로 가정)
-                  var speed = 0.15;
-                  var remainingSeconds = Math.max(0, Math.floor(distance / speed));
+                  // 최대 거리 갱신 (진척률 계산용)
+                  if (!window.dwMaxDistance || distance > window.dwMaxDistance) {
+                      window.dwMaxDistance = distance;
+                  }
+                  
+                  // 진척률(%) 계산 (현재 거리가 최대 거리 대비 얼마나 줄었는지)
+                  window.dwPhysicalProgress = Math.floor(Math.max(0, Math.min(100, ((window.dwMaxDistance - distance) / window.dwMaxDistance) * 100)));
+                  
+                  // 실시간 속도 계산을 통한 남은 시간(ETA) 예측
+                  var nowTime = Date.now();
+                  if (!window.dwLastEtaCalcTime) {
+                      window.dwSmoothedSpeed = 0.2; // 초기 가정 속도 (0.2 m/s)
+                  } else {
+                      var dt = (nowTime - window.dwLastEtaCalcTime) / 1000.0;
+                      if (dt >= 0.5 && window.dwLastDistance !== undefined) {
+                          var instSpeed = (window.dwLastDistance - distance) / dt;
+                          if (instSpeed < 0.02) instSpeed = 0.05; // 너무 느려도 최소 보장 (무한대 방지)
+                          if (instSpeed > 1.5) instSpeed = 1.5;   // 튀는 값 방지
+                          
+                          // 지수 이동 평균(EMA)으로 속도 부드럽게 만들기 (새로운 값 20% 반영)
+                          window.dwSmoothedSpeed = (window.dwSmoothedSpeed * 0.8) + (instSpeed * 0.2);
+                      }
+                  }
+                  
+                  window.dwLastEtaCalcTime = nowTime;
+                  window.dwLastDistance = distance;
+                  
+                  var remainingSeconds = Math.max(0, Math.floor(distance / window.dwSmoothedSpeed));
                   
                   var minutes = Math.floor(remainingSeconds / 60);
                   var seconds = remainingSeconds % 60;
                   var etaStr = (minutes > 0 ? minutes + "분 " : "") + seconds + "초";
                   
                   window.dwHasPhysicalETA = true; 
-                  window.dwPhysicalEtaStr = etaStr; // poll()에서 사용하도록 저장
+                  window.dwPhysicalEtaStr = etaStr; // poll()에서 표시
+                  
+                  // UI 즉시 업데이트 (부드러운 애니메이션을 위해)
                   document.getElementById('dw-eta-text').textContent = '도착 예상: ' + etaStr;
+                  document.getElementById('dw-progress-fill').style.width = window.dwPhysicalProgress + '%';
+                  document.getElementById('dw-pct-text').textContent = window.dwPhysicalProgress + '%';
               }
           }
 
