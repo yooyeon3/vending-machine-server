@@ -498,6 +498,15 @@
             document.getElementById('total-count').innerText = totalCount;
             if (document.getElementById('discount-amount')) document.getElementById('discount-amount').innerText = discountAmount.toLocaleString();
             document.getElementById('total-price').innerText = finalPrice.toLocaleString();
+            
+            var payBtn = document.querySelector('.pay-btn');
+            if (payBtn && !window.isQueueFull && !window.currentOrderId) {
+                if (finalPrice > 0) {
+                    payBtn.innerText = finalPrice.toLocaleString() + '원 결제하기';
+                } else {
+                    payBtn.innerText = '결제하기';
+                }
+            }
         }
 
         document.getElementById('point-use-input').addEventListener('input', calculateTotal);
@@ -816,7 +825,12 @@
                             payBtn.style.cursor = 'pointer';
                             var totalEl = document.getElementById('total-price');
                             if (totalEl) {
-                                payBtn.innerText = totalEl.innerText + '원 결제하기';
+                                var price = parseInt(totalEl.innerText.replace(/,/g, '')) || 0;
+                                if (price > 0) {
+                                    payBtn.innerText = totalEl.innerText + '원 결제하기';
+                                } else {
+                                    payBtn.innerText = '결제하기';
+                                }
                             }
                         }
                     }
