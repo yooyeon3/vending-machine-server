@@ -294,7 +294,7 @@
           setTimeout(dwConnectROS, 500);
           return;
       }
-      var ip = localStorage.getItem('ros_ip') || '192.168.0.186';
+      var ip = localStorage.getItem('ros_ip') || '192.168.0.6';
       var url = 'ws://' + ip + ':9090';
       dwRos = new ROSLIB.Ros({ url: url });
       dwRos.on('connection', function() {

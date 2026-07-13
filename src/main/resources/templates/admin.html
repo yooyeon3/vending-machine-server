@@ -2,6 +2,7 @@
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 
 <head>
+    <meta name="viewport" content="width=1280">
     <meta charset="UTF-8">
     <title>PIMTO - 관리자</title>
     <link rel="stylesheet" as="style" crossorigin
@@ -732,7 +733,7 @@
         var robotMarker = null;
 
         function connectROS() {
-            var ip = "192.168.0.186"; // 기본 로봇 IP
+            var ip = "192.168.0.6"; // 기본 로봇 IP
             var url = 'ws://' + ip + ':9090';
             
             var statusEl = document.getElementById('status');

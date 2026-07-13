@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta name="viewport" content="width=1280">
     <meta charset="UTF-8">
     <title>PIMTO - 나만의 스마트 이동식 자판기</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
@@ -629,7 +630,7 @@
         window.currentOrderReserved = false;
 
         function connectROS() {
-            var ip = localStorage.getItem('ros_ip') || '192.168.0.186';
+            var ip = localStorage.getItem('ros_ip') || '192.168.0.6';
             var url = 'ws://' + ip + ':9090';
             
             var statusEl = document.getElementById('map-status');

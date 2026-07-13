@@ -27,6 +27,7 @@ public class ChatController {
     private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
 
     @GetMapping("/chat")
     public String userChatPage(Authentication authentication, Model model) {
@@ -94,6 +95,8 @@ public class ChatController {
         payload.put("userUsername", message.getUserUsername());
         payload.put("time", message.getCreatedAt() != null
                 ? message.getCreatedAt().format(TIME_FORMAT) : "");
+        payload.put("date", message.getCreatedAt() != null
+                ? message.getCreatedAt().format(DATE_FORMAT) : "");
         return payload;
     }
 

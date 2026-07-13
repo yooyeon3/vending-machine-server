@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko" xmlns:th="http://www.thymeleaf.org">
 <head>
+    <meta name="viewport" content="width=1280">
     <meta charset="UTF-8">
     <title>PIMTO 고객 채팅</title>
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
@@ -159,7 +160,13 @@
         <p>아직 대화가 없어요. 먼저 말을 걸어보세요!</p>
     </div>
 
-    <th:block th:each="msg : ${messages}">
+    <th:block th:each="msg, stat : ${messages}">
+        <th:block th:with="currDate=${msg.createdAt != null ? #temporals.format(msg.createdAt, 'yyyy년 MM월 dd일') : ''}">
+            <div th:if="${stat.index == 0 or currDate != (messages[stat.index - 1].createdAt != null ? #temporals.format(messages[stat.index - 1].createdAt, 'yyyy년 MM월 dd일') : '')}" 
+                 class="date-divider">
+                <span th:text="${currDate}"></span>
+            </div>
+        </th:block>
         <div th:class="${msg.fromAdmin} ? 'msg-row' : 'msg-row mine'">
             <div th:if="${msg.fromAdmin}" class="msg-avatar">관</div>
             <div class="msg-content">
@@ -188,6 +195,7 @@
 <script th:inline="javascript">
     const myUsername = /*[[${username}]]*/ '';
     let stompClient = null;
+    let lastDate = /*[[${#lists.isEmpty(messages) ? null : (#temporals.format(messages[messages.size() - 1].createdAt, 'yyyy년 MM월 dd일'))}]]*/ null;
 
     function connect() {
         const socket = new SockJS('/ws');
@@ -221,6 +229,15 @@
         row.className = msg.fromAdmin ? 'msg-row' : 'msg-row mine';
 
         const now = msg.time || new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const msgDate = msg.date || new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        if (lastDate !== msgDate) {
+            const dateDivider = document.createElement('div');
+            dateDivider.className = 'date-divider';
+            dateDivider.innerHTML = `<span>${msgDate}</span>`;
+            chatBody.appendChild(dateDivider);
+            lastDate = msgDate;
+        }
 
         if (msg.fromAdmin) {
             row.innerHTML = `
@@ -246,6 +263,16 @@
         if (emptyDiv) emptyDiv.remove();
 
         const now = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const msgDate = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+
+        if (lastDate !== msgDate) {
+            const dateDivider = document.createElement('div');
+            dateDivider.className = 'date-divider';
+            dateDivider.innerHTML = `<span>${msgDate}</span>`;
+            chatBody.appendChild(dateDivider);
+            lastDate = msgDate;
+        }
+
         const row = document.createElement('div');
         row.className = 'msg-row mine';
         row.innerHTML = `

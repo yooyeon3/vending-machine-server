@@ -277,6 +277,19 @@
             color: #9e8c7a;
         }
 
+        .cp-date-divider {
+            text-align: center;
+            font-size: 11px;
+            color: #9e8c7a;
+            margin: 12px 0 6px 0;
+        }
+
+        .cp-date-divider span {
+            background: rgba(0,0,0,0.05);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+
         .cp-footer {
             background: white;
             border-top: 1px solid var(--border);
@@ -362,6 +375,7 @@
             let cpPanelOpen = false;
             let cpListLoaded = false;
             let cpCurrentUser = null;
+            let cpLastDate = null;
 
             function toggleChatPanel() {
                 cpPanelOpen = !cpPanelOpen;
@@ -444,6 +458,7 @@
                             container.innerHTML = '<div style="text-align:center;color:var(--sub-text);font-size:13px;margin-top:40px;">아직 대화가 없어요.</div>';
                             return;
                         }
+                        cpLastDate = null;
                         messages.forEach(msg => cpRenderMessage(msg, username, false));
                         container.scrollTop = container.scrollHeight;
                     });
@@ -453,6 +468,15 @@
                 const container = document.getElementById('cpMessages');
                 const loadingEl = container.querySelector('.cp-loading');
                 if (loadingEl) loadingEl.remove();
+
+                const msgDate = msg.date || new Date().toLocaleDateString('ko-KR', {year:'numeric', month:'long', day:'numeric'});
+                if (cpLastDate !== msgDate) {
+                    const dateDivider = document.createElement('div');
+                    dateDivider.className = 'cp-date-divider';
+                    dateDivider.innerHTML = `<span>${msgDate}</span>`;
+                    container.appendChild(dateDivider);
+                    cpLastDate = msgDate;
+                }
 
                 const row = document.createElement('div');
                 const isAdmin = msg.fromAdmin;

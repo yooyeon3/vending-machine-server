@@ -19,6 +19,7 @@ public class ChatApiController {
 
     private final ChatService chatService;
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy년 MM월 dd일");
 
     @GetMapping("/history")
     public List<Map<String, Object>> getUserHistory(Authentication auth) {
@@ -44,6 +45,7 @@ public class ChatApiController {
             m.put("content", msg.getContent());
             m.put("fromAdmin", msg.isFromAdmin());
             m.put("time", msg.getCreatedAt() != null ? msg.getCreatedAt().format(TIME_FORMAT) : "");
+            m.put("date", msg.getCreatedAt() != null ? msg.getCreatedAt().format(DATE_FORMAT) : "");
             m.put("userUsername", msg.getUserUsername());
             return m;
         }).collect(Collectors.toList());
