@@ -8,6 +8,7 @@
     <script src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/roslib@1.3.0/build/roslib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/ros2d@0.10.0/build/ros2d.min.js"></script>
+    <script src="http://192.168.0.70:4000/socket.io/socket.io.js"></script>
     <style>
         * { box-sizing: border-box; }
         body { margin: 0; font-family: 'Pretendard', sans-serif; background-color: #faf8f4; display: flex; flex-direction: column; min-height: 100vh; color: #3d2c1e; }
@@ -502,6 +503,10 @@
         document.getElementById('point-use-input').addEventListener('input', calculateTotal);
 
         async function processOrder() {
+            if (window.isQueueFull) {
+                showToast('🚫 주문 불가', '현재 다른 배달이 진행 중이거나 대기열이 있습니다. 잠시 후 시도해주세요.');
+                return;
+            }
             let items = [];
             document.querySelectorAll('.counter-val').forEach(el => {
                 const qty = parseInt(el.innerText);
@@ -525,7 +530,7 @@
                 if (result.success) {
                     window.currentOrderId = result.id;
                     window.currentOrderReserved = result.reserved;
-                    showToast('🎉 결제 완료!', '오른쪽 지도에서 로봇이 도착할 위치를 선택하고 호출해주세요.');
+                    showToast('\uD83C\uDF89 결제 완료!', '오른쪽 지도에서 로봇이 도착할 위치를 선택하고 호출해주세요.');
                     
                     var payBtn = document.querySelector('.pay-btn');
                     if (payBtn) {
@@ -534,7 +539,7 @@
                         payBtn.style.boxShadow = 'none';
                         payBtn.style.transform = 'none';
                         payBtn.style.cursor = 'not-allowed';
-                        payBtn.innerHTML = '✅ 결제 완료 (위치 지정 대기 중)';
+                        payBtn.innerHTML = '\u2728 결제 완료 (위치 지정 대기 중)';
                     }
                 } else {
                     alert(result.message || '구매 처리 중 오류가 발생했습니다.');
@@ -663,6 +668,9 @@
             
             userX = viewer.width / 2;
             userY = viewer.height / 2;
+            
+            // 시뮬레이터(Node.js) 단독 실행 시 ROS 맵이 수신되지 않더라도 마커가 보일 수 있도록 초기 줌/패닝 강제 적용
+            applyStageTransform();
 
             gridClient = new ROS2D.OccupancyGridClient({ ros: ros, rootObject: stage, continuous: true });
 
@@ -685,8 +693,8 @@
                         name: '/map',
                         messageType: 'nav_msgs/OccupancyGrid'
                     });
-                    
                     mapListener.subscribe(function(message) {
+                        window.rosMapData = message; // 마커 지정 가능 여부 검사를 위해 맵 데이터 전역 저장
                         mapListener.unsubscribe(); 
                         
                         var data = message.data;
@@ -736,32 +744,110 @@
             });
 
             robotMarker = new createjs.Container();
+            // 흰색 테두리 원형 배경 (앱 아바타 느낌)
+            var robotBg = new createjs.Shape();
+            robotBg.graphics.beginFill('#ffffff').drawCircle(0, 0, 0.45);
+            var robotBorder = new createjs.Shape();
+            robotBorder.graphics.setStrokeStyle(0.06).beginStroke('#c47d4a').drawCircle(0, 0, 0.45);
+            robotMarker.addChild(robotBg, robotBorder);
+            
             var robotImage = new Image();
             robotImage.src = '/images/pimto.png';
             var bitmap = new createjs.Bitmap(robotImage);
             robotImage.onload = function() {
-                var scale = 0.6 / robotImage.width;
+                var scale = 0.7 / robotImage.width;
                 bitmap.scaleX = scale; bitmap.scaleY = scale;
                 bitmap.regX = robotImage.width / 2; bitmap.regY = robotImage.height / 2;
+                robotMarker.addChild(bitmap);
             };
-            robotMarker.addChild(bitmap);
             robotMarker.visible = false;
             stage.addChild(robotMarker);
 
-            userGoalMarker = new createjs.Shape();
-            userGoalMarker.graphics.beginFill('rgba(16, 185, 129, 0.8)').drawPolyStar(0, 0, 0.3, 5, 0.5, -90);
+            // 예쁜 타겟(도착지) 핀 마커
+            userGoalMarker = new createjs.Container();
+            var shadow = new createjs.Shape();
+            shadow.graphics.beginFill('rgba(0,0,0,0.3)').drawEllipse(-0.2, -0.05, 0.4, 0.1);
+            var pin = new createjs.Shape();
+            pin.graphics.beginFill('#e74c3c').drawCircle(0, -0.4, 0.2);
+            pin.graphics.beginFill('#e74c3c').moveTo(-0.15, -0.3).lineTo(0, 0).lineTo(0.15, -0.3).closePath();
+            var dot = new createjs.Shape();
+            dot.graphics.beginFill('#ffffff').drawCircle(0, -0.4, 0.08);
+            
+            userGoalMarker.addChild(shadow, pin, dot);
             userGoalMarker.visible = false;
             stage.addChild(userGoalMarker);
+            
 
-            tfClient = new ROSLIB.TFClient({ ros: ros, fixedFrame: 'map', angularThres: 0.01, transThres: 0.01, rate: 10.0 });
+
+            // Node.js 서버의 웹소켓(Socket.IO) 실시간 좌표 및 대기열 정보 활용 (시뮬레이터 연동)
+            if (typeof io !== 'undefined') {
+                var socket = io('http://192.168.0.70:4000');
+                
+                socket.on('robot_position', function(pos) {
+                    if (robotMarker && stage) {
+                        var rosY = ((pos.x - 190) * 0.05) - 10.0;
+                        var rosX = ((384 - (pos.y - 127)) * 0.05) - 10.0;
+                        
+                        robotMarker.x = rosX;
+                        robotMarker.y = -rosY;
+                        robotMarker.rotation = -(pos.heading * 180.0 / Math.PI);
+                        robotMarker.visible = true;
+                        
+                        if (stage.getChildIndex(robotMarker) !== stage.getNumChildren() - 1) {
+                            stage.setChildIndex(robotMarker, stage.getNumChildren() - 1);
+                        }
+                        stage.update();
+                    }
+                });
+
+                // 대기열 상태를 실시간으로 받아와서 결제 버튼 제어
+                socket.on('queue_updated', function(data) {
+                    window.isQueueFull = data.queueCount > 0;
+                    var payBtn = document.querySelector('.pay-btn');
+                    if (payBtn && !window.currentOrderId) {
+                        if (window.isQueueFull) {
+                            payBtn.disabled = true;
+                            payBtn.style.background = '#bdc3c7';
+                            payBtn.style.cursor = 'not-allowed';
+                            payBtn.innerText = '⏳ 로봇 배달 중 (대기열 발생)';
+                        } else {
+                            payBtn.disabled = false;
+                            payBtn.style.background = '#3d2c1e';
+                            payBtn.style.cursor = 'pointer';
+                            var totalEl = document.getElementById('total-price');
+                            if (totalEl) {
+                                payBtn.innerText = totalEl.innerText + '원 결제하기';
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 실제 로봇(ROS) 연동 시 tfClient를 통해 로봇 좌표(base_link) 갱신
+            tfClient = new ROSLIB.TFClient({
+                ros : ros,
+                angularThres : 0.01,
+                transThres : 0.01,
+                rate : 10.0,
+                fixedFrame : 'map'
+            });
+
             tfClient.subscribe('base_link', function(tf) {
-                robotMarker.x = tf.translation.x;
-                robotMarker.y = -tf.translation.y;
-                var q = tf.rotation;
-                var yaw = Math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
-                robotMarker.rotation = -yaw * 180.0 / Math.PI;
-                robotMarker.visible = true;
-                stage.update();
+                if (robotMarker && stage) {
+                    robotMarker.x = tf.translation.x;
+                    robotMarker.y = -tf.translation.y;
+                    
+                    var q = tf.rotation;
+                    var heading = Math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z));
+                    robotMarker.rotation = -(heading * 180.0 / Math.PI);
+                    
+                    robotMarker.visible = true;
+                    
+                    if (stage.getChildIndex(robotMarker) !== stage.getNumChildren() - 1) {
+                        stage.setChildIndex(robotMarker, stage.getNumChildren() - 1);
+                    }
+                    stage.update();
+                }
             });
 
             goalTopic = new ROSLIB.Topic({
@@ -800,7 +886,7 @@
 
             canvas.addEventListener('click', function(e) {
                 if (!window.currentOrderId) {
-                    showToast('💳 결제 필요', '먼저 장바구니에서 상품을 결제하셔야 로봇을 호출할 수 있습니다.');
+                    showToast('\uD83D\uDED2 결제 필요', '먼저 장바구니에서 상품을 결제하셔야 로봇을 호출할 수 있습니다.');
                     return;
                 }
                 
@@ -818,15 +904,34 @@
                 selectedGoalX = rosX;
                 selectedGoalY = -rosY;
 
-                // 지도(OccupancyGrid) 영역을 벗어났는지 확인
-                if (gridClient && gridClient.currentGrid) {
+                // 맵(OccupancyGrid) 데이터가 있을 경우, 갈 수 없는 구역인지 정밀 검사
+                if (window.rosMapData) {
+                    var info = window.rosMapData.info;
+                    var res = info.resolution;
+                    var ox = info.origin.position.x;
+                    var oy = info.origin.position.y;
+                    
+                    var col = Math.floor((rosX - ox) / res);
+                    var row = Math.floor((-rosY - oy) / res);
+                    
+                    if (col < 0 || col >= info.width || row < 0 || row >= info.height) {
+                        showToast('\uD83D\uDEAB 지정 불가', '지도 영역을 벗어났습니다. 다시 지정해주세요.');
+                        return;
+                    }
+                    var val = window.rosMapData.data[row * info.width + col];
+                    // -1: Unknown, 50 이상: 장애물/벽
+                    if (val === -1 || val > 50) {
+                        showToast('\uD83D\uDEAB 지정 불가', '장애물이 있거나 갈 수 없는 구역입니다. 다른 곳을 선택해주세요.');
+                        return;
+                    }
+                } else if (gridClient && gridClient.currentGrid) {
                     var minX = gridClient.currentGrid.pose.position.x;
                     var maxX = minX + gridClient.currentGrid.width;
                     var minY = gridClient.currentGrid.pose.position.y;
                     var maxY = minY + gridClient.currentGrid.height;
                     
                     if (selectedGoalX < minX || selectedGoalX > maxX || selectedGoalY < minY || selectedGoalY > maxY) {
-                        showToast('❌ 지정 불가', '로봇이 갈 수 없는 구역입니다. 지도 안쪽을 터치해주세요.');
+                        showToast('\uD83D\uDEAB 지정 불가', '로봇이 갈 수 없는 구역입니다. 지도 안쪽을 터치해주세요.');
                         return;
                     }
                 }
@@ -838,7 +943,7 @@
 
                 var btn = document.getElementById('call-robot-btn');
                 btn.disabled = false;
-                btn.innerHTML = '🚀 이곳으로 로봇 호출하기';
+                btn.innerHTML = '\uD83C\uDFAF 이곳으로 로봇 호출하기';
                 btn.style.background = '#10b981';
             });
         }
@@ -866,7 +971,7 @@
                 showToast('대기열 등록 완료!', '로봇 대기열에 등록되었습니다. 영수증으로 이동합니다...');
                 
                 var btn = document.getElementById('call-robot-btn');
-                btn.innerHTML = '🤖 대기열 확인 중...';
+                btn.innerHTML = '\u23F3 대기열 확인 중...';
                 btn.style.background = '#c47d4a';
                 
                 setTimeout(() => {

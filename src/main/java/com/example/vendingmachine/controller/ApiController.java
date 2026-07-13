@@ -68,7 +68,11 @@ public class ApiController {
         List<PurchaseHistory> orders = purchaseHistoryRepository
                 .findByBuyerNameAndPurchaseTimeAfterOrderByPurchaseTimeAsc(loginMember.getName(), since)
                 .stream()
-                .filter(o -> !o.isUsed() && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.DELIVERED)
+                .filter(o -> !o.isUsed() 
+                    && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.DELIVERED
+                    && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.CANCELLED
+                    && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.PENDING
+                    && o.getDeliveryStatus() != PurchaseHistory.DeliveryStatus.RESERVED)
                 .collect(Collectors.toList());
 
         if (orders.isEmpty()) return Map.of("active", false);
