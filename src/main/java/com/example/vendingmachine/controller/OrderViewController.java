@@ -45,17 +45,26 @@ public class OrderViewController {
         // 등급 정보 조회
         MemberService.GradeProgress progress = memberService.getGradeProgress(loginMember);
 
-        // 최애 음료 TOP 3 조회 (묶음 구매 'x2' 등 통합 로직 적용)
+        // 최애 음료 TOP 3 조회 (묶음 구매 'x2' 및 장바구니 묶음 구매 콤마 분리 로직 적용)
         java.util.Map<String, Integer> productCountMap = new java.util.HashMap<>();
         for (PurchaseHistory order : orders) {
-            String name = order.getProductName();
-            int qty = 1;
-            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(.*?)\\s*[xX]\\s*(\\d+)$").matcher(name);
-            if (matcher.matches()) {
-                name = matcher.group(1).trim();
-                qty = Integer.parseInt(matcher.group(2));
+            String fullName = order.getProductName();
+            if (fullName == null) continue;
+            
+            // 장바구니 등에서 여러 개를 동시에 시켰을 때 (예: "레쓰비, 펩시콜라 x2") 콤마로 분리
+            String[] items = fullName.split(",");
+            for (String itemStr : items) {
+                String name = itemStr.trim();
+                if (name.isEmpty()) continue;
+                
+                int qty = 1;
+                java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("^(.*?)\\s*[xX]\\s*(\\d+)$").matcher(name);
+                if (matcher.matches()) {
+                    name = matcher.group(1).trim();
+                    qty = Integer.parseInt(matcher.group(2));
+                }
+                productCountMap.put(name, productCountMap.getOrDefault(name, 0) + qty);
             }
-            productCountMap.put(name, productCountMap.getOrDefault(name, 0) + qty);
         }
 
         List<Map<String, Object>> topProducts = productCountMap.entrySet().stream()
