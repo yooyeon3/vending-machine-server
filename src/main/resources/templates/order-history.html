@@ -257,7 +257,7 @@
                 </div>
 
                 <!-- 배달 현황 링크 -->
-                <div class="order-pin-box" th:if="${order.pinCode != null}">
+                <div class="order-pin-box" th:if="${order.pinCode != null}" th:with="isExpired=${(order.purchaseTime != null and now.isAfter(order.purchaseTime.plusMinutes(30))) or now.isAfter(order.expiryDate)}">
                     <div style="display: flex; align-items: center; gap: 8px;">
                         <!-- 완료 -->
                         <span th:if="${order.used or (order.deliveryStatus != null and order.deliveryStatus.name() == 'DELIVERED')}" class="pin-status status-used">배달 완료</span>
@@ -266,16 +266,16 @@
                         <span th:if="${order.deliveryStatus != null and order.deliveryStatus.name() == 'CANCELLED'}" class="pin-status status-expired">주문 취소</span>
                         
                         <!-- 만료 (사용되지 않았고, 완료/취소가 아니며 기한 초과) -->
-                        <span th:if="${!order.used and (order.deliveryStatus == null or (order.deliveryStatus.name() != 'DELIVERED' and order.deliveryStatus.name() != 'CANCELLED')) and now.isAfter(order.expiryDate)}" class="pin-status status-expired">만료</span>
+                        <span th:if="${!order.used and (order.deliveryStatus == null or (order.deliveryStatus.name() != 'DELIVERED' and order.deliveryStatus.name() != 'CANCELLED')) and isExpired}" class="pin-status status-expired">시간 만료</span>
                         
                         <!-- 진행 중 (미사용, 유효기간 내, 미완료/미취소) -->
-                        <th:block th:if="${!order.used and order.deliveryStatus != null and order.deliveryStatus.name() != 'DELIVERED' and order.deliveryStatus.name() != 'CANCELLED' and now.isBefore(order.expiryDate)}">
+                        <th:block th:if="${!order.used and order.deliveryStatus != null and order.deliveryStatus.name() != 'DELIVERED' and order.deliveryStatus.name() != 'CANCELLED' and !isExpired}">
                             <span th:if="${order.deliveryStatus.name() == 'PENDING' or order.deliveryStatus.name() == 'RESERVED'}" class="pin-status status-used">대기 중</span>
                             <span th:if="${order.deliveryStatus.name() == 'DELIVERING' or order.deliveryStatus.name() == 'PENDING_DELIVERY'}" class="pin-status status-valid">배달 중</span>
                             <span th:if="${order.deliveryStatus.name() == 'DISPENSING'}" class="pin-status" style="background:#fef3c7; color:#d97706;">수령 대기</span>
                         </th:block>
                     </div>
-                    <a th:if="${!order.used and now.isBefore(order.expiryDate) and (order.deliveryStatus == null or (order.deliveryStatus.name() != 'CANCELLED' and order.deliveryStatus.name() != 'DELIVERED'))}"
+                    <a th:if="${!order.used and !isExpired and (order.deliveryStatus == null or (order.deliveryStatus.name() != 'CANCELLED' and order.deliveryStatus.name() != 'DELIVERED'))}"
                        th:href="@{/orders/delivery/{id}(id=${order.id})}"
                        class="copy-btn" style="text-decoration:none;">현황 확인</a>
                 </div>
