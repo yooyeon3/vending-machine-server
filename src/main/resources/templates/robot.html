@@ -228,7 +228,7 @@
         <th:block th:if="${session.loginMember != null}" th:with="grade=${@memberService.getGrade(session.loginMember)}">
             <div style="text-align: right; margin-right: 15px;">
                 <div style="font-size: 14px; color: #9e8c7a; font-weight: 700;">
-                    <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(grade)}">GRADE</span>
+                    <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(grade)}" th:style="${grade == 'DIAMOND' ? 'background-color: #3498db !important; color: #fff !important;' : (grade == 'GOLD' ? 'background-color: #f1c40f !important; color: #fff !important;' : (grade == 'SILVER' ? 'background-color: #bdc3c7 !important; color: #fff !important;' : 'background-color: #e67e22 !important; color: #fff !important;'))}">GRADE</span>
                     <span th:text="${session.loginMember.name}" style="color: #3d2c1e; margin-left: 5px;">사용자</span>님     
                 </div>
                 <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">

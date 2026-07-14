@@ -340,7 +340,7 @@
             <div class="dash-header-right">
                 <div style="text-align: right; margin-right: 15px;">
                     <div style="font-size: 14px; color: #9e8c7a; font-weight: 700;">
-                        <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(grade)}">GRADE</span>
+                        <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(grade)}" th:style="${grade == 'DIAMOND' ? 'background-color: #3498db !important; color: #fff !important;' : (grade == 'GOLD' ? 'background-color: #f1c40f !important; color: #fff !important;' : (grade == 'SILVER' ? 'background-color: #bdc3c7 !important; color: #fff !important;' : 'background-color: #e67e22 !important; color: #fff !important;'))}">GRADE</span>
                         <span th:text="${session.loginMember.name}" style="color: #3d2c1e; margin-left: 5px;">사용자</span>님      
                     </div>
                     <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">
@@ -756,16 +756,16 @@
             robotMarker = new createjs.Container();
             // 흰색 테두리 원형 배경 (앱 아바타 느낌)
             var robotBg = new createjs.Shape();
-            robotBg.graphics.beginFill('#ffffff').drawCircle(0, 0, 0.45);
+            robotBg.graphics.beginFill('#ffffff').drawCircle(0, 0, 0.35);
             var robotBorder = new createjs.Shape();
-            robotBorder.graphics.setStrokeStyle(0.06).beginStroke('#c47d4a').drawCircle(0, 0, 0.45);
+            robotBorder.graphics.setStrokeStyle(0.04).beginStroke('#c47d4a').drawCircle(0, 0, 0.35);
             robotMarker.addChild(robotBg, robotBorder);
             
             var robotImage = new Image();
             robotImage.src = '/images/pimto.png';
             var bitmap = new createjs.Bitmap(robotImage);
             robotImage.onload = function() {
-                var scale = 0.7 / robotImage.width;
+                var scale = 0.5 / robotImage.width;
                 bitmap.scaleX = scale; bitmap.scaleY = scale;
                 bitmap.regX = robotImage.width / 2; bitmap.regY = robotImage.height / 2;
                 robotMarker.addChild(bitmap);
