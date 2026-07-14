@@ -244,7 +244,18 @@
             <div class="order-group" th:each="order : ${orders}">
                 <div class="order-item">
                     <div class="order-info">
-                        <div class="order-icon" th:text="${order.productName.contains('커피') ? '☕' : '🥤'}">🥤</div>
+                        <div style="display: flex; gap: 6px;">
+                            <!-- 레쓰비 이미지가 있을 경우 표시 -->
+                            <div class="order-icon" th:if="${order.productName.contains('레쓰비')}" style="padding: 0; overflow: hidden;">
+                                <img th:src="@{/images/letsbe.jpg}" alt="레쓰비" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                            <!-- 펩시 이미지가 있을 경우 표시 -->
+                            <div class="order-icon" th:if="${order.productName.contains('펩시')}" style="padding: 0; overflow: hidden;">
+                                <img th:src="@{/images/pepsi.jpg}" alt="펩시콜라" style="width: 100%; height: 100%; object-fit: cover;" />
+                            </div>
+                            <!-- 둘 다 아닐 경우 기존 이모지 폴백 -->
+                            <div class="order-icon" th:if="${!order.productName.contains('레쓰비') and !order.productName.contains('펩시')}" th:text="${order.productName.contains('커피') ? '☕' : '🥤'}">🥤</div>
+                        </div>
                         <div class="order-details">
                             <div class="order-name" th:text="${order.productName}">상품명</div>
                             <div class="order-date" th:text="${#temporals.format(order.purchaseTime, 'yyyy.MM.dd HH:mm')}">2026.06.16 12:00</div>
