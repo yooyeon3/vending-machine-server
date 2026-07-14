@@ -138,6 +138,12 @@
             .order-pin-box { margin-left: 0; flex-direction: column; gap: 10px; align-items: flex-start; }
             .copy-btn { width: 100%; padding: 8px; font-size: 12px; }
         }
+        /* 등급 뱃지 스타일 */
+        .grade-badge { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #fff; }
+        .grade-badge.diamond { background: #3498db; }
+        .grade-badge.gold { background: #f1c40f; }
+        .grade-badge.silver { background: #bdc3c7; }
+        .grade-badge.bronze { background: #e67e22; }
     </style>
 </head>
 <body>
@@ -162,7 +168,18 @@
         </a>
     </div>
     <div class="header-right">
-        <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; transition: opacity 0.2s;">로그아웃</a>
+        <th:block th:if="${session.loginMember != null}">
+            <div style="text-align: right; margin-right: 15px;">
+                <div style="font-size: 14px; color: #9e8c7a; font-weight: 700;">
+                    <span th:text="${progress.currentGrade == 'DIAMOND' ? '다이아몬드' : (progress.currentGrade == 'GOLD' ? '골드' : (progress.currentGrade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(progress.currentGrade)}">GRADE</span>
+                    <span th:text="${session.loginMember.name}" style="color: #3d2c1e; margin-left: 5px;">사용자</span>님     
+                </div>
+                <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">
+                    보유 포인트 <span th:text="${#numbers.formatInteger(session.loginMember.points ?: 0, 0, 'COMMA')}">0</span>P
+                </div>
+            </div>
+            <a href="/logout" style="color: #ef4444; text-decoration: none; font-size: 14px; transition: opacity 0.2s;">로그아웃</a>
+        </th:block>
     </div>
 </div>
 

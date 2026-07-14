@@ -340,7 +340,7 @@
             <div class="dash-header-right">
                 <div style="text-align: right; margin-right: 15px;">
                     <div style="font-size: 14px; color: #9e8c7a; font-weight: 700;">
-                        <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${grade.toLowerCase()}">GRADE</span>
+                        <span th:text="${grade == 'DIAMOND' ? '다이아몬드' : (grade == 'GOLD' ? '골드' : (grade == 'SILVER' ? '실버' : '브론즈'))}" th:class="'grade-badge ' + ${#strings.toLowerCase(grade)}">GRADE</span>
                         <span th:text="${session.loginMember.name}" style="color: #3d2c1e; margin-left: 5px;">사용자</span>님      
                     </div>
                     <div style="font-size: 13px; color: #c47d4a; font-weight: 800; margin-top: 2px;">
